@@ -1,4 +1,4 @@
-# Model for advanced use
+# Model for Genshin Simulator
 
 <h2> Git Commit Style </h2>
 ```
