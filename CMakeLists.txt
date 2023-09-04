@@ -3,11 +3,12 @@ cmake_minimum_required (VERSION 3.20)
 project(model)
 
 # source 
-aux_source_directory(. DIR_SRCS)
 aux_source_directory(./src DIR_SRCS)
+aux_source_directory(./src/subsrc DIR_SRCS)
+aux_source_directory(./src/include DIR_SRCS)
 
 # head file
-include_directories(./include)
+include_directories(./src/include)
 
 # thirdparty link lib
 include_directories(../thirdparty/yaml-cpp/include)
