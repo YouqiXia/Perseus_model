@@ -15,7 +15,7 @@ public:
         return valid_;
     }
 
-    bool Kill() {
+    void Kill() {
         valid_ = false;
     }
 
@@ -24,7 +24,7 @@ public:
         data_ = data;
     }
 
-    T &GetData() const {
+    const T &GetData() const {
         return data_;
     }
 

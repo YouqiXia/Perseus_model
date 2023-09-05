@@ -2,6 +2,8 @@
 
 Clock::Clock() : cur_tick_(0) {}
 
+std::shared_ptr<Clock> Clock::clock_ = nullptr;
+
 std::shared_ptr<Clock> &Clock::Instance() {
     struct ClockProxy : public Clock {};
     if (clock_ == nullptr) {
@@ -16,4 +18,8 @@ uint64_t Clock::CurTick() const {
 
 void Clock::Tick() {
     cur_tick_++;
+}
+
+void Clock::Reset() {
+    cur_tick_ = 0;
 }

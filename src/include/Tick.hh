@@ -15,6 +15,7 @@ public:
     static std::shared_ptr<Clock>& Instance();
     uint64_t CurTick() const;
     void Tick();
+    void Reset();
     //Observer Interface
     void Attach(std::shared_ptr<Observer>);
     void Detach(std::shared_ptr<Observer>);

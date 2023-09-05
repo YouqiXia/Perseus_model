@@ -1,6 +1,7 @@
 #ifndef LATCH_HH_
 #define LATCH_HH_
 
+#include <iostream>
 #include "BaseDigital.hh"
 
 template<typename T>
@@ -22,10 +23,12 @@ public:
 
     virtual void Evaluate() {
         port_->Kill();
-        if (digital_unit_->IsPortValid() && IsReady()) {
-            port_->SetData(digital_unit_->GetPort()->GetData());
-        } else {
+        if (!IsReady()) {
             digital_unit_->Stall();
+            return;
+        }
+        if (digital_unit_->IsPortValid()) {
+            port_->SetData(digital_unit_->GetPort()->GetData());
         }
     }
 
@@ -40,19 +43,30 @@ public:
     // implementation for default
     virtual void Stall() { Error(); }
 
-    virtual bool IsStall() { Error(); }
+    virtual bool IsStall() {
+        Error();
+        return true;
+    }
 
     virtual void Flush() { Error(); }
 
-    virtual bool IsFlush() { Error(); }
+    virtual bool IsFlush() {
+        Error();
+        return true;
+    }
 
-    virtual bool IsDrained() { Error(); }
+    virtual bool IsDrained() {
+        Error();
+        return true;
+    }
 
-    virtual void Advance() { Error(); }
+    virtual void Advance() {
+        std::printf("Latch is advanced\n");
+    }
 
 private:
     void Error() {
-        printf("no implement error occurs in Latch");
+        std::printf("no implement error occurs in Latch\n");
         assert(false);
     }
 

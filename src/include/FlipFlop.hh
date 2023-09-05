@@ -72,9 +72,17 @@ public:
             data_queue_->push({digital_unit_->GetPort()->GetData(), Clock::Instance()->CurTick() + latency_ - 1});
         }
         port_->Kill();
-        if (data_queue_->front().desk_tick <= Clock::CurTick() && !data_queue_->empty()) {
-            port_->SetData(digital_unit_->GetPort()->GetData());
+        if (data_queue_->empty()) {
+            return;
         }
+        if (data_queue_->front().desk_tick <= Clock::Instance()->CurTick()) {
+            port_->SetData(data_queue_->front().data);
+            data_queue_->pop();
+        }
+    }
+
+    bool IsPortValid() {
+        return port_->IsValid();
     }
 
     std::shared_ptr<port<T>> &GetPort() {
@@ -85,15 +93,16 @@ public:
     virtual bool IsReady() {
         printf("%s", __func__);
         Error();
+        return true;
     }
 
-    virtual void Evaluate() { Error(); }
-
-    virtual bool IsPortValid() { Error(); }
+    virtual void Evaluate() {
+        std::printf("FlipFlop is evaluated\n");
+    }
 
 private:
     void Error() {
-        std::printf("no implement error occurs in FlipFlop");
+        std::printf("no implement error occurs in FlipFlop\n");
         assert(false);
     }
 
