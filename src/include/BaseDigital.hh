@@ -7,26 +7,15 @@
 template<typename T>
 class port {
 public:
-    port() {
-        valid_ = false;
-    }
+    port();
 
-    bool IsValid() const {
-        return valid_;
-    }
+    bool IsValid() const;
 
-    void Kill() {
-        valid_ = false;
-    }
+    void Kill();
 
-    void SetData(T data) {
-        valid_ = true;
-        data_ = data;
-    }
+    void SetData(T data);
 
-    const T &GetData() const {
-        return data_;
-    }
+    const T &GetData() const;
 
 private:
     bool valid_;
@@ -60,5 +49,34 @@ public:
 
     virtual std::shared_ptr<port<T>> &GetPort() = 0;
 };
+
+//Implementation
+
+template<typename T>
+port<T>::port() {
+    valid_ = false;
+}
+
+template<typename T>
+bool port<T>::IsValid() const {
+    return valid_;
+}
+
+template<typename T>
+void port<T>::Kill() {
+    valid_ = false;
+}
+
+template<typename T>
+void port<T>::SetData(T data) {
+    valid_ = true;
+    data_ = data;
+}
+
+template<typename T>
+const T &port<T>::GetData() const {
+    return data_;
+}
+
 
 #endif // BASESTAGE_HH_

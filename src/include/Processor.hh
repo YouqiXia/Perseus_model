@@ -10,7 +10,7 @@ typedef std::shared_ptr<BaseDigital<Dyninsn>> BaseSchedule;
 
 class Processor {
 public:
-    Processor(uint32_t max_scheduler_num) :
+    explicit Processor(uint32_t max_scheduler_num) :
             schedule_composition_(max_scheduler_num),
             max_scheduler_num_(max_scheduler_num) {
         stall_ = std::make_shared<bool>();
@@ -29,13 +29,13 @@ public:
     }
 
     void Advance() {
-        for (auto& scheduler : schedule_composition_) {
+        for (auto &scheduler: schedule_composition_) {
             scheduler->Advance();
         }
     }
 
     void Evaluate() {
-        for (auto& scheduler : schedule_composition_) {
+        for (auto &scheduler: schedule_composition_) {
             scheduler->Evaluate();
         }
     }
@@ -67,7 +67,7 @@ public:
     void Reset() {
         *stall_ = false;
         *flush_ = false;
-        for(auto& scheduler: schedule_composition_) {
+        for (auto &scheduler: schedule_composition_) {
             scheduler->Reset();
         }
     }
