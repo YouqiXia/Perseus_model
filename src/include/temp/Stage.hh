@@ -9,26 +9,24 @@
 class Stage {
 public:
     Stage(
-            std::shared_ptr<std::vector<Register<Dyninsn>>> read_queue_,
-            std::shared_ptr<std::vector<Register<Dyninsn>>> write_queue_
+            std::shared_ptr<std::vector<Register<DynInsn>>> read_queue_,
+            std::shared_ptr<std::vector<Register<DynInsn>>> write_queue_
     );
 
     void Evaluate();
 
-    std::vector<Register<Dyninsn>>::iterator &GetProcessIterator();
+    virtual bool Analyse(DynInsn &) const;
 
-    std::vector<Register<Dyninsn>>::iterator &GetAcceptIterator();
+protected:
+    bool IsReady() const;
 
-private:
-    bool IsReady();
+    bool IsValid() const;
 
-    bool IsValid();
+    virtual void Strategy(DynInsn &) const;
 
-    void Strategy(Dyninsn &);
-
-private:
-    std::shared_ptr<std::vector<Register<Dyninsn>>> process_queue_;
-    std::shared_ptr<std::vector<Register<Dyninsn>>> accept_queue_;
+protected:
+    std::shared_ptr<std::vector<Register<DynInsn>>> process_queue_;
+    std::shared_ptr<std::vector<Register<DynInsn>>> accept_queue_;
 };
 
 

@@ -1,11 +1,12 @@
 #ifndef DYNINSN_HH_
 #define DYNINSN_HH_
 
-#include <cstdlib>
+#include <memory>
 
-struct Dyninsn {
+struct InstData {
     uint64_t count;
 };
 
+typedef std::shared_ptr<InstData> DynInsn;
 
 #endif
