@@ -1,10 +1,12 @@
 # Model for Genshin Simulator
 
 <h2> Git Commit Style </h2>
+
 ```
 [type]<Scope>: <Subject>
 eg: [feat]<undone>: new feature or file are added
 ```
+
 | Type | Description |
 | :---:  | --- |
 |feat	       | A new feature                                                                                            
