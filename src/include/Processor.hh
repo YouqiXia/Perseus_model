@@ -1,10 +1,10 @@
 #ifndef PROCESSOR_HH_
 #define PROCESSOR_HH_
 
-#include "basicunit/FlipFlop.hh"
-#include "basicunit/Latch.hh"
+#include "legacy/basicunit/FlipFlop.hh"
+#include "legacy/basicunit/Latch.hh"
 #include "DynInsn.hh"
-#include "basicunit/NullDigitalUnit.hh"
+#include "legacy/basicunit/NullDigitalUnit.hh"
 
 typedef std::shared_ptr<BaseDigital<DynInsn>> BaseSchedule;
 

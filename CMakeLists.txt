@@ -7,6 +7,7 @@ file(GLOB_RECURSE DIR_SRCS "src/*.cc" "src/*.c")
 
 # head file
 include_directories(./src/include)
+include_directories(./src)
 
 # thirdparty link lib
 #include_directories(../thirdparty/yaml-cpp/include)
