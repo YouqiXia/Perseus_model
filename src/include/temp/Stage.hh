@@ -15,12 +15,19 @@ public:
 
     void Evaluate();
 
-    virtual bool Analyse(DynInsn &) const;
+    // To see if some instruction read from Register is permitted to operate
+    virtual bool IsPermitted(DynInsn &) const;
 
 protected:
+    // To see if all the Register is ready to be written into
     bool IsReady() const;
 
+    // To see if all the data in Register is valid
     bool IsValid() const;
+
+    void Process(DynInsn &) const;
+
+    void Feedback(DynInsn &) const;
 
     virtual void Strategy(DynInsn &) const;
 
