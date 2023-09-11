@@ -3,10 +3,10 @@
 
 #include "legacy/basicunit/FlipFlop.hh"
 #include "legacy/basicunit/Latch.hh"
-#include "DynInsn.hh"
+#include "DynInst.hh"
 #include "legacy/basicunit/NullDigitalUnit.hh"
 
-typedef std::shared_ptr<BaseDigital<DynInsn>> BaseSchedule;
+typedef std::shared_ptr<BaseDigital<DynInst>> BaseSchedule;
 
 class Processor {
 public:
@@ -15,16 +15,16 @@ public:
             max_scheduler_num_(max_scheduler_num) {
         stall_ = std::make_shared<bool>();
         flush_ = std::make_shared<bool>();
-        NullDigital_ = std::make_shared<NullDigitalUnit<DynInsn>>();
+        NullDigital_ = std::make_shared<NullDigitalUnit<DynInst>>();
         // iterator is needed here
         for (int i = 0; i < max_scheduler_num_; i += 2) {
-            schedule_composition_[i] = std::make_shared<FlipFlop<DynInsn>>(
+            schedule_composition_[i] = std::make_shared<FlipFlop<DynInst>>(
                     stall_,
                     flush_,
                     (!i) ? NullDigital_ : schedule_composition_[i - 1],
                     1
             );
-            schedule_composition_[i + 1] = std::make_shared<Latch<DynInsn>>(schedule_composition_[i]);
+            schedule_composition_[i + 1] = std::make_shared<Latch<DynInst>>(schedule_composition_[i]);
         }
     }
 
@@ -60,8 +60,8 @@ public:
         return *stall_;
     }
 
-    void SetInsn(DynInsn &insn) {
-        NullDigital_->GetPort()->SetData(insn);
+    void SetInst(DynInst &inst) {
+        NullDigital_->GetPort()->SetData(inst);
     }
 
     void Reset() {

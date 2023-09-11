@@ -5,11 +5,11 @@ int main() {
     Processor only_processor(10);
     only_processor.Reset();
     Clock::Instance()->Reset();
-    DynInsn instruction = std::make_shared<InstData>();
+    DynInst instruction = std::make_shared<InstData>();
     instruction->count = 0;
     while(1) {
         instruction->count++;
-        only_processor.SetInsn(instruction);
+        only_processor.SetInst(instruction);
         Clock::Instance()->Tick();
         only_processor.Advance();
         only_processor.Evaluate();
