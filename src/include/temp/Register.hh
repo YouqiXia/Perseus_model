@@ -17,18 +17,18 @@ public:
     /* Read data from inner data structure */
     virtual void Process(T &) const;
 
-    /*
-     * Read ctrl signal
-     * Modify the ctrl signal which controls whether the Register will do Advance
+    /**
+     * @brief When Register stores ctrl signal,
+     * @brief Set stall signal of an instruction whether an operation is permitted according to the ctrl signal
      */
-    virtual void Feedback(T &);
-
-    /* Stall the Register which will do nothing in the Advance operation */
-    virtual void Stall();
+    virtual void SetPermission(T &) const;
 
 // Write port
-    /* Data can be written into the Register */
-    virtual bool IsReady() const;
+    /**
+     * @brief Read ctrl signal \n
+     * @brief Modify the ctrl signal which controls whether the Register will do Advance
+     */
+    virtual void RequestReady(T &) const;
 
     /* Accept data if the Register is ready but do not update */
     virtual void Accept(T &);

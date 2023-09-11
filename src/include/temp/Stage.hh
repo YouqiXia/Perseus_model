@@ -4,36 +4,43 @@
 #include <memory>
 #include <vector>
 #include "temp/Register.hh"
-#include "DynInsn.hh"
+#include "DynInst.hh"
+
+typedef std::shared_ptr<std::vector<Register<DynInst>>> RegistersPtr;
 
 class Stage {
 public:
+    // All the interface of the method of Stage should be DynInst list
     Stage(
-            std::shared_ptr<std::vector<Register<DynInsn>>> read_queue_,
-            std::shared_ptr<std::vector<Register<DynInsn>>> write_queue_
+            RegistersPtr input_queue,
+            RegistersPtr output_queue
     );
 
     void Evaluate();
 
-    // To see if some instruction read from Register is permitted to operate
-    virtual bool IsPermitted(DynInsn &) const;
-
 protected:
-    // To see if all the Register is ready to be written into
-    bool IsReady() const;
-
-    // To see if all the data in Register is valid
+    // To see if all the data in input Register is valid
     bool IsValid() const;
 
-    void Process(DynInsn &) const;
+    /**
+     * @brief To see if all the Register is ready to be written into
+     */
+    void RequestReady(DynInst &) const;
 
-    void Feedback(DynInsn &) const;
+    /**
+     * @brief To see if some instruction read from Register is permitted to operate
+     */
+    void SetPermission(DynInst &) const;
 
-    virtual void Strategy(DynInsn &) const;
+    void Process(DynInst &) const;
+
+    virtual void Execute(DynInst &) const;
+
+    void Accept(DynInst &);
 
 protected:
-    std::shared_ptr<std::vector<Register<DynInsn>>> process_queue_;
-    std::shared_ptr<std::vector<Register<DynInsn>>> accept_queue_;
+    RegistersPtr input_queue_;
+    RegistersPtr output_queue_;
 };
 
 
