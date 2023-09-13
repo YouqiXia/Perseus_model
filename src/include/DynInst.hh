@@ -5,12 +5,9 @@
 
 struct InstData {
     // while processing, set stall ptr to all Register into input queue
-    std::shared_ptr<bool> stall;
     uint64_t count;
 };
 
-typedef std::shared_ptr<InstData> DynInst;
-
-// FIXME: there should be an DynInst list (what kind of data structure?)
+typedef std::shared_ptr<InstData> InstPtr;
 
 #endif
