@@ -10,6 +10,8 @@ struct InstPkgEntry {
     InstPtr data;
 };
 
+typedef std::shared_ptr<InstPkgEntry> InstPkgEntryPtr;
+
 class InstPkg {
 public:
 
@@ -19,14 +21,16 @@ public:
 
     void Transfer(InstPtr &);
 
-    std::vector<InstPkgEntry>::iterator Begin();
+    uint64_t Size();
 
-    std::vector<InstPkgEntry>::iterator End();
+    std::vector<InstPkgEntryPtr>::iterator Begin();
 
-    std::vector<InstPkgEntry>::iterator Delete(typename std::vector<InstPkgEntry>::iterator &);
+    std::vector<InstPkgEntryPtr>::iterator End();
+
+    std::vector<InstPkgEntryPtr>::iterator Delete(typename std::vector<InstPkgEntryPtr>::iterator &);
 
 private:
-    TransferQueue<InstPkgEntry> queue_;
+    TransferQueue<InstPkgEntryPtr> queue_;
 };
 
 typedef std::shared_ptr<InstPkg> InstPkgPtr;

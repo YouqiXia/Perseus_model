@@ -4,9 +4,9 @@
 #include <memory>
 #include <vector>
 #include "basicunit/Register.hh"
-#include "DynInst.hh"
+#include "Common/DynInst.hh"
 
-typedef std::shared_ptr<std::vector<Register<InstPtr>>> RegistersPtr;
+typedef std::shared_ptr<std::vector<Register>> RegistersPtr;
 
 class Stage {
 public:
@@ -19,22 +19,24 @@ public:
     void Evaluate();
 
 protected:
-    // To see if all the data in input Register is valid
-    bool IsValid() const;
+    void Reset();
 
-    void RequestReady(InstPtr &) const;
+    void SetPermission();
 
-    void SetPermission(InstPtr &) const;
+    void Produce();
 
-    void Process(InstPtr &) const;
+    void Process();
 
-    virtual void Execute(InstPtr &) const;
+    virtual void Execute() {}
 
-    void Accept(InstPtr &);
+    void Accept();
+
+    bool IsNothingToDo();
 
 protected:
     RegistersPtr input_queue_;
     RegistersPtr output_queue_;
+    InstPkgPtr inst_pkg_ptr_;
 };
 
 

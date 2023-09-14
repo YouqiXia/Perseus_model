@@ -11,6 +11,8 @@ public:
 
     void Transfer(T &);
 
+    uint64_t Size();
+
     typename std::vector<T>::iterator Begin();
 
     typename std::vector<T>::iterator End();
@@ -29,6 +31,11 @@ void TransferQueue<T>::Reset() {
 template<typename T>
 void TransferQueue<T>::Transfer(T &data) {
     queue_.push_back(data);
+}
+
+template<typename T>
+uint64_t TransferQueue<T>::Size() {
+    return queue_.size();
 }
 
 template<typename T>

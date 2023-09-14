@@ -3,7 +3,7 @@
 
 #include "legacy/basicunit/FlipFlop.hh"
 #include "legacy/basicunit/Latch.hh"
-#include "DynInst.hh"
+#include "Common/DynInst.hh"
 #include "legacy/basicunit/NullDigitalUnit.hh"
 
 typedef std::shared_ptr<BaseDigital<DynInst>> BaseSchedule;
