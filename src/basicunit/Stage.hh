@@ -4,7 +4,7 @@
 #include <memory>
 #include <vector>
 #include "basicunit/Register.hh"
-#include "Common/DynInst.hh"
+#include "common/DynInst.hh"
 
 typedef std::shared_ptr<std::vector<Register>> RegistersPtr;
 

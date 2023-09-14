@@ -1,7 +1,7 @@
 #ifndef REGISTER_HH_
 #define REGISTER_HH_
 
-#include "Common/InstPkg.hh"
+#include "common/InstPkg.hh"
 
 /**
  * @brief Simulate the behavior of register(storage unit in rtl) \n

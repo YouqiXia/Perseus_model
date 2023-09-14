@@ -1,8 +1,7 @@
 #include <memory>
 #include <utility>
 
-#include "basicunit/Stage.hh"
-#include "Common/DynInst.hh"
+#include "Stage.hh"
 
 Stage::Stage(
         RegistersPtr input_queue,

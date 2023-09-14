@@ -1,4 +1,4 @@
-#include "Common/InstPkg.hh"
+#include "InstPkg.hh"
 
 InstPkg::InstPkg() {
     Reset();
