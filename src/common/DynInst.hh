@@ -7,7 +7,9 @@ typedef uint16_t ThreadId;
 
 typedef uint64_t Addr_t;
 
-typedef uint32_t Insn_t;
+typedef uint32_t Inst_t;
+
+typedef uint16_t CompressedInst_t;
 
 typedef uint8_t  IsaRegId_t;
 
@@ -120,11 +122,25 @@ enum AguType_t{
     Gen_Addr,Gen_Data,Gen_Both
 };
 
-struct InstData
-{
+struct InstData {
+
     InsnState_t  State;
 
-    Addr_t       Pc;
+    struct {
+        Addr_t       pc;
+        Inst_t       instruction;
+    } BasicInfo;
+
+    struct MemInterface {
+        char* memory_ptr;
+    };
+    bool         is_rvc;
+    bool         is_branch;
+    bool         is_predict_miss;
+    Addr_t       predicted_pc;
+    Addr_t       destination_pc;
+
+
     uint64_t     RobTag;
     uint64_t     LSQTag;
 
@@ -132,8 +148,8 @@ struct InstData
     uint8_t      SubOp;
 
     bool         IsRvcInsn;
-    Insn_t       CompressedInsn;
-    Insn_t       UncompressedInsn;
+    Inst_t       CompressedInsn;
+    Inst_t       UncompressedInsn;
 
     bool         ControlFlowInsn;
 

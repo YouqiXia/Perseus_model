@@ -3,9 +3,13 @@
 
 #include "basicunit/Register.hh"
 
-class CSR : Register {
+namespace Emulator {
 
-};
+    class CSR : Register {
+
+    };
+
+}
 
 
 #endif //MODEL_CSR_HH

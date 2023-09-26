@@ -3,9 +3,13 @@
 
 #include "basicunit/Register.hh"
 
-class PipelineRegister : Register {
+namespace Emulator {
 
-};
+    class PipelineRegister : Register {
+
+    };
+
+}
 
 
 #endif //MODEL_PIPELINEREGISTER_HH

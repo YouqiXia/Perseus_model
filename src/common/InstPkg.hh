@@ -5,34 +5,37 @@
 #include "basicunit/TransferQueue.hh"
 #include "DynInst.hh"
 
-struct InstPkgEntry {
-    bool stall;
-    InstPtr data;
-};
+namespace Emulator {
 
-typedef std::shared_ptr<InstPkgEntry> InstPkgEntryPtr;
+    struct InstPkgEntry {
+        std::shared_ptr<bool> stall;
+        InstPtr data;
+    };
 
-class InstPkg {
-public:
+    typedef std::shared_ptr<InstPkgEntry> InstPkgEntryPtr;
 
-    InstPkg();
+    class InstPkg {
+    public:
 
-    void Reset();
+        InstPkg();
 
-    void Transfer(InstPtr &);
+        void Reset();
 
-    uint64_t Size();
+        void Transfer(InstPtr);
 
-    std::vector<InstPkgEntryPtr>::iterator Begin();
+        uint64_t Size();
 
-    std::vector<InstPkgEntryPtr>::iterator End();
+        std::vector<InstPkgEntry>::iterator Begin();
 
-    std::vector<InstPkgEntryPtr>::iterator Delete(typename std::vector<InstPkgEntryPtr>::iterator &);
+        std::vector<InstPkgEntry>::iterator End();
 
-private:
-    TransferQueue<InstPkgEntryPtr> queue_;
-};
+        std::vector<InstPkgEntry>::iterator Delete(typename std::vector<InstPkgEntry>::iterator);
 
-typedef std::shared_ptr<InstPkg> InstPkgPtr;
+    private:
+        TransferQueue<InstPkgEntry> queue_;
+    };
+
+    typedef std::shared_ptr<InstPkg> InstPkgPtr;
+}
 
 #endif // INTERFACE_HH_

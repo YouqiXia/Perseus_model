@@ -3,9 +3,13 @@
 
 #include "basicunit/Stage.hh"
 
-class WriteBack : Stage {
+namespace Emulator {
 
-};
+    class WriteBack : Stage {
+
+    };
+
+}
 
 
 #endif //MODEL_WRITEBACK_HH

@@ -6,7 +6,7 @@
 #include <queue>
 
 #include "BaseDigital.hh"
-#include "Tick.hh"
+#include "timing/Tick.hh"
 
 template<typename T>
 class FlipFlop : public BaseDigital<T> {

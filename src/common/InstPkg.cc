@@ -1,32 +1,35 @@
+#include <utility>
+
 #include "InstPkg.hh"
 
-InstPkg::InstPkg() {
-    Reset();
-}
+namespace Emulator {
 
-void InstPkg::Reset() {
-    queue_.Reset();
-}
+    InstPkg::InstPkg() {
+        Reset();
+    }
 
-uint64_t InstPkg::Size() {
-    return queue_.Size();
-}
+    void InstPkg::Reset() {
+        queue_.Reset();
+    }
 
-void InstPkg::Transfer(InstPtr &inst_ptr) {
-    InstPkgEntry inst_pkg_entry {false, inst_ptr};
-    InstPkgEntryPtr inst_pkg_entry_ptr = std::shared_ptr<InstPkgEntry>();
-    *inst_pkg_entry_ptr = inst_pkg_entry;
-    queue_.Transfer(inst_pkg_entry_ptr);
-}
+    uint64_t InstPkg::Size() {
+        return queue_.Size();
+    }
 
-std::vector<InstPkgEntryPtr>::iterator InstPkg::Begin() {
-    return queue_.Begin();
-}
+    void InstPkg::Transfer(InstPtr inst_ptr) {
+        InstPkgEntry inst_pkg_entry{std::make_shared<bool>(false), std::move(inst_ptr)};
+        queue_.Transfer(inst_pkg_entry);
+    }
 
-std::vector<InstPkgEntryPtr>::iterator InstPkg::End() {
-    return queue_.End();
-}
+    std::vector<InstPkgEntry>::iterator InstPkg::Begin() {
+        return queue_.Begin();
+    }
 
-std::vector<InstPkgEntryPtr>::iterator InstPkg::Delete(typename std::vector<InstPkgEntryPtr>::iterator &iterator) {
-    return queue_.Delete(iterator);
+    std::vector<InstPkgEntry>::iterator InstPkg::End() {
+        return queue_.End();
+    }
+
+    std::vector<InstPkgEntry>::iterator InstPkg::Delete(typename std::vector<InstPkgEntry>::iterator iterator) {
+        return queue_.Delete(iterator);
+    }
 }

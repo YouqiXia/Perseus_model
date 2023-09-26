@@ -6,38 +6,47 @@
 #include "basicunit/Register.hh"
 #include "common/DynInst.hh"
 
-typedef std::shared_ptr<std::vector<Register>> RegistersPtr;
+namespace Emulator {
 
-class Stage {
-public:
-    // All the interface of the method of Stage should be InstPtr list
-    Stage(
-            RegistersPtr input_queue,
-            RegistersPtr output_queue
-    );
+    typedef std::vector<RegisterPtr> RegisterVec;
 
-    void Evaluate();
+    class Stage : public Trace::TraceObject {
+    public:
+        // All the interface of the method of Stage should be InstPtr list
+        Stage(std::string name);
 
-protected:
-    void Reset();
+        void Evaluate();
 
-    void SetPermission();
+        void Reset();
 
-    void Produce();
+        void SetProduceQueue(const RegisterPtr&);
 
-    void Process();
+        void SetProcessQueue(const RegisterPtr&);
 
-    virtual void Execute() {}
+        void SetWriteIntoQueue(const RegisterPtr&);
 
-    void Accept();
+    protected:
+        void SetPermission();
 
-    bool IsNothingToDo();
+        virtual void Produce();
 
-protected:
-    RegistersPtr input_queue_;
-    RegistersPtr output_queue_;
-    InstPkgPtr inst_pkg_ptr_;
-};
+        void Process();
 
+        virtual void Execute() {}
+
+        void Accept();
+
+        // To make sure all the invalid instructions are deleted
+        bool IsNothingToDo();
+
+    protected:
+        RegisterPtr commit_unit_;
+        RegisterVec produce_queue_;
+        RegisterVec process_queue_;
+        RegisterVec write_into_queue_;
+        InstPkgPtr inst_pkg_ptr_;
+    };
+
+}
 
 #endif //STAGE_HH_

@@ -4,19 +4,22 @@
 #include "basicunit/Register.hh"
 #include <vector>
 
-class Registerfile : public Register {
-public:
-    Registerfile();
+namespace Emulator {
 
-    void Process(InstPkgPtr &) override;
+    class Registerfile : public Register {
+    public:
+        Registerfile();
 
-    void Accept(InstPkgPtr &) override;
+        void Process(InstPkgPtr &) override;
 
-    void Advance() override;
+        void Accept(InstPkgPtr &) override;
 
-private:
-    std::vector<uint64_t> register_file;
-};
+        void Advance() override;
 
+    private:
+        std::vector<uint64_t> register_file;
+    };
+
+}
 
 #endif //MODEL_REGISTERFILE_HH

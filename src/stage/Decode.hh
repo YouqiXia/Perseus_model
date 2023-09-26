@@ -3,9 +3,12 @@
 
 #include "basicunit/Stage.hh"
 
-class Decode : Stage {
+namespace Emulator {
 
-};
+    class Decode : Stage {
 
+    };
+
+}
 
 #endif //MODEL_DECODE_HH

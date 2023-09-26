@@ -1,0 +1,11 @@
+Simulator: {
+  DRAM: {
+    MemoryMap: { Base: 0x80000000 , Length: 0x10000000 }
+  },
+  Processors: [
+    iCache: {
+      iCacheLatency: 2,
+      iCacheAlignByte: 64
+    },
+  ]
+}

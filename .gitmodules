@@ -1,0 +1,15 @@
+[submodule "thirdParty/cmdline"]
+	path = thirdParty/cmdline
+	url = https://github.com/tanakh/cmdline.git
+[submodule "thirdParty/spdlog"]
+	path = thirdParty/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "thirdParty/fmt"]
+	path = thirdParty/fmt
+	url = https://github.com/fmtlib/fmt.git
+[submodule "thirdParty/ELFIO"]
+	path = thirdParty/ELFIO
+	url = https://github.com/serge1/ELFIO.git
+[submodule "thirdParty/Yaml-cpp"]
+	path = thirdParty/Yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git

@@ -3,9 +3,12 @@
 
 #include "basicunit/Stage.hh"
 
-class LoadStore : Stage {
+namespace Emulator {
 
-};
+    class LoadStore : Stage {
 
+    };
+
+}
 
 #endif //MODEL_LOADSTORE_HH

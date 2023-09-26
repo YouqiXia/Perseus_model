@@ -3,9 +3,12 @@
 
 #include "basicunit/Stage.hh"
 
-class Execute : Stage {
+namespace Emulator {
 
-};
+    class Execute : Stage {
 
+    };
+
+}
 
 #endif //MODEL_EXECUTE_HH

@@ -3,9 +3,12 @@
 
 #include "basicunit/Stage.hh"
 
-class Fetch2 : Stage {
+namespace Emulator {
 
-};
+    class Fetch2 : Stage {
 
+    };
+
+}
 
 #endif //MODEL_FETCH2_HH
