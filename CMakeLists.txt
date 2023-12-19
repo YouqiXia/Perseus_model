@@ -1,31 +1,27 @@
 cmake_minimum_required (VERSION 3.20)
+# enable c++17
+set (CMAKE_CXX_STANDARD 17)
+set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(model)
 
-option(TRACE_ON "Debug Trace On" ON)
-if (TRACE_ON)
-    add_definitions( -DTRACE_ON )
-endif()
+# set sparta directory
+set(SPARTA_SEARCH_DIR /home/yzhang/.local/)
+set(SPARTA_INCLUDE_DIRS /home/yzhang/.local/include/sparta)
+set(CMAKE_MODULE_PATH "${SPARTA_SEARCH_DIR}/lib/cmake/sparta" ${CMAKE_MODULE_PATH})
+find_package(Sparta REQUIRED)
 
 # source
-file(GLOB_RECURSE DIR_SRCS "src/*.cc" "src/*.c")
-#file(GLOB_RECURSE DIR_SRCS "src/main.cc")
+file(GLOB_RECURSE DIR_SRCS "src/*.cc" "src/*.cpp" "src/*.c")
 
 # head file
 include_directories(./src)
-include_directories(./thirdParty)
-include_directories(./thirdParty/spdlog/include)
-include_directories(./thirdParty/fmt/include)
-include_directories(./thirdParty/Yaml-cpp/include)
+include_directories(${SPARTA_INCLUDE_DIRS})
 
 # thirdparty link lib
-#include_directories(../thirdparty/yaml-cpp/include)
-#link_directories(../thirdparty/yaml-cpp/lib)
-
-# enable c++11
-set(CMAKE_CXX_STANDARD 11)
 
 # add_subdirectory()
 add_executable(model ${DIR_SRCS})
 
 # link lib
+target_link_libraries(model SPARTA::sparta)
