@@ -14,7 +14,7 @@ namespace TimingModel {
 
         virtual ~Simulation();
 
-        void Test();
+        void test();
 
     private:
         void buildTree_() override;

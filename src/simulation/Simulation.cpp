@@ -20,7 +20,9 @@ namespace TimingModel {
     // Simulation
     Simulation::Simulation(sparta::Scheduler& Sched) :
         sparta::app::Simulation("Yihai_test", &Sched)
-    {}
+    {
+        sparta::StartupEvent(getRoot(), CREATE_SPARTA_HANDLER(Simulation, test));
+    }
 
     Simulation::~Simulation() {
         getRoot()->enterTeardown();
@@ -75,7 +77,7 @@ namespace TimingModel {
                      getRoot()->getChildAs<sparta::Port>("perfect_backend.ports.fetch_backend_inst_in"));
     }
 
-    void Simulation::Test() {
+    void Simulation::test() {
         getRoot()->getChildAs<sparta::ResourceTreeNode>("perfect_frontend")-> 
             getResourceAs<TimingModel::PerfectFrontend>()->Trigger();
 
@@ -101,6 +103,11 @@ namespace TimingModel {
         for (int i = 0; i < max_run_time; ++i) {
             getRoot()->getScheduler()->run(1);
             std::cout << "tick: " << i << std::endl << std::endl;
+            if (i == 190) {
+                getScheduler()->clearEvents();
+                getScheduler()->stopRunning();
+                std::cout << "haha" << std::endl;
+            }
         }
     }
 } // namespace Yihai
