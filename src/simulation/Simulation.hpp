@@ -4,13 +4,19 @@
 #include "sparta/app/Simulation.hpp"
 #include "sparta/simulation/ResourceFactory.hpp"
 
+#include <string>
+
+#include "olympia/OlympiaAllocators.hpp"
+
+
 namespace TimingModel {
 
     const uint64_t max_run_time = 200;
 
     class Simulation : public sparta::app::Simulation {
     public:
-        Simulation(sparta::Scheduler& scheduler);
+        Simulation(sparta::Scheduler& scheduler,
+                   const std::string workload);
 
         virtual ~Simulation();
 
@@ -25,6 +31,9 @@ namespace TimingModel {
         //! The tree is now configured, built, and instantiated.  We need
         //! to bind things together.
         void bindTree_() override;
+
+    private:
+        std::string workload_;
     };
 }
 

@@ -6,7 +6,7 @@
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/ports/SignalPort.hpp"
 
-#include "basic/Instruction.hh"
+#include "basic/Inst.hpp"
 #include "interface/functionunit/IperfectAlu.hh"
 
 

@@ -1,6 +1,8 @@
 #pragma once
 
-#include "basic/Instruction.hh"
+#include "basic/Inst.hpp"
+
+namespace TimingModel {
 
 class IperfectLsu{
 public:
@@ -8,3 +10,5 @@ public:
 
     virtual void ProcessInst(InstPtr) {}
 };
+
+}

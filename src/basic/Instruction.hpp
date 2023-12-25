@@ -3,6 +3,8 @@
 #include <memory>
 #include <vector>
 
+namespace TimingModel {
+
 struct InstInfo;
 
 typedef uint16_t ThreadId;
@@ -23,38 +25,8 @@ typedef uint64_t xlen_t;
 
 typedef uint64_t xReg_t;
 
-typedef std::shared_ptr<InstInfo> InstPtr;
-
-typedef std::vector<InstPtr>      InstGroup;
-
-/* for schduler */
-typedef uint8_t  IssueNum;
-
-typedef uint64_t RobIdx;
-
-typedef uint64_t RSIdx;
-
-typedef uint64_t FreeListIdx;
-
-typedef uint64_t BusyTableIdx;
-
-typedef uint64_t DispatchQueueIdx;
-
-struct RobEntry
-{
-    InstPtr inst_ptr;
-    bool is_valid;
-    bool is_finished;
-    bool is_issued;
-};
-
-struct ScalarRSEntry
-{
-    RSIdx rs_idx;
-    InstPtr inst_ptr;
-    RobIdx forwardRobidx[2];
-    bool is_forwarding[2];
-    bool is_OperandReady[2];
+enum FuncType {
+    ALU, MUL, DIV, BRU, CSR, LDU, STU, FPU
 };
 
 /* exception */
@@ -63,10 +35,6 @@ struct Exception
     bool    valid;
     xlen_t  Cause;
     xlen_t  Tval;
-};
-
-enum FuncType {
-    ALU, MUL, DIV, BRU, CSR, LDU, STU, FPU
 };
 
 // function sub opcode
@@ -142,63 +110,15 @@ enum RegType_t{
     NONE, INT
 };
 
-struct STFInstInfo {
-
-    /* fetch info */
-    Addr_t       pc;
-    bool         IsRvcInsn;
-    Inst_t       CompressedInst;
-    Inst_t       UncompressedInst;
-
-    /* decode info */
-    bool         ExceptionInst;
-    bool         ControlFlowInst;
-
-    IsaRegId_t   IsaRs1;
-    IsaRegId_t   IsaRs2;
-    IsaRegId_t   IsaRd;
-    Imm_t        imm;
-
-    RegType_t    Rs1Type;
-    RegType_t    Rs2Type;
-    RegType_t    RdType;
-
-    FuncType     Fu;
-    uint8_t      SubOp;
-
-    /* Scheduler info */
-    uint64_t     RobTag;
-
-    PhyRegId_t   PhyRs1;
-    PhyRegId_t   PhyRs2;
-    PhyRegId_t   PhyRd;
-    PhyRegId_t   LPhyRd;
-
-    /* function unit info */
-    xReg_t       Operand1;
-    xReg_t       Operand2;
-    xReg_t       RdResult;
-
-    /* exception info */
-    Exception    Excp;
-    
-};
-
 struct InstInfo {
 
-    /* STFInstInfo */
-    STFInstInfo stf_inst_info;
-
     /* fetch info */
     Addr_t       pc;
-    bool         IsRvcInsn;
+    bool         IsRvcInst;
     Inst_t       CompressedInst;
     Inst_t       UncompressedInst;
 
     /* decode info */
-    bool         ExceptionInst;
-    bool         ControlFlowInst;
-
     IsaRegId_t   IsaRs1;
     IsaRegId_t   IsaRs2;
     IsaRegId_t   IsaRd;
@@ -228,3 +148,5 @@ struct InstInfo {
     Exception    Excp;
 
 };
+
+}

@@ -6,9 +6,12 @@
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/ports/SignalPort.hpp"
 
-#include "basic/Instruction.hh"
+// #include "basic/Instruction.hh"
+#include "basic/Inst.hpp"
+#include "olympia/InstGenerator.hpp"
 
 #include "LoopQueue.hh"
+#include <string>
 
 namespace TimingModel {
 
@@ -22,6 +25,7 @@ namespace TimingModel {
 
             PARAMETER(uint64_t, issue_num, 2, "the issuing bandwidth in a cycle")
             PARAMETER(uint64_t, inst_queue_depth, 128, "the rob depth")
+            PARAMETER(std::string, input_file, "", "the stf entry")
         };
 
         static const char* name;
@@ -35,6 +39,8 @@ namespace TimingModel {
         InstGroup GetAvailInst();
 
         void Pop();
+
+        InstPtr GetInstFromSTF();
 
         /* for test */
         void SetInst(InstPtr);
@@ -57,5 +63,9 @@ namespace TimingModel {
         const uint64_t issue_num_;
 
         sparta::TreeNode* node_;
+
+        MavisType* mavis_facade_ = nullptr;
+
+        std::unique_ptr<InstGenerator> inst_generator_;
     };
 }

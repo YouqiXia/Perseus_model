@@ -1,6 +1,8 @@
 #pragma once
 
-#include "basic/Instruction.hh"
+#include "basic/Inst.hpp"
+
+namespace TimingModel {
 
 class IInstQueue {
 public:
@@ -12,3 +14,5 @@ public:
 
     virtual void Pop() {}
 };
+
+}

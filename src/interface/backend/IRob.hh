@@ -1,6 +1,8 @@
 #pragma once
 
-#include "basic/Instruction.hh"
+#include "basic/Inst.hpp"
+
+namespace TimingModel {
 
 class IRob {
 public:
@@ -49,3 +51,5 @@ public:
 
     virtual void Commit(IssueNum) = 0;
 };
+
+}

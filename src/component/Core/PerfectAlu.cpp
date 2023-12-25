@@ -16,8 +16,8 @@ namespace TimingModel {
 
     void PerfectAlu::WriteBack(const InstGroup& inst_group) {
         for (InstPtr inst_ptr: inst_group) {
-            std::cout << "alu get inst: " << inst_ptr->pc << std::endl;
-            alu_backend_finish_out.send(inst_ptr->RobTag);
+            std::cout << "alu get inst: " << inst_ptr->getPC() << std::endl;
+            alu_backend_finish_out.send(inst_ptr->getRobTag());
         }
     }
 }

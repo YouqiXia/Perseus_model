@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+namespace TimingModel {
+
 IntegrateRob::IntegrateRob(uint64_t rob_depth) :
     rob_(rob_depth)
 {}
@@ -52,22 +54,22 @@ void IntegrateRob::Flush() {
 }
 
 void IntegrateRob::AllocateRobEntry(InstPtr inst_ptr) {
-    std::cout << "Rob allocation instrution pc: " << inst_ptr->pc 
-              << " is issued. function unit is " << inst_ptr->Fu
+    std::cout << "Rob allocation instrution pc: " << inst_ptr->getPC() 
+              << " is issued. function unit is " << inst_ptr->getFuType()
               << std::endl;
-    inst_ptr->RobTag = rob_.getTail();
+    inst_ptr->setRobTag(rob_.getTail());
     rob_.Push(RobEntry{inst_ptr, true, false, false});
 }
 
 void IntegrateRob::IssueInst(RobIdx rob_idx) {
-    std::cout << "instrution pc: " << rob_[rob_idx].inst_ptr->pc 
-              << " is issued. function unit is " << rob_[rob_idx].inst_ptr->Fu
+    std::cout << "instrution pc: " << rob_[rob_idx].inst_ptr->getPC() 
+              << " is issued. function unit is " << rob_[rob_idx].inst_ptr->getFuType()
               << std::endl;
     rob_[rob_idx].is_issued = true;
 }
 
 void IntegrateRob::FinishInst(RobIdx rob_idx) {
-    std::cout << "instrution pc: " << rob_[rob_idx].inst_ptr->pc 
+    std::cout << "instrution pc: " << rob_[rob_idx].inst_ptr->getPC() 
               << " is finished"
               << std::endl;
     rob_[rob_idx].is_finished = true;
@@ -83,11 +85,13 @@ void IntegrateRob::Commit(IssueNum issue_num) {
     for (int i = 0; i < issue_num; ++i) {
         uint64_t idx = rob_.getHeader();
         if (rob_[idx].is_finished && rob_[idx].is_issued && rob_[idx].is_valid) {
-            std::cout << "instrution pc: " << rob_[idx].inst_ptr->pc << " is committed" << std::endl;
+            std::cout << "instrution pc: " << rob_[idx].inst_ptr->getPC() << " is committed" << std::endl;
             Clear(idx);
             rob_.Pop();
         } else {
             break;
         }
     }
+}
+
 }

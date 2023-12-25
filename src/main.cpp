@@ -4,14 +4,8 @@
 #include "sparta/app/FeatureConfiguration.hpp"
 #include "sparta/app/CommandLineSimulator.hpp"
 
-#include "basic/Instruction.hh"
+#include "basic/Inst.hpp"
 #include "interface/backend/IRob.hh"
-#include "interface/backend/IFreeList.hh"
-#include "interface/backend/IPhysicalReg.hh"
-#include "interface/backend/IReservationStation.hh"
-#include "interface/backend/IRenamingTable.hh"
-#include "interface/backend/IBusyTable.hh"
-#include "interface/backend/IDispatchQueue.hh"
 
 #include "interface/frontend/IInstQueue.hh"
 
@@ -67,7 +61,8 @@ int main(int argc, char **argv) {
         if (vm.count("run") != 0) {
             // Create the simulator
             sparta::Scheduler scheduler;
-            TimingModel::Simulation sim(scheduler);
+            TimingModel::Simulation sim(scheduler,
+                                        workload);
 
             cls.populateSimulation(&sim);
 

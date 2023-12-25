@@ -16,12 +16,12 @@ namespace TimingModel {
 
     void PerfectLsu::WriteBack(const InstGroup& inst_group) {
         for (InstPtr inst_ptr: inst_group) {
-            if (inst_ptr->Fu == FuncType::LDU) {
-                std::cout << "lsu get load inst: " << inst_ptr->pc << std::endl;
-                lsu_backend_finish_out.send(inst_ptr->RobTag, load_to_use_latency_ - 1);
-            } else if (inst_ptr->Fu == FuncType::STU) {
-                std::cout << "lsu get store inst: " << inst_ptr->pc << std::endl;
-                lsu_backend_finish_out.send(inst_ptr->RobTag);
+            if (inst_ptr->getFuType() == FuncType::LDU) {
+                std::cout << "lsu get load inst: " << inst_ptr->getPC() << std::endl;
+                lsu_backend_finish_out.send(inst_ptr->getRobTag(), load_to_use_latency_ - 1);
+            } else if (inst_ptr->getFuType() == FuncType::STU) {
+                std::cout << "lsu get store inst: " << inst_ptr->getPC() << std::endl;
+                lsu_backend_finish_out.send(inst_ptr->getRobTag());
             }
         }
     }

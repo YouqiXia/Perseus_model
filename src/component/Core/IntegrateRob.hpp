@@ -1,6 +1,9 @@
 #include "interface/backend/IRob.hh"
 #include "LoopQueue.hh"
 
+
+namespace TimingModel {
+
 class IntegrateRob : public IIntegrateRob {
 public:
     IntegrateRob(uint64_t rob_depth);
@@ -32,3 +35,5 @@ public:
 private:
     LoopQueue<RobEntry> rob_;
 };
+
+}

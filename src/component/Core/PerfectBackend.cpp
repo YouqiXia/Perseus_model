@@ -62,15 +62,15 @@ namespace TimingModel {
         InstGroup lsu_tmp_instgroup;
         InstGroup alu_tmp_instgroup;
         for (InstPtr inst_ptr: rob_->GetIssuingEntry(issue_num_)) {
-            if (inst_ptr->Fu != FuncType::STU && inst_ptr->Fu != FuncType::LDU) {
+            if (inst_ptr->getFuType() != FuncType::STU && inst_ptr->getFuType() != FuncType::LDU) {
                 if (IsAluReady(alu_tmp_instgroup.size() + 1)) {
                     alu_tmp_instgroup.push_back(inst_ptr);
-                    set_rob_issued.preparePayload(inst_ptr->RobTag)->schedule(1);
+                    set_rob_issued.preparePayload(inst_ptr->getRobTag())->schedule(1);
                 }
             } else {
                 if (IsLsuReady(lsu_tmp_instgroup.size() + 1)) {
                     lsu_tmp_instgroup.push_back(inst_ptr);
-                    set_rob_issued.preparePayload(inst_ptr->RobTag)->schedule(1);
+                    set_rob_issued.preparePayload(inst_ptr->getRobTag())->schedule(1);
                 }
             }
         }
