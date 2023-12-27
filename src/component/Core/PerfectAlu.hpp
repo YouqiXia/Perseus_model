@@ -24,23 +24,21 @@ namespace TimingModel {
 
         PerfectAlu(sparta::TreeNode* node, const PerfectAluParameter* p);
 
-        bool IsReady(IssueNum);
-
         void WriteBack(const InstGroup&);
 
-        void Trigger() {}
+        void SendInitCredit();
         
     public:
     // ports
         sparta::DataInPort<InstGroup> backend_alu_inst_in
             {&unit_port_set_, "backend_alu_inst_in", sparta::SchedulingPhase::Tick, 1};
 
+        sparta::DataOutPort<Credit> backend_alu_credit_out
+            {&unit_port_set_, "backend_alu_credit_out"};
+
         sparta::DataOutPort<RobIdx> alu_backend_finish_out
             {&unit_port_set_, "alu_backend_finish_out"};
 
-    // Events
-        sparta::UniqueEvent<> self_trigger 
-            {&unit_event_set_, "perfectlsu_trigger", CREATE_SPARTA_HANDLER(PerfectAlu, Trigger)};
     };
 
 }

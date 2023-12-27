@@ -7,6 +7,8 @@ namespace TimingModel {
 
 struct InstInfo;
 
+typedef uint64_t Credit;
+
 typedef uint16_t ThreadId;
 
 typedef uint64_t Addr_t;

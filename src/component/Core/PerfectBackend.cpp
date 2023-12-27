@@ -1,6 +1,7 @@
-#include "PerfectBackend.hpp"
 #include "sparta/simulation/ResourceTreeNode.hpp"
+#include "sparta/utils/LogUtils.hpp"
 
+#include "PerfectBackend.hpp"
 #include "IntegrateRob.hpp"
 #include "PerfectAlu.hpp"
 #include "PerfectLsu.hpp"
@@ -14,63 +15,75 @@ namespace TimingModel {
         sparta::Unit(node),
         node_(node),
         issue_num_(p->issue_num),
-        rob_(new IntegrateRob(p->rob_depth))
+        rob_depth_(p->rob_depth),
+        rob_(new IntegrateRob(p->rob_depth)),
+        stat_ipc_(&unit_stat_set_,
+                  "ipc",
+                  "Instructions retired per cycle",
+                  &unit_stat_set_,
+                  "total_number_retired/cycles"),
+        num_retired_(&unit_stat_set_,
+                     "total_number_retired",
+                     "The total number of instructions retired by this core",
+                     sparta::Counter::COUNT_NORMAL),
+        ipc_(&stat_ipc_)
     {
         fetch_backend_inst_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectBackend, AllocateRobEntry, InstGroup));
         alu_backend_finish_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectBackend, Finish, RobIdx));
         lsu_backend_finish_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectBackend, Finish, RobIdx));
+        alu_backend_credit_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectBackend, AcceptCreditFromALU, Credit));
+        lsu_backend_credit_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectBackend, AcceptCreditFromLSU, Credit));
+
+        sparta::GlobalOrderingPoint(node, "backend_alu_multiport_order") >> issue_event_;
+        sparta::GlobalOrderingPoint(node, "backend_lsu_multiport_order") >> issue_event_;
+        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(PerfectBackend, SendInitCredit));
     }
 
     PerfectBackend::~PerfectBackend() {
+        std::cout << "olympia: Retired " << num_retired_.get()
+                        << " instructions in " << getClock()->currentCycle()
+                        << " overall IPC: " << ipc_.getValue()
+                        << std::endl << std::endl << std::endl;
+        
         delete rob_;
     }
 
-    bool PerfectBackend::IsReady(IssueNum issue_num) {
-        return rob_->IsRobFull(issue_num);
+    void PerfectBackend::SendInitCredit() {
+        fetch_backend_credit_out.send(rob_depth_);
     }
 
-    bool PerfectBackend::IsAluReady(IssueNum issue_num) {
-        return node_->getRoot()->getChildAs<sparta::ResourceTreeNode>("perfect_alu")-> 
-            getResourceAs<TimingModel::PerfectAlu>()->IsReady(issue_num);
+    void PerfectBackend::AcceptCreditFromALU(const Credit& credit) {
+        alu_credit_ += credit;
+
+        ILOG("perfect backend get credits from alu: " << credit);
+
+        issue_event_.schedule(sparta::Clock::Cycle(0));
     }
 
-    bool PerfectBackend::IsLsuReady(IssueNum issue_num) {
-        return node_->getRoot()->getChildAs<sparta::ResourceTreeNode>("perfect_lsu")-> 
-            getResourceAs<TimingModel::PerfectLsu>()->IsReady(issue_num);
+    void PerfectBackend::AcceptCreditFromLSU(const Credit& credit) {
+        lsu_credit_ += credit;
+
+        ILOG("perfect backend get credits from lsu: " << credit);
+
+        issue_event_.schedule(sparta::Clock::Cycle(0));
     }
 
-    void PerfectBackend::AllocateRobEntry(const InstGroup& inst_group) {
-        for (InstPtr inst_ptr: inst_group) {
-            rob_->AllocateRobEntry(inst_ptr);
-        }
-    }
-
-    void PerfectBackend::Finish(const RobIdx& rob_idx) {
-        rob_->FinishInst(rob_idx);
-    }
-
-    void PerfectBackend::SetRobIssued(const RobIdx& rob_idx) {
-        rob_->IssueInst(rob_idx);
-    }
-
-    void PerfectBackend::RobCommit() {
-        rob_->Commit(issue_num_);
-    }
-
-    void PerfectBackend::Trigger() {
+    void PerfectBackend::Issue() {
         /* for issuing */
         InstGroup lsu_tmp_instgroup;
         InstGroup alu_tmp_instgroup;
         for (InstPtr inst_ptr: rob_->GetIssuingEntry(issue_num_)) {
             if (inst_ptr->getFuType() != FuncType::STU && inst_ptr->getFuType() != FuncType::LDU) {
-                if (IsAluReady(alu_tmp_instgroup.size() + 1)) {
+                if (alu_credit_) {
                     alu_tmp_instgroup.push_back(inst_ptr);
-                    set_rob_issued.preparePayload(inst_ptr->getRobTag())->schedule(1);
+                    SetRobIssued(inst_ptr->getRobTag());
+                    --alu_credit_;
                 }
             } else {
-                if (IsLsuReady(lsu_tmp_instgroup.size() + 1)) {
+                if (lsu_credit_) {
                     lsu_tmp_instgroup.push_back(inst_ptr);
-                    set_rob_issued.preparePayload(inst_ptr->getRobTag())->schedule(1);
+                    SetRobIssued(inst_ptr->getRobTag());
+                    --lsu_credit_;
                 }
             }
         }
@@ -82,12 +95,47 @@ namespace TimingModel {
         if (alu_tmp_instgroup.size()) {
             backend_alu_inst_out.send(alu_tmp_instgroup);
         }
-
-        /* for commiting*/
-        set_rob_commmited.schedule(1);
-
-        /* self trigger */
-        self_trigger.schedule(1);
     }
 
+    void PerfectBackend::AllocateRobEntry(const InstGroup& inst_group) {
+        for (InstPtr inst_ptr: inst_group) {
+            rob_->AllocateRobEntry(inst_ptr);
+        }
+        set_rob_commmited.schedule(1);
+        issue_event_.schedule(1);
+    }
+
+    void PerfectBackend::Finish(const RobIdx& rob_idx) {
+        rob_->FinishInst(rob_idx);
+    }
+
+    void PerfectBackend::SetRobIssued(const RobIdx& rob_idx) {
+        rob_->IssueInst(rob_idx);
+    }
+
+    void PerfectBackend::RobCommit() {
+        if (rob_->IsRobEmpty()) {
+            return;
+        }
+
+        uint64_t commit_num = rob_->Commit(issue_num_);
+        if (commit_num) {
+            ILOG(commit_num << " instructions is commited");
+            fetch_backend_credit_out.send(commit_num);
+        }
+
+        num_retired_ += commit_num;
+
+        if((num_retired_ % retire_heartbeat_) == 0) {
+            std::cout << "olympia: Retired " << num_retired_.get()
+                        << " instructions in " << getClock()->currentCycle()
+                        << " overall IPC: " << ipc_.getValue()
+                        << std::endl;
+        }
+
+        if (rob_->GetIssuingEntry(issue_num_).size()) {
+            issue_event_.schedule(1);
+        }
+        set_rob_commmited.schedule(1);
+    }
 }

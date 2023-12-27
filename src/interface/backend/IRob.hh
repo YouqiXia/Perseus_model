@@ -32,6 +32,8 @@ public:
     // read operation
     virtual bool IsRobFull(IssueNum) = 0;
 
+    virtual bool IsRobEmpty() = 0;
+
     virtual InstPtr GetRobEntry(RobIdx) = 0;
 
     virtual InstGroup GetCommitingEntry(IssueNum) = 0;
@@ -49,7 +51,7 @@ public:
 
     virtual void Clear(RobIdx) = 0;
 
-    virtual void Commit(IssueNum) = 0;
+    virtual uint64_t Commit(IssueNum) = 0;
 };
 
 }

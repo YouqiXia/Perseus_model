@@ -9,6 +9,10 @@
 #include "basic/Inst.hpp"
 #include "interface/backend/IRob.hh"
 
+#include "sparta/statistics/Counter.hpp"
+#include "sparta/statistics/StatisticDef.hpp"
+#include "sparta/statistics/StatisticInstance.hpp"
+
 #include <vector>
 
 namespace TimingModel {
@@ -30,13 +34,12 @@ namespace TimingModel {
 
         ~PerfectBackend() final;
 
-        bool IsReady(IssueNum);
+        void AcceptCreditFromALU(const Credit&);
 
-        bool IsAluReady(IssueNum);
+        void AcceptCreditFromLSU(const Credit&);
 
-        bool IsLsuReady(IssueNum);
-
-        void Trigger();
+        // should be an observe pattern here
+        void Issue();
 
         /* about rob */
         void AllocateRobEntry(const InstGroup&);
@@ -46,6 +49,8 @@ namespace TimingModel {
         void SetRobIssued(const RobIdx&);
 
         void RobCommit();
+
+        void SendInitCredit();
 
     public:
     // ports
@@ -64,12 +69,19 @@ namespace TimingModel {
         sparta::DataInPort<RobIdx> lsu_backend_finish_in
             {&unit_port_set_, "lsu_backend_finish_in", sparta::SchedulingPhase::Tick, 1};
 
+        sparta::DataOutPort<Credit> fetch_backend_credit_out
+            {&unit_port_set_, "fetch_backend_credit_out"};
+
+        sparta::DataInPort<RobIdx> alu_backend_credit_in
+            {&unit_port_set_, "alu_backend_credit_in", sparta::SchedulingPhase::Tick, 0};
+
+        sparta::DataInPort<RobIdx> lsu_backend_credit_in
+            {&unit_port_set_, "lsu_backend_credit_in", sparta::SchedulingPhase::Tick, 0};
+
+    private:
     // Events
-        sparta::UniqueEvent<> self_trigger 
-            {&unit_event_set_, "backend_trigger", CREATE_SPARTA_HANDLER(PerfectBackend, Trigger)};
-        
-        sparta::PayloadEvent<RobIdx> set_rob_issued
-            {&unit_event_set_, "set_rob_issued", CREATE_SPARTA_HANDLER_WITH_DATA(PerfectBackend, SetRobIssued, RobIdx)};
+        sparta::SingleCycleUniqueEvent<> issue_event_
+            {&unit_event_set_, "issue_event", CREATE_SPARTA_HANDLER(PerfectBackend, Issue)};
 
         sparta::UniqueEvent<> set_rob_commmited
             {&unit_event_set_, "set_rob_commmited", CREATE_SPARTA_HANDLER(PerfectBackend, RobCommit)};
@@ -77,7 +89,19 @@ namespace TimingModel {
     private:
         IIntegrateRob* rob_;
 
+        uint64_t alu_credit_;
+
+        uint64_t lsu_credit_;
+
         const uint64_t issue_num_;
+
+        RobIdx rob_depth_;
+
+        sparta::Counter             num_retired_;
+        sparta::StatisticDef        stat_ipc_;
+        sparta::StatisticInstance   ipc_;
+
+        const uint64_t retire_heartbeat_ = 1000000;
 
         // optimization: store the pointer of next stage instead
         sparta::TreeNode* node_;

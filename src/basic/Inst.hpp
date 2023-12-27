@@ -87,13 +87,13 @@ namespace TimingModel
         uint64_t getProgramID() const           { return program_id_; }
 
         // Set the instruction's PC
-        void setPC(sparta::memory::addr_t inst_pc) { inst_pc_ = inst_pc; }
+        void setPC(sparta::memory::addr_t inst_pc) { inst_pc_ = inst_pc; inst_.pc = inst_pc; }
         sparta::memory::addr_t getPC() const       { return inst_pc_; }
 
         // Set the instruction's target PC (branch target or load/store target)
         void     setTargetVAddr(sparta::memory::addr_t target_vaddr) { target_vaddr_ = target_vaddr; }
         sparta::memory::addr_t getTargetVAddr() const                { return target_vaddr_; }
-        
+
         // Opcode information
         std::string getMnemonic() const { return opcode_info_->getMnemonic(); }
         std::string getDisasm()   const { return opcode_info_->dasmString(); }

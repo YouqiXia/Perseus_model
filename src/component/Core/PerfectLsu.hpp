@@ -26,23 +26,20 @@ namespace TimingModel {
 
         PerfectLsu(sparta::TreeNode* node, const PerfectLsuParameter* p);
 
-        bool IsReady(IssueNum);
-
         void WriteBack(const InstGroup&);
 
-        void Trigger() {}
-        
+        void SendInitCredit();
+
     public:
     // ports
         sparta::DataInPort<InstGroup> backend_lsu_inst_in
             {&unit_port_set_, "backend_lsu_inst_in", sparta::SchedulingPhase::Tick, 1};
 
+        sparta::DataOutPort<Credit> backend_lsu_credit_out
+            {&unit_port_set_, "backend_lsu_credit_out"};
+
         sparta::DataOutPort<RobIdx> lsu_backend_finish_out
             {&unit_port_set_, "lsu_backend_finish_out"};
-
-    // Events
-        sparta::UniqueEvent<> self_trigger 
-            {&unit_event_set_, "perfectlsu_trigger", CREATE_SPARTA_HANDLER(PerfectLsu, Trigger)};
 
     private:
         IperfectLsu* perfect_lsu;

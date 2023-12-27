@@ -24,7 +24,6 @@ namespace TimingModel {
             {}
 
             PARAMETER(uint64_t, issue_num, 2, "the issuing bandwidth in a cycle")
-            PARAMETER(uint64_t, inst_queue_depth, 128, "the rob depth")
             PARAMETER(std::string, input_file, "", "the stf entry")
         };
 
@@ -32,35 +31,27 @@ namespace TimingModel {
 
         PerfectFrontend(sparta::TreeNode* node, const PerfectFrontendParameter* p);
 
-        bool IsNextStageReady(IssueNum);
+        void AcceptCredit(const Credit&);
 
-        void Trigger();
-
-        InstGroup GetAvailInst();
-
-        void Pop();
-
-        InstPtr GetInstFromSTF();
-
-        /* for test */
-        void SetInst(InstPtr);
+        void ProduceInst();
 
     public:
     // ports
         sparta::DataOutPort<InstGroup> fetch_backend_inst_out
             {&unit_port_set_, "fetch_backend_inst_out"};
-    
-    // Events
-        sparta::UniqueEvent<> self_trigger 
-            {&unit_event_set_, "frontend_trigger", CREATE_SPARTA_HANDLER(PerfectFrontend, Trigger)};
 
-        sparta::Event<> pop_inst_queue
-            {&unit_event_set_, "pop_inst_queue", CREATE_SPARTA_HANDLER(PerfectFrontend, Pop)};
+        sparta::DataInPort<uint64_t> fetch_backend_credit_in
+            {&unit_port_set_, "fetch_backend_credit_in", sparta::SchedulingPhase::Tick, 0};
     
     private:
-        LoopQueue<InstPtr> inst_queue_;
-
+    // Events
+        sparta::SingleCycleUniqueEvent<> produce_inst_event_
+            {&unit_event_set_, "produce_inst", CREATE_SPARTA_HANDLER(PerfectFrontend, ProduceInst)};
+    
+    private:
         const uint64_t issue_num_;
+
+        Credit credit_ = 0;
 
         sparta::TreeNode* node_;
 

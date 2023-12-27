@@ -1,7 +1,9 @@
-#include "PerfectFrontend.hpp"
+#include <algorithm>
 
 #include "sparta/simulation/ResourceTreeNode.hpp"
+#include "sparta/utils/LogUtils.hpp"
 
+#include "PerfectFrontend.hpp"
 #include "PerfectBackend.hpp"
 
 namespace TimingModel {
@@ -12,62 +14,45 @@ namespace TimingModel {
         sparta::Unit(node),
         node_(node),
         issue_num_(p->issue_num),
-        inst_queue_(p->inst_queue_depth),
         mavis_facade_(getMavis(node))
     {
         inst_generator_ = InstGenerator::createGenerator(mavis_facade_, p->input_file, false);
+        fetch_backend_credit_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectFrontend, AcceptCredit, Credit));
     }
 
-    bool PerfectFrontend::IsNextStageReady(IssueNum issue_num) {
-        return node_->getRoot()->getChildAs<sparta::ResourceTreeNode>("perfect_backend")-> 
-            getResourceAs<TimingModel::PerfectBackend>()->IsReady(issue_num);
+    void PerfectFrontend::AcceptCredit(const Credit& credit) {
+        credit_ += credit;
+
+        ILOG("perfect frontend get credits from backend: " << credit);
+
+        produce_inst_event_.schedule(sparta::Clock::Cycle(0));
     }
 
-    InstGroup PerfectFrontend::GetAvailInst() {
-        InstGroup tmp_inst_group;
-        for (int i = 1; i < issue_num_ + 1; ++i) {
-            if (IsNextStageReady(i)) {
-                tmp_inst_group.emplace_back(GetInstFromSTF());
-                pop_inst_queue.schedule(1);
-            } else {
-                break;
+    void PerfectFrontend::ProduceInst() {
+        uint64_t produce_num = std::min(issue_num_, credit_);
+        InstGroup inst_group;
+        if (!produce_num) { 
+            return; 
+        }
+        while(produce_num--) {
+            if (!inst_generator_) {
+                return;
             }
-        }
-        return tmp_inst_group;
-    }
-
-    void PerfectFrontend::Trigger() {
-        InstGroup inst_group = GetAvailInst();
-        if (inst_group.size()) {
-            std::cout << "perfect frontend send " << inst_group.size() << " instructions to backend" << std::endl;
-            fetch_backend_inst_out.send(inst_group);
-        }
-
-        self_trigger.schedule(1);
-    }
-
-    void PerfectFrontend::Pop() {
-        inst_queue_.Pop();
-    }
-
-    InstPtr PerfectFrontend::GetInstFromSTF() {
-        static uint64_t cnt = 0;
-        InstPtr dinst;
-
-        if (inst_generator_) {
+            InstPtr dinst;
             dinst = inst_generator_->getNextInst(getClock());
 
-            if(nullptr != dinst) {
-                ++cnt;
-            } else {
-                std::cout << "this is the end inst: " << cnt << std::endl;
+            if(nullptr == dinst) {
+                return;
             }
+            inst_group.emplace_back(dinst);
+            --credit_;
         }
 
-        return dinst;
+        if (credit_) {
+            produce_inst_event_.schedule(1);
+        }
+        ILOG("perfect frontend send " << inst_group.size() << " instructions to backend");
+        fetch_backend_inst_out.send(inst_group);
     }
 
-    void PerfectFrontend::SetInst(InstPtr inst_ptr) {
-        inst_queue_.Push(inst_ptr);
-    }
 }

@@ -102,17 +102,22 @@ namespace TimingModel {
 
         sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_frontend.ports.fetch_backend_inst_out"), 
                      getRoot()->getChildAs<sparta::Port>("perfect_backend.ports.fetch_backend_inst_in"));
+
+        // Credits
+        sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_frontend.ports.fetch_backend_credit_in"), 
+                     getRoot()->getChildAs<sparta::Port>("perfect_backend.ports.fetch_backend_credit_out"));
+
+        sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_backend.ports.lsu_backend_credit_in"), 
+                     getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.backend_lsu_credit_out"));
+
+        sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_backend.ports.alu_backend_credit_in"), 
+                     getRoot()->getChildAs<sparta::Port>("perfect_alu.ports.backend_alu_credit_out"));
+
+        // precedes
+        
     }
 
     void Simulation::test() {
-        getRoot()->getChildAs<sparta::ResourceTreeNode>("perfect_frontend")-> 
-            getResourceAs<TimingModel::PerfectFrontend>()->Trigger();
-
-        getRoot()->getChildAs<sparta::ResourceTreeNode>("perfect_backend")-> 
-            getResourceAs<TimingModel::PerfectBackend>()->Trigger();
-
-        auto perfect_frontend_tmp = getRoot()->getChildAs<sparta::ResourceTreeNode>("perfect_frontend")-> 
-            getResourceAs<TimingModel::PerfectFrontend>();
 
         // for (int i = 0; i < 128; ++i) {
         //     InstPtr inst {new InstInfo};
@@ -127,14 +132,9 @@ namespace TimingModel {
         //     perfect_frontend_tmp->SetInst(inst);
         // }
 
-        for (int i = 0; i < max_run_time; ++i) {
-            getRoot()->getScheduler()->run(1);
-            std::cout << "tick: " << i << std::endl << std::endl;
-            if (i == 190) {
-                getScheduler()->clearEvents();
-                getScheduler()->stopRunning();
-                std::cout << "haha" << std::endl;
-            }
-        }
+        // for (int i = 0; i < max_run_time; ++i) {
+        //     getRoot()->getScheduler()->run(1);
+        //     std::cout << "tick: " << i << std::endl << std::endl;
+        // }
     }
 } // namespace Yihai

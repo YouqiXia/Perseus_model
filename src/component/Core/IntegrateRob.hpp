@@ -8,29 +8,31 @@ class IntegrateRob : public IIntegrateRob {
 public:
     IntegrateRob(uint64_t rob_depth);
 
-    virtual ~IntegrateRob();
+    ~IntegrateRob();
 
     // read operation
-    virtual bool IsRobFull(IssueNum) final;
+    bool IsRobFull(IssueNum) final;
 
-    virtual InstPtr GetRobEntry(RobIdx) final;
+    bool IsRobEmpty() final;
 
-    virtual InstGroup GetCommitingEntry(IssueNum) final;
+    InstPtr GetRobEntry(RobIdx) final;
 
-    virtual InstGroup GetIssuingEntry(IssueNum) final;
+    InstGroup GetCommitingEntry(IssueNum) final;
+
+    InstGroup GetIssuingEntry(IssueNum) final;
 
     // write operation
-    virtual void Flush() final;
+    void Flush() final;
 
-    virtual void AllocateRobEntry(InstPtr) final;
+    void AllocateRobEntry(InstPtr) final;
 
-    virtual void IssueInst(RobIdx) final;
+    void IssueInst(RobIdx) final;
 
-    virtual void FinishInst(RobIdx) final;
+    void FinishInst(RobIdx) final;
 
-    virtual void Clear(RobIdx) final;
+    void Clear(RobIdx) final;
 
-    virtual void Commit(IssueNum) final;
+    uint64_t Commit(IssueNum) final;
 
 private:
     LoopQueue<RobEntry> rob_;
