@@ -103,9 +103,21 @@ namespace TimingModel
         using OpInfoList = mavis::DecodedInstructionInfo::OpInfoList;
         const OpInfoList& getSourceOpInfoList() const { return opcode_info_->getSourceOpInfoList(); }
         const OpInfoList& getDestOpInfoList()   const { return opcode_info_->getDestOpInfoList(); }
+        bool hasImmediate() const { return opcode_info_->hasImmediate(); }
+        uint64_t getImmediate() const { return opcode_info_->getImmediate(); } //FIXME: uint64 for imm may cause bug.
+        std::bitset<64> getIntSourceRegs() const { return opcode_info_->getIntSourceRegs(); }
+        std::bitset<64> getFloatSourceRegs() const { return opcode_info_->getFloatSourceRegs(); }
+        std::bitset<64> getIntDestRegs() const { return opcode_info_->getIntDestRegs(); }
+        std::bitset<64> getFloatDestRegs() const { return opcode_info_->getFloatDestRegs(); }
+        uint32_t numIntSourceRegs() const { return opcode_info_->numIntSourceRegs(); }
+        uint32_t numFloatSourceRegs() const { return opcode_info_->numFloatSourceRegs(); }
+        uint32_t numIntDestRegs() const { return opcode_info_->numIntDestRegs(); }
+        uint32_t numFloatDestRegs() const { return opcode_info_->numFloatDestRegs(); }
 
         // old type inst
         InstInfo & getInstInfo() { return inst_; }
+
+        Addr_t getPc() const { return inst_.pc; }
 
         void setIsRvcInst(bool IsRvcInst) { inst_.IsRvcInst = IsRvcInst; }
         bool getIsRvcInst() { return inst_.IsRvcInst; }
@@ -172,6 +184,7 @@ namespace TimingModel
         uint32_t    getExecuteTime() const { return inst_arch_info_->getExecutionTime(); }
 
         uint64_t    getRAdr() const        { return target_vaddr_ | 0x8000000; } // faked
+        bool        isStoreInst() const    { return is_store_; } 
         bool        isSpeculative() const  { return is_speculative_; }
         bool        isTransfer() const     { return is_transfer_; }
 
@@ -185,6 +198,7 @@ namespace TimingModel
         uint64_t               unique_id_     = 0; // Supplied by Fetch
         uint64_t               program_id_    = 0; // Supplied by a trace Reader or execution backend
         bool                   is_speculative_ = false; // Is this instruction soon to be flushed?
+        bool                   is_store_  = false;
         const bool             is_transfer_;  // Is this a transfer instruction (F2I/I2F)
         sparta::Scheduleable * ev_retire_    = nullptr;
         InstInfo               inst_;

@@ -27,6 +27,129 @@ namespace TimingModel
         return nullptr;
     }
 
+    void InstGenerator::InsnComplete(InstPtr& inst) const {
+        switch(inst->getUnit()){
+            case InstArchInfo::TargetUnit::LSU:
+                if(inst->isStoreInst()){
+                    inst->setFuType(FuncType::STU);
+                }else{
+                    inst->setFuType(FuncType::LDU);
+                }
+                break;
+            case InstArchInfo::TargetUnit::BR:
+                inst->setFuType(FuncType::BRU);
+                break;
+            case InstArchInfo::TargetUnit::ALU:
+                inst->setFuType(FuncType::ALU);
+                break;
+            case InstArchInfo::TargetUnit::FPU:
+                inst->setFuType(FuncType::FPU);
+                break;
+            default:
+                inst->setFuType(FuncType::ALU);
+        }
+        uint32_t intSourceNum = inst->numIntSourceRegs();
+        uint32_t fpSourceNum  = inst->numFloatSourceRegs();
+        uint32_t intDestNum   = inst->numIntDestRegs();
+        uint32_t fpDestNum    = inst->numFloatDestRegs();
+        std::bitset<64> int_source_stream   = inst->getIntSourceRegs();
+        std::bitset<64> float_source_stream = inst->getFloatSourceRegs();
+        std::bitset<64> int_dst_stream      = inst->getIntDestRegs();
+        std::bitset<64> float_dst_stream    = inst->getFloatDestRegs();
+        uint8_t cnt = 1;
+        if(intSourceNum > 0) {
+            switch (intSourceNum) {
+                case 1:
+                    for(int i = 0; i<64; i++){
+                        if(int_source_stream[i]){
+                            inst->setIsaRs1(i);
+                            inst->setRs1Type(RegType_t::INT);
+                            break;
+                        }
+                    }
+                    break;
+                case 2:
+                    for(int i = 0; i<64; i++){
+                        if(int_source_stream[i] && (cnt == 1)){
+                            inst->setIsaRs1(i);
+                            inst->setRs1Type(RegType_t::INT);
+                            ++cnt;
+                        }else if(int_source_stream[i] && (cnt == 2)){
+                            inst->setIsaRs2(i);
+                            inst->setRs2Type(RegType_t::INT);
+                            ++cnt;
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        cnt = 1;
+        if(fpSourceNum > 0) {
+            switch (fpSourceNum) {
+                case 1:
+                    for(int i = 0; i<64; i++){
+                        if(float_source_stream[i]){
+                            inst->setIsaRs2(i);
+                            inst->setRs2Type(RegType_t::FLOAT);
+                            break;
+                        }
+                    }
+                    break;
+                case 2:
+                    for(int i = 0; i<64; i++){
+                        if(float_source_stream[i] && (cnt == 1)){
+                            inst->setIsaRs1(i);
+                            inst->setRs1Type(RegType_t::FLOAT);
+                            ++cnt;
+                        }else if(float_source_stream[i] && (cnt == 2)){
+                            inst->setIsaRs2(i);
+                            inst->setRs2Type(RegType_t::FLOAT);
+                            ++cnt;
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        if(intDestNum > 0) {
+            switch (intDestNum) {
+                case 1:
+                    for(int i = 0; i<64; i++){
+                        if(int_dst_stream[i]){
+                            inst->setIsaRd(i);
+                            inst->setRdType(RegType_t::INT);
+                            break;
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        if(fpDestNum > 0) {
+            switch (fpDestNum) {
+                case 1:
+                    for(int i = 0; i<64; i++){
+                        if(float_dst_stream[i]){
+                            inst->setIsaRd(i);
+                            inst->setRdType(RegType_t::FLOAT);
+                            break;
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     // JSON Inst Generator
     JSONInstGenerator::JSONInstGenerator(MavisType * mavis_facade,
@@ -162,6 +285,11 @@ namespace TimingModel
             inst->setPC(next_it_->pc());
             inst->setUniqueID(++unique_id_);
             inst->setProgramID(unique_id_);
+            inst->setIsRvcInst(next_it_->isOpcode16());
+            inst->setCompressedInst(inst->getOpCode());
+            inst->setUncompressedInst(inst->getOpCode());
+            inst->setImm(inst->getImmediate());
+            InsnComplete(inst);
             if (const auto& mem_accesses = next_it_->getMemoryAccesses(); !mem_accesses.empty())
             {
                 using VectorAddrType = std::vector<sparta::memory::addr_t>;
@@ -175,6 +303,13 @@ namespace TimingModel
                 //For misaligns, more than 1 address is provided
                 //inst->setVAddrVector(std::move(addrs));
             }
+            // std::cout << "GenInsn: uid[" << inst->getUniqueID() << "], Pc[0x" << std::hex << inst->getPc() 
+            //           << "], IsRvcInsn: " << std::dec << inst->getIsRvcInst() << ", UnCompressedInst[0x"
+            //           << std::hex << inst->getUncompressedInst() << std::dec << "], Fu: " << inst->getFuType() 
+            //           << ", IsaRs1[" << unsigned(inst->getIsaRs1()) << "]-Type[" << inst->getRs1Type() 
+            //           << "], IsaRs2[" << unsigned(inst->getIsaRs2()) << "]-Type[" << inst->getRs2Type() 
+            //           << "], IsaRd[" << unsigned(inst->getIsaRd()) << "]-Type[" << inst->getRdType() 
+            //           << "], Imm[0x" << std::hex << inst->getImm() << std::dec << "], insn: '" << inst->getDisasm() << "'" << std::endl;
             ++next_it_;
             return inst;
         }

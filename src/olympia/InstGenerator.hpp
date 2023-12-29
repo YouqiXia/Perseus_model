@@ -40,6 +40,7 @@ namespace TimingModel
                                                               const std::string & filename,
                                                               const bool skip_nonuser_mode);
         virtual bool isDone() const = 0;
+        void InsnComplete(InstPtr& inst) const ;
 
     protected:
         MavisType * mavis_facade_ = nullptr;
