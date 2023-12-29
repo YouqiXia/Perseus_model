@@ -40,7 +40,7 @@ namespace TimingModel {
     }
 
     PerfectBackend::~PerfectBackend() {
-        std::cout << "olympia: Retired " << num_retired_.get()
+        std::cout << "model: Retired " << num_retired_.get()
                         << " instructions in " << getClock()->currentCycle()
                         << " overall IPC: " << ipc_.getValue()
                         << std::endl << std::endl << std::endl;
@@ -127,7 +127,7 @@ namespace TimingModel {
         num_retired_ += commit_num;
 
         if((num_retired_ % retire_heartbeat_) == 0) {
-            std::cout << "olympia: Retired " << num_retired_.get()
+            std::cout << "model: Retired " << num_retired_.get()
                         << " instructions in " << getClock()->currentCycle()
                         << " overall IPC: " << ipc_.getValue()
                         << std::endl;

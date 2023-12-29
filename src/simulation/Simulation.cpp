@@ -1,10 +1,10 @@
 #include "Simulation.hpp"
 #include "sparta/ports/Port.hpp"
 
-#include "component/Core/PerfectAlu.hpp"
-#include "component/Core/PerfectLsu.hpp"
-#include "component/Core/PerfectFrontend.hpp"
-#include "component/Core/PerfectBackend.hpp"
+#include "Core/Backend/PerfectAlu.hpp"
+#include "Core/Backend/PerfectLsu.hpp"
+#include "Core/Frontend/PerfectFrontend.hpp"
+#include "Core/Backend/PerfectBackend.hpp"
 
 #include <memory>
 

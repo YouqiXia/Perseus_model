@@ -4,7 +4,6 @@
 #include "sparta/utils/LogUtils.hpp"
 
 #include "PerfectFrontend.hpp"
-#include "PerfectBackend.hpp"
 
 namespace TimingModel {
 

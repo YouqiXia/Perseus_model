@@ -1,0 +1,31 @@
+Name:     
+Cmdline:  
+Exe:      
+SimulatorVersion:
+Repro:    
+Start:    Friday Fri Dec 29 16:37:48 2023
+Elapsed:  0.011045s
+
+
+Error:
+================================================================================
+Cannot open JSON ISA file 'mavis_isa_files/isa_rv64g.json'
+
+
+Backtrace:
+================================================================================
+<No backtrace available. Exception may not have been a SpartaException>
+
+
+Scheduler:  
+================================================================================
+Current Tick:  0
+Num Fired:     0
+Current Phase: Trigger
+Current Event: <null>
+
+sparta::Scheduler is empty
+
+
+================================================================================
+error-dump.dbg EOF

@@ -10,7 +10,6 @@
 #include "basic/Inst.hpp"
 #include "olympia/InstGenerator.hpp"
 
-#include "LoopQueue.hh"
 #include <string>
 
 namespace TimingModel {
