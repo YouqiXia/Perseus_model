@@ -7,7 +7,6 @@
 #include "sparta/ports/SignalPort.hpp"
 
 #include "basic/Inst.hpp"
-#include "interface/functionunit/IperfectLsu.hh"
 
 
 namespace TimingModel {
@@ -42,8 +41,6 @@ namespace TimingModel {
             {&unit_port_set_, "lsu_backend_finish_out"};
 
     private:
-        IperfectLsu* perfect_lsu;
-
         const uint64_t load_to_use_latency_;
     };
 

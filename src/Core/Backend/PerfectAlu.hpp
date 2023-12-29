@@ -7,7 +7,6 @@
 #include "sparta/ports/SignalPort.hpp"
 
 #include "basic/Inst.hpp"
-#include "interface/functionunit/IperfectAlu.hh"
 
 
 namespace TimingModel {

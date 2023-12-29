@@ -5,12 +5,6 @@
 #include "sparta/app/CommandLineSimulator.hpp"
 
 #include "basic/Inst.hpp"
-#include "interface/backend/IRob.hh"
-
-#include "interface/frontend/IInstQueue.hh"
-
-#include "interface/functionunit/IperfectAlu.hh"
-#include "interface/functionunit/IperfectLsu.hh"
 
 // User-friendly usage that correspond with sparta::app::CommandLineSimulator
 // options
