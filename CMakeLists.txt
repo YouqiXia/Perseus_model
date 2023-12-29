@@ -6,8 +6,8 @@ set (CMAKE_CXX_STANDARD_REQUIRED ON)
 project(model)
 
 # set sparta directory
-set(SPARTA_SEARCH_DIR /home/yzhang/.local/)
-set(SPARTA_INCLUDE_DIRS /home/yzhang/.local/include/sparta)
+set(SPARTA_SEARCH_DIR /usr/local)
+set(SPARTA_INCLUDE_DIRS ${SPARTA_SEARCH_DIR}/include/sparta)
 set(CMAKE_MODULE_PATH "${SPARTA_SEARCH_DIR}/lib/cmake/sparta" ${CMAKE_MODULE_PATH})
 find_package(Sparta REQUIRED)
 
