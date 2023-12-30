@@ -1,6 +1,5 @@
 #include <algorithm>
 
-#include "sparta/simulation/ResourceTreeNode.hpp"
 #include "sparta/utils/LogUtils.hpp"
 
 #include "PerfectFrontend.hpp"
@@ -16,7 +15,7 @@ namespace TimingModel {
         mavis_facade_(getMavis(node))
     {
         inst_generator_ = InstGenerator::createGenerator(mavis_facade_, p->input_file, false);
-        fetch_backend_credit_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectFrontend, AcceptCredit, Credit));
+        backend_fetch_credit_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectFrontend, AcceptCredit, Credit));
     }
 
     void PerfectFrontend::AcceptCredit(const Credit& credit) {
@@ -29,7 +28,7 @@ namespace TimingModel {
 
     void PerfectFrontend::ProduceInst() {
         uint64_t produce_num = std::min(issue_num_, credit_);
-        InstGroup inst_group;
+        InstGroupPtr inst_group_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
         if (!produce_num) { 
             return; 
         }
@@ -43,15 +42,15 @@ namespace TimingModel {
             if(nullptr == dinst) {
                 return;
             }
-            inst_group.emplace_back(dinst);
+            inst_group_ptr->emplace_back(dinst);
             --credit_;
         }
 
         if (credit_) {
             produce_inst_event_.schedule(1);
         }
-        ILOG("perfect frontend send " << inst_group.size() << " instructions to backend");
-        fetch_backend_inst_out.send(inst_group);
+        ILOG("perfect frontend send " << inst_group_ptr.size() << " instructions to backend");
+        fetch_backend_inst_out.send(inst_group_ptr);
     }
 
 }

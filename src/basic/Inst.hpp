@@ -24,18 +24,7 @@
 
 namespace TimingModel
 {
-    /* for schduler */
-    typedef uint8_t  IssueNum;
-
-    typedef uint64_t RobIdx;
-
-    typedef uint64_t RSIdx;
-
-    typedef uint64_t FreeListIdx;
-
-    typedef uint64_t BusyTableIdx;
-
-    typedef uint64_t DispatchQueueIdx;
+    typedef uint64_t FlushingCriteria;
 
     /*!
      * \class Inst
@@ -206,7 +195,6 @@ namespace TimingModel
 
     using InstPtr = Inst::PtrType;
     using InstQueue = sparta::Queue<InstPtr>;
-    using InstGroup = std::vector<InstPtr>;
 
     inline std::ostream & operator<<(std::ostream & os, const Inst & inst) {
         os << "uid: " << inst.getUniqueID()

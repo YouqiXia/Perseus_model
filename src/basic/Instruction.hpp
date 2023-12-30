@@ -121,10 +121,10 @@ struct InstInfo {
     Inst_t       UncompressedInst;
 
     /* decode info */
-    IsaRegId_t   IsaRs1=0;
-    IsaRegId_t   IsaRs2=0;
-    IsaRegId_t   IsaRd=0;
-    Imm_t        imm=0;
+    IsaRegId_t   IsaRs1 = 0;
+    IsaRegId_t   IsaRs2 = 0;
+    IsaRegId_t   IsaRd  = 0;
+    Imm_t        imm    = 0;
 
     RegType_t    Rs1Type;
     RegType_t    Rs2Type;

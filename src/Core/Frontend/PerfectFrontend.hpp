@@ -8,6 +8,7 @@
 
 // #include "basic/Instruction.hh"
 #include "basic/Inst.hpp"
+#include "basic/InstGroup.hpp"
 #include "olympia/InstGenerator.hpp"
 
 #include <string>
@@ -36,11 +37,11 @@ namespace TimingModel {
 
     public:
     // ports
-        sparta::DataOutPort<InstGroup> fetch_backend_inst_out
+        sparta::DataOutPort<InstGroupPtr> fetch_backend_inst_out
             {&unit_port_set_, "fetch_backend_inst_out"};
 
-        sparta::DataInPort<uint64_t> fetch_backend_credit_in
-            {&unit_port_set_, "fetch_backend_credit_in", sparta::SchedulingPhase::Tick, 0};
+        sparta::DataInPort<Credit> backend_fetch_credit_in
+            {&unit_port_set_, "backend_fetch_credit_in", sparta::SchedulingPhase::Tick, 0};
     
     private:
     // Events
