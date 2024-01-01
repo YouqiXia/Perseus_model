@@ -27,6 +27,8 @@ typedef uint64_t xlen_t;
 
 typedef uint64_t xReg_t;
 
+typedef std::vector<xReg_t> PhysicalReg;
+
 enum FuncType {
     ALU, MUL, DIV, BRU, CSR, LDU, STU, FPU
 };

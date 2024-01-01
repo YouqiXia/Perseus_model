@@ -1,3 +1,5 @@
+#pragma once
+
 #include "sparta/simulation/Unit.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
 
