@@ -5,7 +5,7 @@
 
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/ports/SignalPort.hpp"
-
+#include "olympia/OlympiaAllocators.hpp"
 #include "basic/Inst.hpp"
 
 
@@ -19,6 +19,7 @@ namespace TimingModel {
             {}
 
             PARAMETER(uint64_t, load_to_use_latency, 4, "load to use latency")
+            PARAMETER(bool, is_perfect_lsu, true, "load to use latency")
         };
 
         static const char* name;
@@ -39,6 +40,24 @@ namespace TimingModel {
 
         sparta::DataOutPort<RobIdx> lsu_backend_finish_out
             {&unit_port_set_, "lsu_backend_finish_out"};
+
+
+        sparta::DataInPort<Credit> in_lowlevel_credit
+            {&unit_port_set_, "in_lowlevel_credit", 1};
+        sparta::DataInPort<MemAccInfoPtr> in_access_resp
+            {&unit_port_set_, "in_access_resp", 1};
+        sparta::DataOutPort<MemAccInfoPtr> out_access_req
+            {&unit_port_set_, "out_access_req", 1}; 
+
+        MemAccInfoAllocator& mem_acc_info_allocator_;
+        Credit next_level_credit;
+        bool is_perfect_lsu_;
+
+        void recvReq(const InstGroup&);
+        void recvCredit(const Credit& credit){ next_level_credit += credit; }
+        void recvResp(const MemAccInfoPtr& resp);
+        void sendReq(const MemAccInfoPtr& req){ if(next_level_credit>0) out_access_req.send(req);}
+
 
     private:
         const uint64_t load_to_use_latency_;

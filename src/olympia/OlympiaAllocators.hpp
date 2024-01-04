@@ -9,7 +9,7 @@
  */
 
 #include "sparta/simulation/TreeNode.hpp"
-
+#include "MemAccessInfo.hpp"
 #include "Inst.hpp"
 
 namespace TimingModel
@@ -50,6 +50,6 @@ namespace TimingModel
         // full-blown sparta::Resource and adding a sparta::ParameterSet
         InstAllocator         inst_allocator          {3000, 2500};
         InstArchInfoAllocator inst_arch_info_allocator{3000, 2500};
-
+        MemAccInfoAllocator   mem_acc_info_allocator  {3000, 2500};
     };
 }

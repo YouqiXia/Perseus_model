@@ -27,9 +27,15 @@ file(GLOB_RECURSE DIR_SRCS "src/*.cc" "src/*.cpp" "src/*.c")
 # head file
 include_directories(./src)
 include_directories(./src/basic)
+include_directories(./src/uncore)
 include_directories(mavis)
 include_directories(stf_lib)
 include_directories(${SPARTA_INCLUDE_DIRS})
+
+# Profile build flags
+set(CMAKE_CXX_FLAGS_PROFILE   "-O3 -pg -g -ftime-trace")
+set(CMAKE_CXX_FLAGS_FASTDEBUG "-O3 -g")
+set(CMAKE_CXX_FLAGS_DEBUG     "-O0 -g")
 
 # Create a few links like reports and arch directories
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/reports    ${CMAKE_CURRENT_BINARY_DIR}/reports         SYMBOLIC)
