@@ -124,13 +124,15 @@ namespace TimingModel {
             fetch_backend_credit_out.send(commit_num);
         }
 
-        num_retired_ += commit_num;
+        while (commit_num--) {
+            num_retired_ += 1;
 
-        if((num_retired_ % retire_heartbeat_) == 0) {
-            std::cout << "model: Retired " << num_retired_.get()
-                        << " instructions in " << getClock()->currentCycle()
-                        << " overall IPC: " << ipc_.getValue()
-                        << std::endl;
+            if((num_retired_ % retire_heartbeat_) == 0) {
+                std::cout << "model: Retired " << num_retired_.get()
+                            << " instructions in " << getClock()->currentCycle()
+                            << " overall IPC: " << ipc_.getValue()
+                            << std::endl;
+            }
         }
 
         if (rob_->GetIssuingEntry(issue_num_).size()) {

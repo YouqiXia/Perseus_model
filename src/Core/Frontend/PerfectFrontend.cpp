@@ -41,6 +41,10 @@ namespace TimingModel {
             dinst = inst_generator_->getNextInst(getClock());
 
             if(nullptr == dinst) {
+                if (inst_group.size()) {
+                    break;
+                }
+
                 return;
             }
             inst_group.emplace_back(dinst);
