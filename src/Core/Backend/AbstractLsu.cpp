@@ -30,7 +30,7 @@ namespace TimingModel {
            issue_queue_.push_back(inst_ptr);
         }
 
-        uev_issue_inst_.schedule(sparta::Clock::Cycle(0)); 
+        uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
     }
 
     void AbstractLsu::handleAgu() {
@@ -41,7 +41,7 @@ namespace TimingModel {
     void AbstractLsu::issueInst()
     {
         // Instruction issue arbitration
-        // For now, we just pop every inst for queue to ldq & stq 
+        // For now, we just pop every inst for queue to ldq & stq
         for (auto const &inst_ptr : issue_queue_) {
             if (!inst_ptr->getLsuIssued()) {
                 if (inst_ptr->getFuType() == FuncType::LDU) {
@@ -73,7 +73,7 @@ namespace TimingModel {
                 if ((*inst_ptr) == ld_queue_[ld_queue_.getHeader()]) {
                     ld_queue_.Pop();
                     sendInsts((*inst_ptr));
-                } else if ((*inst_ptr) == st_queue_[st_queue_.getHeader()]) { 
+                } else if ((*inst_ptr) == st_queue_[st_queue_.getHeader()]) {
                     st_queue_.Pop();
                     sendInsts((*inst_ptr));
                 } 
