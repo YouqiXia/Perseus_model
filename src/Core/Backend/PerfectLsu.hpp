@@ -47,14 +47,14 @@ namespace TimingModel {
         sparta::DataInPort<MemAccInfoPtr> in_access_resp
             {&unit_port_set_, "in_access_resp", 1};
         sparta::DataOutPort<MemAccInfoPtr> out_access_req
-            {&unit_port_set_, "out_access_req", 1}; 
+            {&unit_port_set_, "out_access_req"}; 
 
         MemAccInfoAllocator& mem_acc_info_allocator_;
         Credit next_level_credit;
         bool is_perfect_lsu_;
 
         void recvReq(const InstGroup&);
-        void recvCredit(const Credit& credit){ next_level_credit += credit; }
+        void recvCredit(const Credit& credit);
         void recvResp(const MemAccInfoPtr& resp);
         void sendReq(const MemAccInfoPtr& req){ if(next_level_credit>0) out_access_req.send(req);}
 

@@ -15,7 +15,7 @@ namespace TimingModel {
 
     void PerfectAlu::WriteBack(const InstGroup& inst_group) {
         for (InstPtr inst_ptr: inst_group) {
-            ILOG("alu get inst: " << inst_ptr->getPC());
+            ILOG("alu get inst: " << HEX16(inst_ptr->getPC()));
             alu_backend_finish_out.send(inst_ptr->getRobTag());
         }
 
