@@ -135,6 +135,7 @@ struct InstInfo {
 
     /* Scheduler info */
     uint64_t     RobTag;
+    bool         LsuIssued  = false;
 
     PhyRegId_t   PhyRs1;
     PhyRegId_t   PhyRs2;
