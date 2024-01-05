@@ -3,6 +3,7 @@
 
 #include "Core/Backend/PerfectAlu.hpp"
 #include "Core/Backend/PerfectLsu.hpp"
+#include "Core/Backend/AbstractLsu.hpp"
 #include "Core/Frontend/PerfectFrontend.hpp"
 #include "Core/Backend/PerfectBackend.hpp"
 #include "uncore/cache/BaseCache.hpp"
@@ -16,8 +17,10 @@ namespace TimingModel {
     // Resource Factory
     sparta::ResourceFactory<TimingModel::PerfectAlu,
                             TimingModel::PerfectAlu::PerfectAluParameter> perfect_alu_factory;
-    sparta::ResourceFactory<TimingModel::PerfectLsu,
-                            TimingModel::PerfectLsu::PerfectLsuParameter> perfect_lsu_factory;
+    // sparta::ResourceFactory<TimingModel::PerfectLsu,
+    //                         TimingModel::PerfectLsu::PerfectLsuParameter> perfect_lsu_factory;
+    sparta::ResourceFactory<TimingModel::AbstractLsu,
+                            TimingModel::AbstractLsu::AbstractLsuParameter> abstract_lsu_factory;
     sparta::ResourceFactory<TimingModel::PerfectFrontend,
                             TimingModel::PerfectFrontend::PerfectFrontendParameter> perfect_frontend_factory;
     sparta::ResourceFactory<TimingModel::PerfectBackend,
@@ -74,12 +77,18 @@ namespace TimingModel {
                                     sparta::TreeNode::GROUP_IDX_NONE, 
                                     "perfect alu", 
                                     &perfect_alu_factory);
-        sparta::ResourceTreeNode* perfect_lsu_node = new sparta::ResourceTreeNode(getRoot(), 
-                                    "perfect_lsu", 
+        // sparta::ResourceTreeNode* perfect_lsu_node = new sparta::ResourceTreeNode(getRoot(), 
+        //                             "perfect_lsu", 
+        //                             sparta::TreeNode::GROUP_NAME_NONE, 
+        //                             sparta::TreeNode::GROUP_IDX_NONE, 
+        //                             "perfect lsu", 
+        //                             &perfect_lsu_factory);
+        sparta::ResourceTreeNode* abstract_lsu_node = new sparta::ResourceTreeNode(getRoot(), 
+                                    "abstract_lsu", 
                                     sparta::TreeNode::GROUP_NAME_NONE, 
                                     sparta::TreeNode::GROUP_IDX_NONE, 
-                                    "perfect lsu", 
-                                    &perfect_lsu_factory);
+                                    "abstract_lsu", 
+                                    &abstract_lsu_factory);
         sparta::ResourceTreeNode* l1dcache_node = new sparta::ResourceTreeNode(getRoot(), 
                                     "l1d_cache", 
                                     sparta::TreeNode::GROUP_NAME_NONE, 
@@ -106,7 +115,8 @@ namespace TimingModel {
         to_delete_.emplace_back(perfect_frontend_node);
         to_delete_.emplace_back(perfect_backend_node);
         to_delete_.emplace_back(perfect_alu_node);
-        to_delete_.emplace_back(perfect_lsu_node);
+        // to_delete_.emplace_back(perfect_lsu_node);
+        to_delete_.emplace_back(abstract_lsu_node);
     }
 
     void Simulation::configureTree_() {
@@ -120,10 +130,10 @@ namespace TimingModel {
         sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_alu.ports.backend_alu_inst_in"), 
                      getRoot()->getChildAs<sparta::Port>("perfect_backend.ports.backend_alu_inst_out"));
 
-        sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.lsu_backend_finish_out"), 
+        sparta::bind(getRoot()->getChildAs<sparta::Port>("abstract_lsu.ports.lsu_backend_finish_out"), 
                      getRoot()->getChildAs<sparta::Port>("perfect_backend.ports.lsu_backend_finish_in"));
 
-        sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.backend_lsu_inst_in"), 
+        sparta::bind(getRoot()->getChildAs<sparta::Port>("abstract_lsu.ports.backend_lsu_inst_in"), 
                      getRoot()->getChildAs<sparta::Port>("perfect_backend.ports.backend_lsu_inst_out"));
 
         sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_frontend.ports.fetch_backend_inst_out"), 
@@ -134,7 +144,7 @@ namespace TimingModel {
                      getRoot()->getChildAs<sparta::Port>("perfect_backend.ports.fetch_backend_credit_out"));
 
         sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_backend.ports.lsu_backend_credit_in"), 
-                     getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.backend_lsu_credit_out"));
+                     getRoot()->getChildAs<sparta::Port>("abstract_lsu.ports.backend_lsu_credit_out"));
 
         sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_backend.ports.alu_backend_credit_in"), 
                      getRoot()->getChildAs<sparta::Port>("perfect_alu.ports.backend_alu_credit_out"));
@@ -154,12 +164,23 @@ namespace TimingModel {
         // sparta::bind(getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_access_req"), 
         //              getRoot()->getChildAs<sparta::Port>("abstract_mem.ports.mem_req_in"));
 
-        sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.in_lowlevel_credit"), 
+        // perfect lsu to l1d cache //
+        // sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.in_lowlevel_credit"), 
+        //              getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_uplevel_credit"));
+        // sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.in_access_resp"), 
+        //              getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_access_resp"));
+        // sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.out_access_req"), 
+        //              getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.in_access_req"));
+        // perfect lsu to l1d cache //
+
+        // abstract lsu to l1d cache //
+        sparta::bind(getRoot()->getChildAs<sparta::Port>("abstract_lsu.ports.l1d_cache_lsu_credit_in"), 
                      getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_uplevel_credit"));
-        sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.in_access_resp"), 
+        sparta::bind(getRoot()->getChildAs<sparta::Port>("abstract_lsu.ports.l1d_cache_lsu_in"), 
                      getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_access_resp"));
-        sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.out_access_req"), 
+        sparta::bind(getRoot()->getChildAs<sparta::Port>("abstract_lsu.ports.lsu_l1d_cache_out"), 
                      getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.in_access_req"));
+        // abstract lsu to l1d cache //
 
         sparta::bind(getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.in_lowlevel_credit"), 
                      getRoot()->getChildAs<sparta::Port>("l2_cache.ports.out_uplevel_credit"));
