@@ -8,108 +8,13 @@
 #include "MemAccessInfo.hpp"
 #include "basic/Inst.hpp"
 #include "olympia/OlympiaAllocators.hpp"
+#include "Mshr.hpp"
+#include "TagEntry.hpp"
 #include <stdlib.h>
 
 
 namespace TimingModel {
-    class TagEntry;
-    class BaseCache;
-
-    using setTags = std::vector<TagEntry>;
-    using wayData = std::vector<uint8_t>;
     using setData = std::vector<wayData>;
-
-    class TagEntry{
-    friend class BaseCache;
-    protected:
-        uint64_t tag;
-        uint64_t access_time;
-        bool valid;
-
-    public:
-        TagEntry(){
-            tag = 0;
-            access_time = 0;
-            valid = 0;
-        }
-        uint64_t getTag(){
-            return tag;
-        }
-        bool isValid(){
-            return valid;
-        }
-    };
-
-    enum class MshrStatus: std::uint8_t {
-        NO_TYPE = 0,
-        __FIRST = NO_TYPE,
-        ALLOCATE,
-        SEND_REQ,
-        RECV_RESP,
-        REFILL,
-        SEND_RESP,
-        NUM_TYPES,
-        __LAST = NUM_TYPES
-    };
-    class MSHREntry{
-    public:
-        uint64_t addr;
-        MemAccInfoPtr req;
-        MshrStatus status;
-        bool valid;
-        MSHREntry(){
-            addr = 0;
-            status = MshrStatus::NO_TYPE;
-            valid = false;
-        }
-    };
-
-    class MSHR{
-    public:
-        std::vector<MSHREntry> queue;
-        uint32_t qsize;
-        uint32_t used;
-        uint32_t header;
-        uint32_t tail;
-    public:
-        void resize(uint32_t size){
-            qsize = size;
-            queue.resize(qsize);
-            used = 0;
-            header = 0;
-            tail = 0;
-        }
-        bool isAvail(){
-            return (used != qsize);
-        }
-
-        uint32_t allocate(){
-            sparta_assert((qsize != used));
-            uint32_t allocated = tail;
-            used++;
-            tail += 1;
-            if(tail == qsize)
-                tail = 0;
-            return allocated;
-        }
-        void deallocate(uint32_t id){
-            sparta_assert((id < qsize));
-            used--;
-            header += 1;
-            if(header == qsize)
-                header = 0;
-            return;
-        }
-        MSHREntry& getHeader(){
-            return queue[header];
-        }
-
-        void recvResp(uint32_t id){
-            queue[id].status = MshrStatus::RECV_RESP; 
-        }
-        bool isEmpty(){ return (used == 0); }
-
-    };
 
     class BaseCache: public sparta::Unit{
         public:
@@ -125,6 +30,8 @@ namespace TimingModel {
                 PARAMETER(uint32_t, mshr_size, 1, "MSHR size")
                 PARAMETER(bool, is_perfect_cache, false, "perfect cache that always hit")
                 PARAMETER(uint32_t, perfect_cache_latency, 3, "perfect cache that always hit")
+                PARAMETER(uint32_t, upstream_access_ports_num, 1, "upstream access ports number")
+                PARAMETER(uint32_t, downstream_access_ports_num, 1, "downstream access ports number")
             };
             static const char name[];
 
@@ -133,17 +40,19 @@ namespace TimingModel {
         
         private:
             //Functional interface
-            virtual void access(const MemAccInfoPtr& req){};
+            virtual void access(const MemAccInfoGroup& req){};
 
-            virtual void funcaccess(const MemAccInfoPtr& req);
+            virtual void funcaccess(const MemAccInfoGroup& req);
 
             virtual void sendCredit();
 
-            virtual void sendResp(const MemAccInfoPtr& resp){out_access_resp.send(resp);};
+            virtual void sendResp(const MemAccInfoGroup& resp);
 
-            virtual void sendRequest(const MemAccInfoPtr& req);
+            void sendResp(const MemAccInfoGroup& resps, uint32_t latency);
 
-            virtual void recvResp(const MemAccInfoPtr& resp);
+            virtual void sendRequest(const MemAccInfoGroup& req);
+
+            virtual void recvResp(const MemAccInfoGroup& resp);
 
             virtual void recvCredit(const Credit& in);
 
@@ -151,8 +60,7 @@ namespace TimingModel {
 
             virtual setData& accessDataRam(const MemAccInfoPtr& req);
 
-            // virtual bool isHit(){return true;};
-            // virtual MemAccInfoPtr& makeResp(const MemAccInfoPtr& req);
+            void makeResp(const MemAccInfoPtr& req, MemAccInfoPtr& resp);
 
             virtual uint32_t allocMshr(const MemAccInfoPtr& req);
 
@@ -177,35 +85,38 @@ namespace TimingModel {
             virtual uint32_t replacementCal(){ return random() % way_num_;};
 
             virtual inline uint32_t getIndex(uint64_t addr){ return (addr&index_mask) >> cacheline_size_bits;}
-            virtual inline uint64_t getTag(uint64_t addr){ return addr&tag_mask;};
-            bool tagCompare(std::vector<TagEntry>& settag, uint64_t access_addr, uint32_t& index);
-            wayData& DataMux(setData& setdata, uint32_t way);
 
+            virtual inline uint64_t getTag(uint64_t addr){ return addr&tag_mask;};
+
+            bool tagCompare(std::vector<TagEntry>& settag, uint64_t access_addr, uint32_t& index);
+
+            wayData& DataMux(setData& setdata, uint32_t way);
 
             void SendInitCredit();
 
         private:
             //Timing
             //ports
-            sparta::DataInPort<MemAccInfoPtr> in_access_req
+            sparta::DataInPort<MemAccInfoGroup> in_access_req
                 {&unit_port_set_, "in_access_req", 1};
-            sparta::DataOutPort<MemAccInfoPtr> out_access_resp
+            sparta::DataOutPort<MemAccInfoGroup> out_access_resp
                 {&unit_port_set_, "out_access_resp", 1};
-            sparta::DataOutPort<Credit> out_uplevel_credit
-                {&unit_port_set_, "out_uplevel_credit", 1};
+            sparta::DataOutPort<Credit> out_upstream_credit
+                {&unit_port_set_, "out_upstream_credit", 1};
 
-            sparta::DataInPort<Credit> in_lowlevel_credit
-                {&unit_port_set_, "in_lowlevel_credit", 1};
-            sparta::DataInPort<MemAccInfoPtr> in_access_resp
+            sparta::DataInPort<Credit> in_downstream_credit
+                {&unit_port_set_, "in_downstream_credit", 1};
+            sparta::DataInPort<MemAccInfoGroup> in_access_resp
                 {&unit_port_set_, "in_access_resp", 1};
-            sparta::DataOutPort<MemAccInfoPtr> out_access_req
+            sparta::DataOutPort<MemAccInfoGroup> out_access_req
                 {&unit_port_set_, "out_access_req", 1}; 
             
 
             //events.
-            sparta::UniqueEvent<> ev_handle_mshr{&unit_event_set_, "ev_handle_mshr", CREATE_SPARTA_HANDLER(BaseCache, handle_mshr)};
-            //sparta::UniqueEvent<> ev_handle_mshr{&unit_event_set_, "ev_handle_mshr", CREATE_SPARTA_HANDLER(BaseCache, handle_mshr)};
+            sparta::UniqueEvent<> ev_handle_mshr{&unit_event_set_, "ev_handle_mshr", 
+                    CREATE_SPARTA_HANDLER(BaseCache, handle_mshr)};
 
+            
             uint32_t cacheline_size_;
             uint32_t way_num_;
             uint32_t set_num_;
@@ -219,6 +130,8 @@ namespace TimingModel {
             uint32_t perfect_cache_latency_;
 
             Credit next_level_credit;
+            uint32_t upstream_access_ports_num_;
+            uint32_t downstream_access_ports_num_;
 
             std::vector<setTags> tagram;
             std::vector<setData> dataram;
@@ -226,6 +139,11 @@ namespace TimingModel {
 
             MemAccInfoAllocator& mem_acc_info_allocator_;
 
+            sparta::Counter cache_hits_{getStatisticSet(), "cache_hits",
+                    "Number of cache hits", sparta::Counter::COUNT_NORMAL};
+
+            sparta::Counter cache_misses_{getStatisticSet(), "cache_misses",
+                    "Number of cache misses", sparta::Counter::COUNT_NORMAL};
     };
 
 } // namespace TimingModel

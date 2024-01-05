@@ -6,30 +6,34 @@ namespace TimingModel {
 
     AbstractMemroy::AbstractMemroy(sparta::TreeNode *node, const AbstractMemroyParameterSet *p) :
         sparta::Unit(node),
-        access_latency_(p->access_latency)
+        access_latency_(p->access_latency),
+        upstream_access_ports_num_(p->upstream_access_ports_num)
     {
         mem_req_in.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(AbstractMemroy, receive_mem_req, MemAccInfoPtr));
+            (CREATE_SPARTA_HANDLER_WITH_DATA(AbstractMemroy, receive_mem_req, MemAccInfoGroup));
         // mem_req_in.setPortDelay(static_cast<sparta::Clock::Cycle>(1));
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(AbstractMemroy, SendInitCredit));
-        
     }
     void AbstractMemroy::SendInitCredit() {
-        out_uplevel_credit.send(1);
-        ILOG("send 1 credit to uplevel");
+        out_upstream_credit.send(upstream_access_ports_num_);
+        ILOG("send " << upstream_access_ports_num_ << " credit to upstream");
     }
 
-    void AbstractMemroy::receive_mem_req(const MemAccInfoPtr & req)
+    void AbstractMemroy::receive_mem_req(const MemAccInfoGroup & reqs)
     {
-        ev_handle_mem_req.preparePayload(req)->schedule(access_latency_);
-        ILOG("access mem addr: "<< HEX16(req->address));
+        sparta_assert((reqs.size() <= upstream_access_ports_num_));
+        ev_handle_mem_req.preparePayload(reqs)->schedule(access_latency_);
+        for (auto req : reqs)
+            ILOG("access mem addr: "<< HEX16(req->address));
     }
 
-    void AbstractMemroy::handle_mem_req(const MemAccInfoPtr & req)
+    void AbstractMemroy::handle_mem_req(const MemAccInfoGroup & reqs)
     {
-        mem_resp_out.send(req); 
-        ILOG("send resp");
+        sparta_assert((reqs.size() <= upstream_access_ports_num_));
+        mem_resp_out.send(reqs);
+        out_upstream_credit.send(reqs.size());
+        for (auto resp : reqs)
+            ILOG("send resp to upstream, resp addr "<< HEX16(resp->address)); 
     }
-
 
 } //namespace TimingModel

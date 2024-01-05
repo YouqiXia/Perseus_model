@@ -150,23 +150,23 @@ namespace TimingModel {
                      getRoot()->getChildAs<sparta::Port>("perfect_alu.ports.backend_alu_credit_out"));
 
         // precedes
-        // sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.in_lowlevel_credit"), 
-        //              getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_uplevel_credit"));
+        // sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.in_downstream_credit"), 
+        //              getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_upstream_credit"));
         // sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.in_access_resp"), 
         //              getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_access_resp"));
         // sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.out_access_req"), 
         //              getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.in_access_req"));
 
-        // sparta::bind(getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.in_lowlevel_credit"), 
-        //              getRoot()->getChildAs<sparta::Port>("abstract_mem.ports.out_uplevel_credit"));
+        // sparta::bind(getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.in_downstream_credit"), 
+        //              getRoot()->getChildAs<sparta::Port>("abstract_mem.ports.out_upstream_credit"));
         // sparta::bind(getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.in_access_resp"), 
         //              getRoot()->getChildAs<sparta::Port>("abstract_mem.ports.mem_resp_out"));
         // sparta::bind(getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_access_req"), 
         //              getRoot()->getChildAs<sparta::Port>("abstract_mem.ports.mem_req_in"));
 
         // perfect lsu to l1d cache //
-        // sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.in_lowlevel_credit"), 
-        //              getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_uplevel_credit"));
+        // sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.in_downstream_credit"), 
+        //              getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_upstream_credit"));
         // sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.in_access_resp"), 
         //              getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_access_resp"));
         // sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.out_access_req"), 
@@ -175,22 +175,22 @@ namespace TimingModel {
 
         // abstract lsu to l1d cache //
         sparta::bind(getRoot()->getChildAs<sparta::Port>("abstract_lsu.ports.l1d_cache_lsu_credit_in"), 
-                     getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_uplevel_credit"));
+                     getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_upstream_credit"));
         sparta::bind(getRoot()->getChildAs<sparta::Port>("abstract_lsu.ports.l1d_cache_lsu_in"), 
                      getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_access_resp"));
         sparta::bind(getRoot()->getChildAs<sparta::Port>("abstract_lsu.ports.lsu_l1d_cache_out"), 
                      getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.in_access_req"));
         // abstract lsu to l1d cache //
 
-        sparta::bind(getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.in_lowlevel_credit"), 
-                     getRoot()->getChildAs<sparta::Port>("l2_cache.ports.out_uplevel_credit"));
+        sparta::bind(getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.in_downstream_credit"), 
+                     getRoot()->getChildAs<sparta::Port>("l2_cache.ports.out_upstream_credit"));
         sparta::bind(getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.in_access_resp"), 
                      getRoot()->getChildAs<sparta::Port>("l2_cache.ports.out_access_resp"));
         sparta::bind(getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_access_req"), 
                      getRoot()->getChildAs<sparta::Port>("l2_cache.ports.in_access_req"));
 
-        sparta::bind(getRoot()->getChildAs<sparta::Port>("l2_cache.ports.in_lowlevel_credit"), 
-                     getRoot()->getChildAs<sparta::Port>("abstract_mem.ports.out_uplevel_credit"));
+        sparta::bind(getRoot()->getChildAs<sparta::Port>("l2_cache.ports.in_downstream_credit"), 
+                     getRoot()->getChildAs<sparta::Port>("abstract_mem.ports.out_upstream_credit"));
         sparta::bind(getRoot()->getChildAs<sparta::Port>("l2_cache.ports.in_access_resp"), 
                      getRoot()->getChildAs<sparta::Port>("abstract_mem.ports.mem_resp_out"));
         sparta::bind(getRoot()->getChildAs<sparta::Port>("l2_cache.ports.out_access_req"), 

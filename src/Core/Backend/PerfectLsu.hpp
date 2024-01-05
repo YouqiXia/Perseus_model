@@ -42,11 +42,11 @@ namespace TimingModel {
             {&unit_port_set_, "lsu_backend_finish_out"};
 
 
-        sparta::DataInPort<Credit> in_lowlevel_credit
-            {&unit_port_set_, "in_lowlevel_credit", 1};
-        sparta::DataInPort<MemAccInfoPtr> in_access_resp
+        sparta::DataInPort<Credit> in_downstream_credit
+            {&unit_port_set_, "in_downstream_credit", 1};
+        sparta::DataInPort<MemAccInfoGroup> in_access_resp
             {&unit_port_set_, "in_access_resp", 1};
-        sparta::DataOutPort<MemAccInfoPtr> out_access_req
+        sparta::DataOutPort<MemAccInfoGroup> out_access_req
             {&unit_port_set_, "out_access_req"}; 
 
         MemAccInfoAllocator& mem_acc_info_allocator_;
@@ -55,8 +55,8 @@ namespace TimingModel {
 
         void recvReq(const InstGroup&);
         void recvCredit(const Credit& credit);
-        void recvResp(const MemAccInfoPtr& resp);
-        void sendReq(const MemAccInfoPtr& req){ if(next_level_credit>0) out_access_req.send(req);}
+        void recvResp(const MemAccInfoGroup& resp);
+        void sendReq(const MemAccInfoGroup& req){ if(next_level_credit>0) out_access_req.send(req);}
 
 
     private:

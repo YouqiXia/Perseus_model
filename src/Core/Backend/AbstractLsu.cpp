@@ -1,5 +1,6 @@
 #include "AbstractLsu.hpp"
 #include "sparta/utils/LogUtils.hpp"
+#include <stdlib.h>
 
 namespace TimingModel {
     const char* AbstractLsu::name = "abstract_lsu";
@@ -7,6 +8,7 @@ namespace TimingModel {
     AbstractLsu::AbstractLsu(sparta::TreeNode* node, const AbstractLsuParameter* p) :
         sparta::Unit(node),
         load_to_use_latency_(p->load_to_use_latency),
+        cache_access_ports_num_(p->cache_access_ports_num),
         issue_queue_("lsu_inst_queue", p->issue_queue_size, getClock()),
         issue_queue_size_(p->issue_queue_size),
         ld_queue_(p->ld_queue_size),
@@ -17,7 +19,7 @@ namespace TimingModel {
         backend_lsu_inst_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(AbstractLsu, handleDispatch, InstGroup));
         backend_lsu_inst_in >> sparta::GlobalOrderingPoint(node, "backend_lsu_multiport_order");
 
-        l1d_cache_lsu_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(AbstractLsu, handleCacheResp, MemAccInfoPtr));
+        l1d_cache_lsu_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(AbstractLsu, handleCacheResp, MemAccInfoGroup));
         l1d_cache_lsu_credit_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(AbstractLsu, acceptCredit, Credit));
 
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(AbstractLsu, SendInitCredit));
@@ -64,20 +66,28 @@ namespace TimingModel {
 
         // Send request to cache
         // TODO reordered insts from ld_queue_ and st_queue_
-        if (!issue_queue_.empty() && cache_credit_) {
-            //send only one be req to cache each cycle
-
-            auto inst_ptr = issue_queue_.begin();
-            if ((*inst_ptr)->getLsuIssued()) {
-
-                if ((*inst_ptr) == ld_queue_[ld_queue_.getHeader()]) {
-                    ld_queue_.Pop();
-                    sendInsts((*inst_ptr));
-                } else if ((*inst_ptr) == st_queue_[st_queue_.getHeader()]) {
-                    st_queue_.Pop();
-                    sendInsts((*inst_ptr));
-                } 
+        uint64_t cnt = std::min(cache_credit_, cache_access_ports_num_);
+        InstGroup insn_grp;
+        auto inst_ptr = issue_queue_.begin();
+        for(int i=0; i<cnt; i++){
+            if (!issue_queue_.empty() && cache_credit_) {
+                //send only one be req to cache each cycle
+                if ((*inst_ptr)->getLsuIssued()) {
+                    if ((*inst_ptr) == ld_queue_[ld_queue_.getHeader()]) {
+                        ld_queue_.Pop();
+                        insn_grp.emplace_back((*inst_ptr));
+                    } else if ((*inst_ptr) == st_queue_[st_queue_.getHeader()]) {
+                        st_queue_.Pop();
+                        insn_grp.emplace_back((*inst_ptr));
+                    } 
+                }
+                inst_ptr++;
             }
+            else{
+                sendInsts(insn_grp);
+                break;
+            }
+            sendInsts(insn_grp);
         }
 
         // Schedule another instruction issue event if possible
@@ -86,14 +96,18 @@ namespace TimingModel {
         }
     }
 
-    void AbstractLsu::sendInsts(InstPtr inst_ptr) {
-        MemAccInfoPtr req = sparta::allocate_sparta_shared_pointer<MemAccInfo>(abstract_lsu_mem_acc_info_allocator_);
-        req->insn = inst_ptr;
-        req->address = inst_ptr->getTargetVAddr();
-        lsu_l1d_cache_out.send(req);
-        cache_credit_--;
-
-        ILOG("abstract lsu access cache: " << inst_ptr->getPC());
+    void AbstractLsu::sendInsts(const InstGroup& inst_group) {
+        MemAccInfoGroup reqs;
+        for (auto insn :inst_group){
+            MemAccInfoPtr req = sparta::allocate_sparta_shared_pointer<MemAccInfo>(abstract_lsu_mem_acc_info_allocator_);
+            req->insn = insn;
+            req->address = insn->getTargetVAddr();
+            reqs.emplace_back(req);
+            ILOG("abstract lsu access cache: " << insn->getPC());
+            cache_credit_--;
+        }
+        if(reqs.size())
+            lsu_l1d_cache_out.send(reqs);
     }
 
     // Check for ready to issue instructions
@@ -131,19 +145,21 @@ namespace TimingModel {
         ILOG("LSU initial credits for BE: " << issue_queue_size_);
     }
 
-    void AbstractLsu::handleCacheResp(const MemAccInfoPtr& respMemInfoPtr){
+    void AbstractLsu::handleCacheResp(const MemAccInfoGroup& resps){
         // std::cout << "AbstractLsu::handleCacheResp, received cache resp." << std::endl;
         ILOG("AbstractLsu::handleCacheResp, received cache resp.");
-        for (auto iter = issue_queue_.begin(); iter != issue_queue_.end(); iter++) {
-            if ((*iter) == respMemInfoPtr->insn) {
-                issue_queue_.erase(iter);
+        for( auto respMemInfoPtr : resps) {
+            for (auto iter = issue_queue_.begin(); iter != issue_queue_.end(); iter++) {
+                if ((*iter) == respMemInfoPtr->insn) {
+                    issue_queue_.erase(iter);
 
-                InstPtr inst_ptr = respMemInfoPtr->insn;
-                lsu_backend_finish_out.send(inst_ptr->getRobTag());
-                backend_lsu_credit_out.send(1);
+                    InstPtr inst_ptr = respMemInfoPtr->insn;
+                    lsu_backend_finish_out.send(inst_ptr->getRobTag());
+                    backend_lsu_credit_out.send(1);
 
-                ILOG("abstract lsu write back: " << inst_ptr->getPC());
-                return;
+                    ILOG("abstract lsu write back: " << inst_ptr->getPC());
+                    break;
+                }
             }
         }
     }

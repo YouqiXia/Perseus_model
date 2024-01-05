@@ -28,6 +28,7 @@ namespace TimingModel {
             PARAMETER(uint64_t, issue_queue_size, 4, "issue queue size")
             PARAMETER(uint64_t, ld_queue_size, 3, "load queue size")
             PARAMETER(uint64_t, st_queue_size, 3, "store queue size")
+            PARAMETER(uint64_t, cache_access_ports_num, 1, "cache access ports number")
         };
 
         static const char* name;
@@ -47,11 +48,11 @@ namespace TimingModel {
         // Issue/Re-issue ready instructions in the issue queue
         void issueInst();
 
-        void sendInsts(InstPtr inst_ptr);
+        void sendInsts(const InstGroup& inst_group);
 
         bool isReadyToIssueInsts() const;
 
-        void handleCacheResp(const MemAccInfoPtr& respMemInfoPtr);
+        void handleCacheResp(const MemAccInfoGroup& resps);
 
         void acceptCredit(const Credit& credit);
     public:
@@ -70,9 +71,9 @@ namespace TimingModel {
             {&unit_port_set_, "lsu_backend_finish_out"};
 
         //ports to cache
-        sparta::DataOutPort<MemAccInfoPtr> lsu_l1d_cache_out
+        sparta::DataOutPort<MemAccInfoGroup> lsu_l1d_cache_out
             {&unit_port_set_, "lsu_l1d_cache_out"};
-        sparta::DataInPort<MemAccInfoPtr> l1d_cache_lsu_in
+        sparta::DataInPort<MemAccInfoGroup> l1d_cache_lsu_in
             {&unit_port_set_, "l1d_cache_lsu_in"};
         sparta::DataInPort<Credit> l1d_cache_lsu_credit_in
             {&unit_port_set_, "l1d_cache_lsu_credit_in", 1};
@@ -88,6 +89,7 @@ namespace TimingModel {
         MemAccInfoAllocator& abstract_lsu_mem_acc_info_allocator_;
     private:
         const uint64_t load_to_use_latency_;
+        uint64_t cache_access_ports_num_;
 
         // inst queue
         using LoadStoreIssueQueue = sparta::Buffer<InstPtr>;

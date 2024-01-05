@@ -19,6 +19,7 @@ namespace TimingModel {
                 { }
 
                 PARAMETER(uint32_t, access_latency, 5, "memory access latency")
+                PARAMETER(uint32_t, upstream_access_ports_num, 1, "upstream access ports number")
             };
 
             AbstractMemroy(sparta::TreeNode* node, const AbstractMemroyParameterSet* p);
@@ -31,21 +32,23 @@ namespace TimingModel {
         // sparta::SyncOutPort<MemAccInfoPtr> mem_resp_out
         //     {&unit_port_set_, "mem_resp_out", getClock()};
 
-        sparta::DataInPort<MemAccInfoPtr> mem_req_in
+        sparta::DataInPort<MemAccInfoGroup> mem_req_in
             {&unit_port_set_, "mem_req_in", 1};
-        sparta::DataOutPort<MemAccInfoPtr> mem_resp_out
+        sparta::DataOutPort<MemAccInfoGroup> mem_resp_out
             {&unit_port_set_, "mem_resp_out", 1};
-        sparta::DataOutPort<Credit> out_uplevel_credit
-            {&unit_port_set_, "out_uplevel_credit", 1};
+        sparta::DataOutPort<Credit> out_upstream_credit
+            {&unit_port_set_, "out_upstream_credit", 1};
 
-        sparta::PayloadEvent<MemAccInfoPtr> ev_handle_mem_req
-            {&unit_event_set_, "handle_mem_req", CREATE_SPARTA_HANDLER_WITH_DATA(AbstractMemroy, handle_mem_req, MemAccInfoPtr)};
+        sparta::PayloadEvent<MemAccInfoGroup> ev_handle_mem_req
+            {&unit_event_set_, "handle_mem_req", CREATE_SPARTA_HANDLER_WITH_DATA(AbstractMemroy, handle_mem_req, MemAccInfoGroup)};
 
-        void receive_mem_req(const MemAccInfoPtr & req);
-        void handle_mem_req(const MemAccInfoPtr & );
+        void receive_mem_req(const MemAccInfoGroup & req);
+        void handle_mem_req(const MemAccInfoGroup & );
         void SendInitCredit();
 
         uint32_t access_latency_;
+        uint32_t upstream_access_ports_num_;
+        uint32_t downstream_access_ports_num_;
 
     };
 

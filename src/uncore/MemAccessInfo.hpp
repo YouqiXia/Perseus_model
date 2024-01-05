@@ -18,16 +18,26 @@ enum class MemOp: std::uint8_t {
 
 class MemAccInfo{
 public:
-   uint64_t address;
-   uint64_t length;
-   MemOp mem_op;
-   InstPtr insn;
-   uint8_t* data;
-   uint32_t mshrid;
+    uint64_t address;
+    uint64_t length;
+    MemOp mem_op;
+    InstPtr insn;
+    uint8_t* data;
+    uint32_t mshrid;
+
+    MemAccInfo& operator=(MemAccInfo & rval){
+        address = rval.address;
+        length = rval.length;
+        mem_op = rval.mem_op;
+        insn = rval.insn;
+        data = rval.data;
+        mshrid = rval.mshrid;
+        return *this;
+    }
 };
 
 using MemAccInfoPtr = sparta::SpartaSharedPointer<MemAccInfo>;
 using MemAccInfoAllocator = sparta::SpartaSharedPointerAllocator<MemAccInfo>;
-
+using MemAccInfoGroup = std::vector<MemAccInfoPtr>;
 
 } //namespace TimingModel
