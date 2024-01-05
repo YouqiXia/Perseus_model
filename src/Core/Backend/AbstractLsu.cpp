@@ -46,14 +46,14 @@ namespace TimingModel {
             if (!inst_ptr->getLsuIssued()) {
                 if (inst_ptr->getFuType() == FuncType::LDU) {
                     if(!ld_queue_.full()) {
-                        // ld_queue_.push(inst_ptr);
+                        ld_queue_.Push(inst_ptr);
                         inst_ptr->setLsuIssued(true);
 
                         ILOG("LSU issue load inst to ld_queue_: " << inst_ptr->getPC());
                     }
                 } else if (inst_ptr->getFuType() == FuncType::STU) {
                     if(!st_queue_.full()) {
-                        // st_queue_.push(inst_ptr);
+                        st_queue_.Push(inst_ptr);
                         inst_ptr->setLsuIssued(true);
 
                         ILOG("LSU issue store inst to st_queue_: " << inst_ptr->getPC());
@@ -63,22 +63,20 @@ namespace TimingModel {
         }
 
         // Send request to cache
-        // TODO reorder insts in ld_queue_ and st_queue_
+        // TODO reordered insts from ld_queue_ and st_queue_
         if (!issue_queue_.empty() && cache_credit_) {
+            //send only one be req to cache each cycle
+
             auto inst_ptr = issue_queue_.begin();
             if ((*inst_ptr)->getLsuIssued()) {
-                // lsu_backend_finish_out.send(inst_ptr->getRobTag());
-                // backend_lsu_credit_out.send(1);
-                // issue_queue_.pop();
 
-                //send only one be req to cache each cycle
-                MemAccInfoPtr req = sparta::allocate_sparta_shared_pointer<MemAccInfo>(abstract_lsu_mem_acc_info_allocator_);
-                req->insn = (*inst_ptr);
-                req->address = (*inst_ptr)->getTargetVAddr();
-                lsu_l1d_cache_out.send(req);
-                cache_credit_--;
-
-                ILOG("abstract lsu access cache: " << (*inst_ptr)->getPC());
+                if ((*inst_ptr) == ld_queue_[ld_queue_.getHeader()]) {
+                    ld_queue_.Pop();
+                    sendInsts((*inst_ptr));
+                } else if ((*inst_ptr) == ld_queue_[st_queue_.getHeader()]) {
+                    st_queue_.Pop();
+                    sendInsts((*inst_ptr));
+                } 
             }
         }
 
@@ -86,6 +84,16 @@ namespace TimingModel {
         if (isReadyToIssueInsts()) {
             uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
         }
+    }
+
+    void AbstractLsu::sendInsts(InstPtr inst_ptr) {
+        MemAccInfoPtr req = sparta::allocate_sparta_shared_pointer<MemAccInfo>(abstract_lsu_mem_acc_info_allocator_);
+        req->insn = inst_ptr;
+        req->address = inst_ptr->getTargetVAddr();
+        lsu_l1d_cache_out.send(req);
+        cache_credit_--;
+
+        ILOG("abstract lsu access cache: " << inst_ptr->getPC());
     }
 
     // Check for ready to issue instructions

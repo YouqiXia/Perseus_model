@@ -47,6 +47,8 @@ namespace TimingModel {
         // Issue/Re-issue ready instructions in the issue queue
         void issueInst();
 
+        void sendInsts(InstPtr inst_ptr);
+
         bool isReadyToIssueInsts() const;
 
         void handleCacheResp(const MemAccInfoPtr& respMemInfoPtr);
