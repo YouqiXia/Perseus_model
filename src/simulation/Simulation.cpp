@@ -5,7 +5,8 @@
 #include "Core/Backend/PerfectLsu.hpp"
 #include "Core/Frontend/PerfectFrontend.hpp"
 #include "Core/Backend/PerfectBackend.hpp"
-
+#include "uncore/cache/BaseCache.hpp"
+#include "uncore/memory/AbstractMemory.hpp"
 #include <memory>
 
 #include "olympia/MavisUnit.hpp"
@@ -20,7 +21,11 @@ namespace TimingModel {
     sparta::ResourceFactory<TimingModel::PerfectFrontend,
                             TimingModel::PerfectFrontend::PerfectFrontendParameter> perfect_frontend_factory;
     sparta::ResourceFactory<TimingModel::PerfectBackend,
-                            TimingModel::PerfectBackend::PerfectBackendParameter> perfect_backend_factory;    
+                            TimingModel::PerfectBackend::PerfectBackendParameter> perfect_backend_factory;
+    sparta::ResourceFactory<TimingModel::BaseCache,
+                            TimingModel::BaseCache::BaseCacheParameterSet> base_cache_factory;
+    sparta::ResourceFactory<TimingModel::AbstractMemroy,
+                            TimingModel::AbstractMemroy::AbstractMemroyParameterSet> abstract_memroy_factory;    
     MavisFactoy mavis_fact;
     std::unique_ptr<OlympiaAllocators> global_allocators;
 
@@ -75,7 +80,28 @@ namespace TimingModel {
                                     sparta::TreeNode::GROUP_IDX_NONE, 
                                     "perfect lsu", 
                                     &perfect_lsu_factory);
+        sparta::ResourceTreeNode* l1dcache_node = new sparta::ResourceTreeNode(getRoot(), 
+                                    "l1d_cache", 
+                                    sparta::TreeNode::GROUP_NAME_NONE, 
+                                    sparta::TreeNode::GROUP_IDX_NONE, 
+                                    "l1d_cache", 
+                                    &base_cache_factory);
+        sparta::ResourceTreeNode* l2cache_node = new sparta::ResourceTreeNode(getRoot(), 
+                                    "l2_cache", 
+                                    sparta::TreeNode::GROUP_NAME_NONE, 
+                                    sparta::TreeNode::GROUP_IDX_NONE, 
+                                    "l2_cache", 
+                                    &base_cache_factory);
+        sparta::ResourceTreeNode* mem_node = new sparta::ResourceTreeNode(getRoot(), 
+                                    "abstract_mem", 
+                                    sparta::TreeNode::GROUP_NAME_NONE, 
+                                    sparta::TreeNode::GROUP_IDX_NONE, 
+                                    "abstract_mem", 
+                                    &abstract_memroy_factory);                          
 
+        to_delete_.emplace_back(l1dcache_node);
+        to_delete_.emplace_back(l2cache_node);
+        to_delete_.emplace_back(mem_node); 
         to_delete_.emplace_back(mavis_node);
         to_delete_.emplace_back(perfect_frontend_node);
         to_delete_.emplace_back(perfect_backend_node);
@@ -114,7 +140,41 @@ namespace TimingModel {
                      getRoot()->getChildAs<sparta::Port>("perfect_alu.ports.backend_alu_credit_out"));
 
         // precedes
-        
+        // sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.in_lowlevel_credit"), 
+        //              getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_uplevel_credit"));
+        // sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.in_access_resp"), 
+        //              getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_access_resp"));
+        // sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.out_access_req"), 
+        //              getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.in_access_req"));
+
+        // sparta::bind(getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.in_lowlevel_credit"), 
+        //              getRoot()->getChildAs<sparta::Port>("abstract_mem.ports.out_uplevel_credit"));
+        // sparta::bind(getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.in_access_resp"), 
+        //              getRoot()->getChildAs<sparta::Port>("abstract_mem.ports.mem_resp_out"));
+        // sparta::bind(getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_access_req"), 
+        //              getRoot()->getChildAs<sparta::Port>("abstract_mem.ports.mem_req_in"));
+
+        sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.in_lowlevel_credit"), 
+                     getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_uplevel_credit"));
+        sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.in_access_resp"), 
+                     getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_access_resp"));
+        sparta::bind(getRoot()->getChildAs<sparta::Port>("perfect_lsu.ports.out_access_req"), 
+                     getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.in_access_req"));
+
+        sparta::bind(getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.in_lowlevel_credit"), 
+                     getRoot()->getChildAs<sparta::Port>("l2_cache.ports.out_uplevel_credit"));
+        sparta::bind(getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.in_access_resp"), 
+                     getRoot()->getChildAs<sparta::Port>("l2_cache.ports.out_access_resp"));
+        sparta::bind(getRoot()->getChildAs<sparta::Port>("l1d_cache.ports.out_access_req"), 
+                     getRoot()->getChildAs<sparta::Port>("l2_cache.ports.in_access_req"));
+
+        sparta::bind(getRoot()->getChildAs<sparta::Port>("l2_cache.ports.in_lowlevel_credit"), 
+                     getRoot()->getChildAs<sparta::Port>("abstract_mem.ports.out_uplevel_credit"));
+        sparta::bind(getRoot()->getChildAs<sparta::Port>("l2_cache.ports.in_access_resp"), 
+                     getRoot()->getChildAs<sparta::Port>("abstract_mem.ports.mem_resp_out"));
+        sparta::bind(getRoot()->getChildAs<sparta::Port>("l2_cache.ports.out_access_req"), 
+                     getRoot()->getChildAs<sparta::Port>("abstract_mem.ports.mem_req_in"));
+
     }
 
     void Simulation::test() {
