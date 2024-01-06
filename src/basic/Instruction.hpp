@@ -27,11 +27,17 @@ typedef uint64_t xlen_t;
 
 typedef uint64_t xReg_t;
 
+typedef uint64_t RobIdx_t;
+
 typedef std::vector<xReg_t> PhysicalReg;
 
 enum FuncType {
     ALU, MUL, DIV, BRU, CSR, LDU, STU, FPU
 };
+
+using FuncUnitType = std::string;
+
+using FuncMap = std::map<FuncUnitType, std::set<FuncType>>;
 
 /* exception */
 struct Exception
@@ -136,7 +142,11 @@ struct InstInfo {
     uint8_t      SubOp;
 
     /* Scheduler info */
-    uint64_t     RobTag;
+    RobIdx_t     RobTag;
+    bool         IsRs1Forward;
+    RobIdx_t     Rs1ForwardRob;
+    bool         IsRs2Forward;
+    RobIdx_t     Rs2ForwardRob;
 
     PhyRegId_t   PhyRs1;
     PhyRegId_t   PhyRs2;
@@ -144,9 +154,9 @@ struct InstInfo {
     PhyRegId_t   LPhyRd;
 
     /* function unit info */
-    xReg_t       Operand1;
-    xReg_t       Operand2;
-    xReg_t       RdResult;
+    xReg_t       Operand1 = 0;
+    xReg_t       Operand2 = 0;
+    xReg_t       RdResult = 0;
 
     /* exception info */
     Exception    Excp;

@@ -16,6 +16,14 @@
 #include "basic/InstGroup.hpp"
 
 namespace TimingModel {
+
+    struct RsCredit {
+        FuncUnitType func_unit;
+        Credit credit;
+    };
+
+    using RsCreditPtr = sparta::SpartaSharedPointer<RsCredit>;
+
     class ReservationStation : public sparta::Unit {
     public:
         class ReservationStationParameter : public sparta::ParameterSet {
@@ -24,7 +32,9 @@ namespace TimingModel {
                 sparta::ParameterSet(n)
             {}
 
+            PARAMETER(uint64_t, issue_num, 1, "the issuing bandwidth in a cycle")
             PARAMETER(uint32_t, rs_depth, 4, "the issuing bandwidth in a cycle")
+            PARAMETER(FuncUnitType, rs_func_type, "", "the type of function unit the reservation station connected")
         };
 
         struct ReStationEntry {
@@ -42,11 +52,13 @@ namespace TimingModel {
     private:
         void HandleFlush_(const FlushingCriteria&);
 
-        void AllocateReStation(const InstGroupPtr&);
+        void InitCredit_();
+
+        void AllocateReStation(const InstPtr&);
 
         void PassingInst();
 
-        void GetForwardingData(const InstGroupPtr&);
+        void GetForwardingData(const InstPtr&);
 
         void AcceptCredit_(const Credit&);
 
@@ -57,10 +69,10 @@ namespace TimingModel {
                 {&unit_port_set_, "reservation_flush_in", sparta::SchedulingPhase::Tick, 1};
 
         // with issue queue
-        sparta::DataInPort<InstGroupPtr> preceding_reservation_inst_in
+        sparta::DataInPort<InstPtr> preceding_reservation_inst_in
                 {&unit_port_set_, "preceding_reservation_inst_in", sparta::SchedulingPhase::Tick, 1};
 
-        sparta::DataOutPort<Credit> reservation_preceding_credit_out
+        sparta::DataOutPort<RsCreditPtr> reservation_preceding_credit_out
                 {&unit_port_set_, "reservation_preceding_credit_out"};
 
         // with function unit
@@ -71,7 +83,7 @@ namespace TimingModel {
                 {&unit_port_set_, "following_reservation_credit_in", sparta::SchedulingPhase::Tick, 0};
 
         // with CDB
-        sparta::DataInPort<InstGroupPtr> forwarding_reservation_inst_in
+        sparta::DataInPort<InstPtr> forwarding_reservation_inst_in
                 {&unit_port_set_, "forwarding_reservation_inst_in", sparta::SchedulingPhase::Tick, 1};
 
 
@@ -80,6 +92,9 @@ namespace TimingModel {
                 {&unit_event_set_, "passing_event", CREATE_SPARTA_HANDLER(ReservationStation, PassingInst)};
 
     private:
+        FuncUnitType rs_func_type_;
+        uint64_t issue_num_;
+        uint64_t rs_depth_;
         sparta::Queue<ReStationEntryPtr> reservation_station_;
         Credit credit_ = 0;
     };

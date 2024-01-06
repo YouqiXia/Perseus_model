@@ -25,6 +25,8 @@ namespace TimingModel {
                    PhyRegId_t phy_regfile_num,
                    sparta::log::MessageSource &info_logger);
 
+        void Flush();
+
         bool IsForwarding(PhyRegId_t);
 
         RobIdx_t GetForwardingEntry(PhyRegId_t);

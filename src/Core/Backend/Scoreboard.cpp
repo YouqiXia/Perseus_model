@@ -13,6 +13,10 @@ namespace TimingModel {
             phy_regfile_num_(phy_regfile_num)
     {}
 
+    void Scoreboard::Flush() {
+        score_board_.clear();
+    }
+
     bool Scoreboard::IsForwarding(PhyRegId_t phy_reg_idx) {
         sparta_assert(phy_reg_idx <= phy_regfile_num_, "Scoreboard access is out of range");
         return score_board_[phy_reg_idx].isValid();
@@ -32,4 +36,5 @@ namespace TimingModel {
         sparta_assert(phy_reg_idx <= phy_regfile_num_, "Scoreboard access is out of range");
         score_board_[phy_reg_idx].clearValid();
     }
+
 }

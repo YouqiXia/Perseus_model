@@ -33,15 +33,17 @@ public:
 
     RenamingStage(sparta::TreeNode* node, const RenamingParameter* p);
 
-    void AcceptCredit(const Credit&);
-
-    void AllocateInst(const InstGroupPtr&);
-
-    void RenameInst();
-
-    void HandleFlush(const FlushingCriteria&);
-
 private:
+    void AcceptCredit_(const Credit&);
+
+    void InitCredit_();
+
+    void AllocateInst_(const InstGroupPtr&);
+
+    void RenameInst_();
+
+    void HandleFlush_(const FlushingCriteria&);
+
     void RenameInstImp_(const InstPtr&);
 
     void RollBack_(const InstGroupPtr&);
@@ -86,6 +88,8 @@ private:
     RenamingTable renaming_table_;
 
     const uint64_t issue_width_;
+
+    const uint64_t renaming_stage_queue_depth_;
 
     Credit credit_ = 0;
 

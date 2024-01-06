@@ -25,18 +25,20 @@ namespace TimingModel {
         xReg_t      data;
     };
 
+    using PhyRegfileWriteBackPtr = sparta::SpartaSharedPointer<PhyRegfileWriteBack>;
+
     class PhyRegfileWritePort {
     public:
 
         PhyRegfileWritePort(const std::string& name,
                            PhysicalReg* phy_reg,
                             sparta::log::MessageSource   & info_logger,
-                            sparta::DataInPort<PhyRegfileWriteBack>* read_port_in);
+                            sparta::DataInPort<PhyRegfileWriteBackPtr>* read_port_in);
 
         const std::string& GetName();
 
     private:
-        void WriteBackRegfile_(const PhyRegfileWriteBack&);
+        void WriteBackRegfile_(const PhyRegfileWriteBackPtr&);
 
     private:
         const std::string name_;

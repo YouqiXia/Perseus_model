@@ -22,10 +22,14 @@
 namespace TimingModel {
 
     struct PhyRegfileRequest {
-        uint64_t rob_idx;
+        FuncUnitType func_unit;
+        bool is_rs1 = false;
+        bool is_rs2 = false;
         PhyRegId_t phy_reg_idx;
         sparta::utils::ValidValue <xReg_t> data;
     };
+
+    using PhyRegfileRequestPtr = sparta::SpartaSharedPointer<PhyRegfileRequest>;
 
     class PhyRegfileReadPort {
     public:
@@ -33,17 +37,17 @@ namespace TimingModel {
         PhyRegfileReadPort(const std::string& name,
                            PhysicalReg* phy_reg,
                            sparta::log::MessageSource   & info_logger,
-                           sparta::DataInPort<PhyRegfileRequest>* read_port_in,
-                           sparta::DataOutPort<PhyRegfileRequest>* read_port_out);
+                           sparta::DataInPort<PhyRegfileRequestPtr>* read_port_in,
+                           sparta::DataOutPort<PhyRegfileRequestPtr>* read_port_out);
 
         const std::string& GetName() const;
 
     private:
-        void ReadRegfile_(const PhyRegfileRequest&);
+        void ReadRegfile_(const PhyRegfileRequestPtr&);
 
     private:
         // ports
-        sparta::DataOutPort<PhyRegfileRequest>* read_phy_regfile_out_;
+        sparta::DataOutPort<PhyRegfileRequestPtr>* read_phy_regfile_out_;
 
     private:
         const std::string name_;
