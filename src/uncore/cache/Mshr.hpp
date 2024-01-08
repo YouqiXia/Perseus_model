@@ -7,6 +7,7 @@ namespace TimingModel {
         ALLOCATE,
         SEND_REQ,
         RECV_RESP,
+        EVICT,
         REFILL,
         SEND_RESP,
         NUM_TYPES,
@@ -57,15 +58,19 @@ namespace TimingModel {
             sparta_assert((id < qsize));
             used--;
             header += 1;
-            if(header == qsize)
+            if(header == qsize){
                 header = 0;
+            }
+            queue[id].status = MshrStatus::NO_TYPE;
             return;
         }
+        
         MSHREntry& getHeader(){
             return queue[header];
         }
 
         void recvResp(uint32_t id){
+            sparta_assert((queue[id].status == MshrStatus::SEND_REQ));
             queue[id].status = MshrStatus::RECV_RESP; 
         }
         bool isEmpty(){ return (used == 0); }

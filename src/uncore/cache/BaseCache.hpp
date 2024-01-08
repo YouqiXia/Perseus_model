@@ -56,6 +56,10 @@ namespace TimingModel {
 
             virtual void recvCredit(const Credit& in);
 
+            virtual void InReqAbitor();
+
+            virtual void OutReqAbitor();
+
             virtual setTags& accessTagRam(const MemAccInfoPtr& req);
 
             virtual setData& accessDataRam(const MemAccInfoPtr& req);
@@ -73,6 +77,8 @@ namespace TimingModel {
             virtual void mshrRefill();
 
             virtual void mshrSendResp();
+
+            virtual void mshrEvict();
 
             virtual bool checkMshrAvail(){ return mshr.isAvail(); };
 

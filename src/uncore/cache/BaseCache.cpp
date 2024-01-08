@@ -83,8 +83,6 @@ namespace TimingModel {
                 cache_hits_++;
                 ILOG("request hit addr: "<<HEX16(req->address) );
             }else{
-                if(req->address == 0x275c8)
-                    printf("test");
                 bool mshr_avail = checkMshrAvail();
                 sparta_assert((mshr_avail));
                 uint32_t id = allocMshr(req);
@@ -158,10 +156,15 @@ namespace TimingModel {
 
     void BaseCache::handle_mshr(){
         if(!mshr.isEmpty()){
-            if(next_level_credit > 0)
-                mshrSendRequest();
-            mshrRefill();
             mshrSendResp();
+        }
+        
+        if(!mshr.isEmpty()){
+            mshrRefill();
+            mshrEvict();
+            if(next_level_credit > 0){
+                mshrSendRequest();
+            }
         }
 
         if(!mshr.isEmpty()){
@@ -187,6 +190,7 @@ namespace TimingModel {
     void BaseCache::recvResp(const MemAccInfoGroup& resps){
         sparta_assert((resps.size() <= downstream_access_ports_num_));
         for (auto resp : resps){
+            ILOG("MSHR recv resp mshrid " << resp->mshrid << " for resp addr " << HEX16(resp->address));
             mshr.recvResp(resp->mshrid);
         }
         ev_handle_mshr.schedule(1);
@@ -215,19 +219,14 @@ namespace TimingModel {
     void BaseCache::mshrRefill(){
         uint32_t header = mshr.header;
         for(int i=0; i<mshr.used; i++){
-            if(mshr.queue[header+i].status == MshrStatus::RECV_RESP){
+            if((mshr.queue[header+i].status == MshrStatus::RECV_RESP)
+            ||(mshr.queue[header+i].status == MshrStatus::EVICT)){
                 uint64_t addr = mshr.queue[header+i].req->address;
                 uint32_t way_id = 0;
                 uint32_t index = getIndex(addr);
                 sparta_assert((index<set_num_));
                 bool no_need_evict = checkWayAvail(index, way_id);
                 if(no_need_evict){
-                    way_id = replacementCal();
-                    evict(index, way_id);
-                    ramRefill(mshr.queue[header+i].req, way_id);
-                    mshr.queue[header+i].status = MshrStatus::REFILL;
-                    ILOG("MSHR entry evict and refill mshrid " << header+i << " for request addr " << HEX16(mshr.queue[header+i].req->address));
-                }else{
                     ramRefill(mshr.queue[header+i].req, way_id);
                     mshr.queue[header+i].status = MshrStatus::REFILL;
                     ILOG("MSHR entry refill id " << header+i << " for request addr " << HEX16(mshr.queue[header+i].req->address));
@@ -236,6 +235,36 @@ namespace TimingModel {
             }
         }
     }
+
+    void BaseCache::mshrEvict(){
+        uint32_t header = mshr.header;
+        for(int i=0; i<mshr.used; i++){
+            if(mshr.queue[header+i].status == MshrStatus::RECV_RESP){
+                uint64_t addr = mshr.queue[header+i].req->address;
+                uint32_t way_id = 0;
+                uint32_t index = getIndex(addr);
+                sparta_assert((index<set_num_));
+                bool no_need_evict = checkWayAvail(index, way_id);
+                if(!no_need_evict){
+                    way_id = replacementCal();
+                    evict(index, way_id);
+                    mshr.queue[header+i].status = MshrStatus::EVICT;
+                    ILOG("MSHR entry evict mshrid " << header+i << " for request addr " << HEX16(mshr.queue[header+i].req->address));
+                }
+            }
+        }
+    }
+
+    void BaseCache::OutReqAbitor(){
+
+
+    }
+
+    void BaseCache::InReqAbitor(){
+
+
+    }
+
 
     void BaseCache::mshrSendResp(){
         uint32_t header = mshr.header;
@@ -258,7 +287,7 @@ namespace TimingModel {
     }
     bool BaseCache::checkWayAvail(uint32_t index, uint32_t way_avail){
         for(int wi=0; wi<way_num_; wi++){
-            if(tagram[index][wi].isValid()){
+            if(!tagram[index][wi].isValid()){
                 way_avail = wi;
                 return true;
             }
@@ -286,5 +315,6 @@ namespace TimingModel {
             out_access_req.send(reqs);
             next_level_credit--;
         }
+		ev_handle_mshr.schedule(1);
     }
 } //namespace TimingModel
