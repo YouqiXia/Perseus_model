@@ -14,7 +14,7 @@ namespace TimingModel {
         cache_size_(p->cache_size),
         mshr_size_(p->mshr_size),
         perfect_cache_(p->is_perfect_cache),
-        perfect_cache_latency_(p->perfect_cache_latency-1),
+        cache_latency_(p->cache_latency),
         next_level_credit(0),
         upstream_access_ports_num_(p->upstream_access_ports_num),
         downstream_access_ports_num_(p->downstream_access_ports_num),
@@ -63,9 +63,13 @@ namespace TimingModel {
     void BaseCache::funcaccess(const MemAccInfoGroup& reqs){
         sparta_assert((reqs.size()<=upstream_access_ports_num_));
         if(perfect_cache_){
-            sendResp(reqs, perfect_cache_latency_);
-            out_upstream_credit.send(upstream_access_ports_num_);
-            ILOG("send" << upstream_access_ports_num_ <<" credits to upstream");
+            sendResp(reqs, cache_latency_);
+            out_upstream_credit.send(upstream_access_ports_num_, cache_latency_);
+
+            ILOG(" send" << upstream_access_ports_num_ <<" credits to upstream");
+            for(auto req: reqs){
+                ILOG("request hit addr: " << HEX16(req->address));
+            }
             return;
         }
 
@@ -92,7 +96,7 @@ namespace TimingModel {
             sendCredit();
         }
         if (resps.size() > 0)
-            sendResp(resps);
+            sendResp(resps, cache_latency_);
     }
 
     setTags& BaseCache::accessTagRam(const MemAccInfoPtr& req){
@@ -283,7 +287,7 @@ namespace TimingModel {
             }
         }
         if (resps.size() > 0)
-            sendResp(resps);
+            sendResp(resps, cache_latency_);
     }
     bool BaseCache::checkWayAvail(uint32_t index, uint32_t way_avail){
         for(int wi=0; wi<way_num_; wi++){

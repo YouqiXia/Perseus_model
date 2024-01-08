@@ -29,7 +29,7 @@ namespace TimingModel {
                 PARAMETER(uint32_t, cache_size, 128*1024, "cache size")
                 PARAMETER(uint32_t, mshr_size, 1, "MSHR size")
                 PARAMETER(bool, is_perfect_cache, false, "perfect cache that always hit")
-                PARAMETER(uint32_t, perfect_cache_latency, 3, "perfect cache that always hit")
+                PARAMETER(uint32_t, cache_latency, 1, "cache access latency")
                 PARAMETER(uint32_t, upstream_access_ports_num, 1, "upstream access ports number")
                 PARAMETER(uint32_t, downstream_access_ports_num, 1, "downstream access ports number")
             };
@@ -133,7 +133,7 @@ namespace TimingModel {
             uint64_t tag_mask;
             uint64_t index_mask;
             bool perfect_cache_;
-            uint32_t perfect_cache_latency_;
+            uint32_t cache_latency_;
 
             Credit next_level_credit;
             uint32_t upstream_access_ports_num_;
