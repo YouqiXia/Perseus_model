@@ -199,7 +199,7 @@ namespace TimingModel
         uint64_t               unique_id_     = 0; // Supplied by Fetch
         uint64_t               program_id_    = 0; // Supplied by a trace Reader or execution backend
         bool                   is_speculative_ = false; // Is this instruction soon to be flushed?
-        bool                   is_store_  = false;
+        bool                   is_store_;
         const bool             is_transfer_;  // Is this a transfer instruction (F2I/I2F)
         sparta::Scheduleable * ev_retire_    = nullptr;
         InstInfo               inst_;
