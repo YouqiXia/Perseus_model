@@ -17,6 +17,7 @@ namespace TimingModel {
             PerfectAluParameter(sparta::TreeNode* n) :
                 sparta::ParameterSet(n)
             {}
+	    PARAMETER(uint64_t, init_alu_credits, 2, "initial alu credits to BE")
         };
 
         static const char* name;
@@ -26,6 +27,9 @@ namespace TimingModel {
         void WriteBack(const InstGroup&);
 
         void SendInitCredit();
+    
+    private:
+        const uint64_t init_alu_credits_;
         
     public:
     // ports

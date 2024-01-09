@@ -24,12 +24,13 @@ namespace TimingModel {
                 BaseCacheParameterSet(sparta::TreeNode* n):
                     sparta::ParameterSet(n)
                 { }
+                PARAMETER(uint32_t, init_credits, 1, "initial credits value")
                 PARAMETER(uint32_t, cacheline_size, 64, "cache line size")
                 PARAMETER(uint32_t, way_num, 4, "way number")
                 PARAMETER(uint32_t, cache_size, 128*1024, "cache size")
                 PARAMETER(uint32_t, mshr_size, 1, "MSHR size")
                 PARAMETER(bool, is_perfect_cache, false, "perfect cache that always hit")
-                PARAMETER(uint32_t, perfect_cache_latency, 3, "perfect cache that always hit")
+                PARAMETER(uint32_t, cache_latency, 1, "cache access latency")
                 PARAMETER(uint32_t, upstream_access_ports_num, 1, "upstream access ports number")
                 PARAMETER(uint32_t, downstream_access_ports_num, 1, "downstream access ports number")
             };
@@ -39,6 +40,7 @@ namespace TimingModel {
 
         
         private:
+	    const uint32_t init_credits_;
             //Functional interface
             virtual void access(const MemAccInfoGroup& req){};
 
@@ -55,6 +57,10 @@ namespace TimingModel {
             virtual void recvResp(const MemAccInfoGroup& resp);
 
             virtual void recvCredit(const Credit& in);
+
+            virtual void InReqAbitor();
+
+            virtual void OutReqAbitor();
 
             virtual setTags& accessTagRam(const MemAccInfoPtr& req);
 
@@ -73,6 +79,8 @@ namespace TimingModel {
             virtual void mshrRefill();
 
             virtual void mshrSendResp();
+
+            virtual void mshrEvict();
 
             virtual bool checkMshrAvail(){ return mshr.isAvail(); };
 
@@ -127,7 +135,7 @@ namespace TimingModel {
             uint64_t tag_mask;
             uint64_t index_mask;
             bool perfect_cache_;
-            uint32_t perfect_cache_latency_;
+            uint32_t cache_latency_;
 
             Credit next_level_credit;
             uint32_t upstream_access_ports_num_;
