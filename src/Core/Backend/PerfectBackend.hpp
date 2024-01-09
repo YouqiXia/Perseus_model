@@ -50,6 +50,8 @@ namespace TimingModel {
 
         void RobCommit();
 
+        void RobWkupStore();
+
         void SendInitCredit();
 
     public:
@@ -72,6 +74,9 @@ namespace TimingModel {
         sparta::DataOutPort<Credit> fetch_backend_credit_out
             {&unit_port_set_, "fetch_backend_credit_out"};
 
+        sparta::DataOutPort<RobIdx> backend_lsu_rob_idx_wakeup_out
+            {&unit_port_set_, "backend_lsu_rob_idx_wakeup_out"};
+
         sparta::DataInPort<RobIdx> alu_backend_credit_in
             {&unit_port_set_, "alu_backend_credit_in", sparta::SchedulingPhase::Tick, 0};
 
@@ -85,6 +90,9 @@ namespace TimingModel {
 
         sparta::UniqueEvent<> set_rob_commmited
             {&unit_event_set_, "set_rob_commmited", CREATE_SPARTA_HANDLER(PerfectBackend, RobCommit)};
+
+        sparta::UniqueEvent<> rob_wakeup_st
+            {&unit_event_set_, "rob_wakeup_st", CREATE_SPARTA_HANDLER(PerfectBackend, RobWkupStore)};
 
     private:
         IIntegrateRob* rob_;

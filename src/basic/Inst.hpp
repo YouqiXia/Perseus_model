@@ -159,7 +159,10 @@ namespace TimingModel
         uint64_t getRobTag() { return inst_.RobTag; }
 
         void setLsuIssued(bool issued) { inst_.LsuIssued = issued; }
-        uint64_t getLsuIssued() { return inst_.LsuIssued; }
+        bool getLsuIssued() { return inst_.LsuIssued; }
+
+        void setStoreWkup(bool wkup) { inst_.IsStoreWkup = wkup; }
+        bool getStoreWkup() { return inst_.IsStoreWkup; }
 
         void setPhyRs1(PhyRegId_t PhyRs1) { inst_.PhyRs1 = PhyRs1; }
         uint64_t getPhyRs1() { return inst_.PhyRs1; }
@@ -201,7 +204,7 @@ namespace TimingModel
         uint64_t               unique_id_     = 0; // Supplied by Fetch
         uint64_t               program_id_    = 0; // Supplied by a trace Reader or execution backend
         bool                   is_speculative_ = false; // Is this instruction soon to be flushed?
-        bool                   is_store_  = false;
+        bool                   is_store_;
         const bool             is_transfer_;  // Is this a transfer instruction (F2I/I2F)
         sparta::Scheduleable * ev_retire_    = nullptr;
         InstInfo               inst_;
@@ -213,8 +216,8 @@ namespace TimingModel
 
     inline std::ostream & operator<<(std::ostream & os, const Inst & inst) {
         os << "uid: " << inst.getUniqueID()
-           << " " << std::setw(10)
-           << " " << std::hex << inst.getPC() << std::dec
+           << " " << std::setw(4)
+           << " Pc: " << std::hex << inst.getPC() << std::dec
            << " pid: " << inst.getProgramID() << " '" << inst.getDisasm() << "' ";
         return os;
     }

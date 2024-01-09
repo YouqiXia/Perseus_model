@@ -289,6 +289,7 @@ namespace TimingModel
             inst->setCompressedInst(inst->getOpCode());
             inst->setUncompressedInst(inst->getOpCode());
             inst->setImm(inst->getImmediate());
+            inst->setStoreWkup(false);
             InsnComplete(inst);
             if (const auto& mem_accesses = next_it_->getMemoryAccesses(); !mem_accesses.empty())
             {

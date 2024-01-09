@@ -19,6 +19,7 @@ namespace TimingModel
                const sparta::Clock             * clk) :
         opcode_info_    (opcode_info),
         inst_arch_info_ (inst_arch_info),
+        is_store_ (opcode_info->isInstType(mavis::OpcodeInfo::InstructionTypes::STORE)),
         is_transfer_(miscutils::isOneOf(inst_arch_info_->getTargetPipe(),
                                         InstArchInfo::TargetPipe::I2F,
                                         InstArchInfo::TargetPipe::F2I))

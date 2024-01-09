@@ -58,8 +58,25 @@ void IntegrateRob::Flush() {
     rob_.Reset();
 }
 
+bool IntegrateRob::getStoreRobIdx(RobIdx& rob_idx) {
+    bool find_store = false;
+    uint64_t idx = rob_.getHeader();
+    // std::cout << "rob header[" << idx << "] do store wakeup check: insn_RobTag[" << rob_[idx].inst_ptr->getRobTag() 
+    //           << "], '" << std::hex << rob_[idx].inst_ptr->getDisasm() << "' " << std::endl;
+    if ((rob_[idx].inst_ptr->getFuType() == FuncType::STU) && !rob_[idx].inst_ptr->getStoreWkup()) {
+        find_store = true;
+        rob_idx = idx;
+    }
+    return  find_store;
+}
+
 void IntegrateRob::AllocateRobEntry(InstPtr inst_ptr) {
     inst_ptr->setRobTag(rob_.getTail());
+    // std::cout << "Pc[0x" << std::hex << inst_ptr->getPC() << std::dec << "] allocate Rob entry[" << inst_ptr->getRobTag() << "], "
+    //           << "rob_header[" << rob_.getHeader() << "]" << std::endl;
+    if((inst_ptr->getFuType() == FuncType::STU) && (inst_ptr->getRobTag() == rob_.getHeader())){
+        inst_ptr->setStoreWkup(true);
+    }
     rob_.Push(RobEntry{inst_ptr, true, false, false});
 }
 

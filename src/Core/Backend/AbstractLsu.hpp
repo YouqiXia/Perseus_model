@@ -39,7 +39,7 @@ namespace TimingModel {
 
         void SendInitCredit();
 
-        void RobWakeUp();
+        void RobWakeUp(const RobIdx&);
 
         void handleAgu();
 
@@ -60,9 +60,12 @@ namespace TimingModel {
         // sparta::DataOutPort<Credit> rob_wakeup_stq_idx_in
         //     {&unit_port_set_, "rob_wakeup_stq_idx_in"};
         
-        //ports to be
+        //ports with be
         sparta::DataInPort<InstGroup> backend_lsu_inst_in
             {&unit_port_set_, "backend_lsu_inst_in", sparta::SchedulingPhase::Tick, 1};
+
+        sparta::DataInPort<RobIdx> backend_lsu_rob_idx_wakeup_in
+            {&unit_port_set_, "backend_lsu_rob_idx_wakeup_in", sparta::SchedulingPhase::Tick, 1};
 
         sparta::DataOutPort<Credit> backend_lsu_credit_out
             {&unit_port_set_, "backend_lsu_credit_out"};
@@ -70,7 +73,7 @@ namespace TimingModel {
         sparta::DataOutPort<RobIdx> lsu_backend_finish_out
             {&unit_port_set_, "lsu_backend_finish_out"};
 
-        //ports to cache
+        //ports with cache
         sparta::DataOutPort<MemAccInfoGroup> lsu_l1d_cache_out
             {&unit_port_set_, "lsu_l1d_cache_out"};
         sparta::DataInPort<MemAccInfoGroup> l1d_cache_lsu_in

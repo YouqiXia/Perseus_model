@@ -43,6 +43,8 @@ public:
     // write operation
     virtual void Flush() = 0;
 
+    virtual bool getStoreRobIdx(RobIdx&) = 0;
+
     virtual void AllocateRobEntry(InstPtr) = 0;
 
     virtual void IssueInst(RobIdx) = 0;

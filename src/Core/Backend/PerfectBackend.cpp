@@ -76,12 +76,14 @@ namespace TimingModel {
             if (inst_ptr->getFuType() != FuncType::STU && inst_ptr->getFuType() != FuncType::LDU) {
                 if (alu_credit_) {
                     alu_tmp_instgroup.push_back(inst_ptr);
+                    ILOG("issue insn to alu:" << inst_ptr);
                     SetRobIssued(inst_ptr->getRobTag());
                     --alu_credit_;
                 }
             } else {
                 if (lsu_credit_) {
                     lsu_tmp_instgroup.push_back(inst_ptr);
+                    ILOG("issue insn to lsu:" << inst_ptr);
                     SetRobIssued(inst_ptr->getRobTag());
                     --lsu_credit_;
                 }
@@ -95,6 +97,10 @@ namespace TimingModel {
         if (alu_tmp_instgroup.size()) {
             backend_alu_inst_out.send(alu_tmp_instgroup);
         }
+
+        if (!rob_->IsRobEmpty()) {
+            rob_wakeup_st.schedule(1);
+        }
     }
 
     void PerfectBackend::AllocateRobEntry(const InstGroup& inst_group) {
@@ -103,6 +109,7 @@ namespace TimingModel {
         }
         set_rob_commmited.schedule(1);
         issue_event_.schedule(1);
+        rob_wakeup_st.schedule();
     }
 
     void PerfectBackend::Finish(const RobIdx& rob_idx) {
@@ -139,5 +146,26 @@ namespace TimingModel {
             issue_event_.schedule(1);
         }
         set_rob_commmited.schedule(1);
+
+        if (!rob_->IsRobEmpty()) {
+            rob_wakeup_st.schedule(1);
+        }
+    }
+
+    void PerfectBackend::RobWkupStore() {
+        if (rob_->IsRobEmpty()) {
+            return;
+        }
+
+        RobIdx rob_idx = 0;
+        if(rob_->getStoreRobIdx(rob_idx)){
+            ILOG("send wakeup rob_idx: " << rob_idx << " to lsu");
+            backend_lsu_rob_idx_wakeup_out.send(rob_idx);
+        }
+
+        if (!rob_->IsRobEmpty()) {
+            ILOG("trigger next rob wakeup store event");
+            rob_wakeup_st.schedule(1);
+        }
     }
 }

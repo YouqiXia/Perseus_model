@@ -17,6 +17,9 @@ namespace TimingModel {
                                  mem_acc_info_allocator)
     {
         backend_lsu_inst_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(AbstractLsu, handleDispatch, InstGroup));
+
+        backend_lsu_rob_idx_wakeup_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(AbstractLsu, RobWakeUp, RobIdx));
+
         backend_lsu_inst_in >> sparta::GlobalOrderingPoint(node, "backend_lsu_multiport_order");
 
         l1d_cache_lsu_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(AbstractLsu, handleCacheResp, MemAccInfoGroup));
@@ -28,11 +31,24 @@ namespace TimingModel {
     void AbstractLsu::handleDispatch(const InstGroup& inst_group) {
         // Receive insts to issue_queue_
         for (InstPtr inst_ptr: inst_group) {
-           ILOG("LSU get inst: " << inst_ptr->getPC());
+           ILOG("LSU get inst: " << inst_ptr);
            issue_queue_.push_back(inst_ptr);
         }
 
         uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+    }
+
+    void AbstractLsu::RobWakeUp(const RobIdx& rob_idx) {
+        // wakeup store insn in issue_queue_
+        for (auto const &inst_ptr : issue_queue_) {
+            if(!inst_ptr->getStoreWkup() && (inst_ptr->getRobTag() == rob_idx)){
+                inst_ptr->setStoreWkup(true);
+                ILOG("Wake up store insn:" << inst_ptr);
+                break;
+            }
+        }
+
+        uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
     }
 
     void AbstractLsu::handleAgu() {
@@ -51,14 +67,18 @@ namespace TimingModel {
                         ld_queue_.Push(inst_ptr);
                         inst_ptr->setLsuIssued(true);
 
-                        ILOG("LSU issue load inst to ld_queue_: " << inst_ptr->getPC());
+                        ILOG("LSU issue load inst to ld_queue_: Pc[0x" << std::hex << inst_ptr->getPC() << "]");
                     }
                 } else if (inst_ptr->getFuType() == FuncType::STU) {
+                    if(!inst_ptr->getStoreWkup()){
+                        ILOG("Rob NOT wakeup causes fail issue store insn:" << inst_ptr);
+                        break;
+                    }
                     if(!st_queue_.full()) {
                         st_queue_.Push(inst_ptr);
                         inst_ptr->setLsuIssued(true);
 
-                        ILOG("LSU issue store inst to st_queue_: " << inst_ptr->getPC());
+                        ILOG("LSU issue store inst to st_queue_: Pc[0x" << std::hex << inst_ptr->getPC() << "]");
                     }
                 }
             }
@@ -103,7 +123,7 @@ namespace TimingModel {
             req->insn = insn;
             req->address = insn->getTargetVAddr();
             reqs.emplace_back(req);
-            ILOG("abstract lsu access cache: " << insn->getPC());
+            ILOG("abstract lsu access cache: Pc[0x" << std::hex << insn->getPC() << "]");
             cache_credit_--;
         }
         if(reqs.size())
@@ -157,7 +177,7 @@ namespace TimingModel {
                     lsu_backend_finish_out.send(inst_ptr->getRobTag());
                     backend_lsu_credit_out.send(1);
 
-                    ILOG("abstract lsu write back: " << inst_ptr->getPC());
+                    ILOG("abstract lsu write back: Pc[0x" << std::hex << inst_ptr->getPC() << "]");
                     break;
                 }
             }

@@ -47,6 +47,7 @@ namespace TimingModel {
 
                 return;
             }
+            ILOG("perfect frontend genInsn " << dinst);
             inst_group.emplace_back(dinst);
             --credit_;
         }

@@ -24,6 +24,8 @@ public:
     // write operation
     void Flush() final;
 
+    bool getStoreRobIdx(RobIdx&) final;
+
     void AllocateRobEntry(InstPtr) final;
 
     void IssueInst(RobIdx) final;
