@@ -24,6 +24,7 @@ namespace TimingModel {
                 BaseCacheParameterSet(sparta::TreeNode* n):
                     sparta::ParameterSet(n)
                 { }
+                PARAMETER(uint32_t, init_credits, 1, "initial credits value")
                 PARAMETER(uint32_t, cacheline_size, 64, "cache line size")
                 PARAMETER(uint32_t, way_num, 4, "way number")
                 PARAMETER(uint32_t, cache_size, 128*1024, "cache size")
@@ -39,6 +40,7 @@ namespace TimingModel {
 
         
         private:
+	    const uint32_t init_credits_;
             //Functional interface
             virtual void access(const MemAccInfoGroup& req){};
 

@@ -9,6 +9,7 @@ namespace TimingModel {
 
     BaseCache::BaseCache(sparta::TreeNode* node, const BaseCacheParameterSet* p):
         sparta::Unit(node),
+        init_credits_(p->init_credits),
         cacheline_size_(p->cacheline_size),
         way_num_(p->way_num),
         cache_size_(p->cache_size),
@@ -57,7 +58,7 @@ namespace TimingModel {
         
     }
     void BaseCache::SendInitCredit() {
-        out_upstream_credit.send(1);
+        out_upstream_credit.send(init_credits_);
         ILOG("send 1 credit to upstream");
     }
     void BaseCache::funcaccess(const MemAccInfoGroup& reqs){

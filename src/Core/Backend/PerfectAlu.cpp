@@ -6,7 +6,8 @@ namespace TimingModel {
     const char* PerfectAlu::name = "perfect_alu";
 
     PerfectAlu::PerfectAlu(sparta::TreeNode* node, const PerfectAluParameter* p) :
-        sparta::Unit(node)
+        sparta::Unit(node),
+	init_alu_credits_(p->init_alu_credits)
     {
         backend_alu_inst_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectAlu, WriteBack, InstGroup));
         backend_alu_inst_in >> sparta::GlobalOrderingPoint(node, "backend_alu_multiport_order");
@@ -23,6 +24,6 @@ namespace TimingModel {
     }
 
     void PerfectAlu::SendInitCredit() {
-        backend_alu_credit_out.send(2);
+        backend_alu_credit_out.send(init_alu_credits_);
     }
 }
