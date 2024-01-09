@@ -225,21 +225,4 @@ namespace TimingModel
     using InstAllocator         = sparta::SpartaSharedPointerAllocator<Inst>;
     using InstArchInfoAllocator = sparta::SpartaSharedPointerAllocator<InstArchInfo>;
 
-    struct RobEntry
-    {
-        InstPtr inst_ptr;
-        bool is_valid;
-        bool is_finished;
-        bool is_issued;
-    };
-
-    struct ScalarRSEntry
-    {
-        RSIdx rs_idx;
-        InstPtr inst_ptr;
-        RobIdx forwardRobidx[2];
-        bool is_forwarding[2];
-        bool is_OperandReady[2];
-    };
-
 }

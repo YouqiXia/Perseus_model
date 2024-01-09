@@ -38,6 +38,7 @@ enum FuncType {
 using FuncUnitType = std::string;
 
 using FuncMap = std::map<FuncUnitType, std::set<FuncType>>;
+using FuncCreditMap = std::map<FuncUnitType, Credit>;
 
 /* exception */
 struct Exception

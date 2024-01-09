@@ -58,7 +58,7 @@ namespace TimingModel {
 
         void PassingInst();
 
-        void GetForwardingData(const InstPtr&);
+        void GetForwardingData(const InstGroupPtr&);
 
         void AcceptCredit_(const Credit&);
 
@@ -83,9 +83,8 @@ namespace TimingModel {
                 {&unit_port_set_, "following_reservation_credit_in", sparta::SchedulingPhase::Tick, 0};
 
         // with CDB
-        sparta::DataInPort<InstPtr> forwarding_reservation_inst_in
+        sparta::DataInPort<InstGroupPtr> forwarding_reservation_inst_in
                 {&unit_port_set_, "forwarding_reservation_inst_in", sparta::SchedulingPhase::Tick, 1};
-
 
         // events
         sparta::SingleCycleUniqueEvent<> passing_event

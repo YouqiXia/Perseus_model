@@ -32,6 +32,8 @@ namespace TimingModel {
         //! to bind things together.
         void bindTree_() override;
 
+        void BuildFuncRelatives_();
+
     private:
         std::string workload_;
     };

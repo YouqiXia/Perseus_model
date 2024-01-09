@@ -25,7 +25,7 @@ namespace TimingModel {
                     sparta::ParameterSet(n)
             {}
 
-            PARAMETER(uint32_t, issue_width, 2, "the issuing bandwidth in a cycle")
+            PARAMETER(uint32_t, issue_width, 4, "the issuing bandwidth in a cycle")
             PARAMETER(uint32_t, rob_depth, 32, "the number of isa register file")
         };
 
@@ -36,9 +36,11 @@ namespace TimingModel {
     private:
         void HandleFlush_(const FlushingCriteria&);
 
-        void Finish_(const InstPtr&);
+        void Finish_(const InstGroupPtr&);
 
         void AllocateRob_(const InstGroupPtr&);
+
+        void InitCredit_();
 
         void Commit_();
 
@@ -56,8 +58,8 @@ namespace TimingModel {
                 {&unit_port_set_, "rob_preceding_credit_out"};
 
         // with function unit
-        sparta::DataInPort<InstPtr> func_unit_rob_finish_in
-                {&unit_port_set_, "following_renaming_credit_in", sparta::SchedulingPhase::Tick, 1};
+        sparta::DataInPort<InstGroupPtr> write_back_rob_finish_in
+                {&unit_port_set_, "write_back_rob_finish_in", sparta::SchedulingPhase::Tick, 1};
 
         // with Renaming table
         sparta::DataOutPort<InstGroupPtr> Rob_cmt_inst_out
@@ -65,7 +67,6 @@ namespace TimingModel {
 
 
         // events
-
         sparta::SingleCycleUniqueEvent<> commit_event
                 {&unit_event_set_, "commit_event", CREATE_SPARTA_HANDLER(Rob, Commit_)};
 
@@ -75,6 +76,8 @@ namespace TimingModel {
         sparta::Queue<bool> finish_queue_;
 
         const uint64_t issue_width_;
+
+        const uint64_t rob_depth_;
 
         Credit credit_ = 0;
 

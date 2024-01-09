@@ -11,11 +11,11 @@ namespace TimingModel {
                        const sparta::Clock * clk,
                        sparta::StatisticSet * stat_set) :
         free_list_(name, depth, clk, stat_set),
-        free_list_backup_(name, depth, clk, stat_set)
+        free_list_backup_(name+"_backup", depth, clk, stat_set)
     {
         for(uint64_t i = 1; i <= depth; ++i) {
-            free_list_.push(depth);
-            free_list_backup_.push(depth);
+            free_list_.push(i);
+            free_list_backup_.push(i);
         }
     }
 

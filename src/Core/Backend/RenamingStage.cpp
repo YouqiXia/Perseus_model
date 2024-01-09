@@ -1,6 +1,7 @@
 #include "sparta/utils/LogUtils.hpp"
 
 #include <cmath>
+#include <iostream>
 
 #include "RenamingStage.hpp"
 
@@ -14,8 +15,8 @@ namespace TimingModel {
         renaming_table_(p->isa_reg_num, 0),
         renaming_stage_queue_depth_(p->renaming_stage_queue_depth),
         renaming_stage_queue_
-            ("renaming queue", p->renaming_stage_queue_depth, node->getClock(), &unit_stat_set_),
-        free_list_("free list", p->free_list_depth, node->getClock(), &unit_stat_set_)
+            ("rename_queue", p->renaming_stage_queue_depth, node->getClock(), &unit_stat_set_),
+        free_list_("free_list", p->free_list_depth, node->getClock(), &unit_stat_set_)
     {
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(RenamingStage, InitCredit_));
         renaming_flush_in.registerConsumerHandler
@@ -23,15 +24,34 @@ namespace TimingModel {
         preceding_renaming_inst_in.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(RenamingStage, AllocateInst_, InstGroupPtr));
         following_renaming_credit_in.registerConsumerHandler
-            (CREATE_SPARTA_HANDLER_WITH_DATA(RenamingStage, AcceptCredit_, Credit));
+            (CREATE_SPARTA_HANDLER_WITH_DATA(RenamingStage, AcceptDispatchCredit_, Credit));
+        rob_renaming_credit_in.registerConsumerHandler
+            (CREATE_SPARTA_HANDLER_WITH_DATA(RenamingStage, AcceptRobCredit_, Credit));
         Rob_cmt_inst_in.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(RenamingStage, RobCommit_, InstGroupPtr));
+
+        // preceding -> rob & dispatch stage
+        following_renaming_credit_in >> sparta::GlobalOrderingPoint(node, "renaming_node");
+        rob_renaming_credit_in >> sparta::GlobalOrderingPoint(node, "renaming_node");
+        sparta::GlobalOrderingPoint(node, "renaming_node") >> rename_event;
     }
 
-    void RenamingStage::AcceptCredit_(const Credit& credit) {
-        credit_ += credit;
+    RenamingStage::~RenamingStage() {
+        std::cout << "haha" << std::endl;
+    }
 
-        ILOG("RenamingStage get credits: " << credit);
+    void RenamingStage::AcceptRobCredit_(const Credit& credit) {
+        rob_credit_ += credit;
+
+        ILOG("RenamingStage get rob credits: " << credit);
+
+        rename_event.schedule(sparta::Clock::Cycle(0));
+    }
+
+    void RenamingStage::AcceptDispatchCredit_(const Credit& credit) {
+        dispatch_credit_ += credit;
+
+        ILOG("RenamingStage get rob credits: " << credit);
 
         rename_event.schedule(sparta::Clock::Cycle(0));
     }
@@ -41,6 +61,7 @@ namespace TimingModel {
     }
 
     void RenamingStage::AllocateInst_(const InstGroupPtr& inst_group_ptr) {
+        ILOG("renaming stage get instructions: " << inst_group_ptr->size());
         for (auto& inst_ptr: *inst_group_ptr) {
             renaming_stage_queue_.push(inst_ptr);
         }
@@ -63,17 +84,25 @@ namespace TimingModel {
     }
 
     void RenamingStage::RenameInst_() {
-        uint64_t produce_inst_num = std::min<uint64_t>(credit_, renaming_stage_queue_.size());
+        if (renaming_stage_queue_.empty()) {
+            return;
+        }
+        uint64_t produce_inst_num = std::min<uint64_t>(dispatch_credit_, rob_credit_);
+        produce_inst_num = std::min<uint64_t>(produce_inst_num, issue_width_);
         InstGroupPtr inst_group_tmp_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
 
         renaming_preceding_credit_out.send(produce_inst_num);
 
         while(produce_inst_num--) {
+            if (renaming_stage_queue_.empty()) {
+                break;
+            }
             auto inst_tmp_ptr = renaming_stage_queue_.front();
             RenameInstImp_(inst_tmp_ptr);
             inst_group_tmp_ptr->emplace_back(inst_tmp_ptr);
             renaming_stage_queue_.pop();
-            --credit_;
+            --dispatch_credit_;
+            --rob_credit_;
         }
 
         if (!renaming_stage_queue_.empty()) {

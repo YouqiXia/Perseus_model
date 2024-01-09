@@ -26,21 +26,21 @@ namespace TimingModel {
         following_reservation_credit_in.registerConsumerHandler
                 (CREATE_SPARTA_HANDLER_WITH_DATA(ReservationStation, AcceptCredit_, Credit));
         forwarding_reservation_inst_in.registerConsumerHandler
-                (CREATE_SPARTA_HANDLER_WITH_DATA(ReservationStation, GetForwardingData, InstPtr));
+                (CREATE_SPARTA_HANDLER_WITH_DATA(ReservationStation, GetForwardingData, InstGroupPtr));
         sparta_assert(p->rs_func_type != "", "reservation with no func type assigned");
     }
 
 
     void ReservationStation::AcceptCredit_(const TimingModel::Credit &credit) {
         credit_ += credit;
-        ILOG(name << "accept credits: " << credit);
+        ILOG(getName() << " accept credits: " << credit);
 
         passing_event.schedule(sparta::Clock::Cycle(0));
     }
 
     void ReservationStation::HandleFlush_(const TimingModel::FlushingCriteria &flush_criteria) {
         passing_event.cancel();
-        ILOG(name << " is flushed.");
+        ILOG(getName() << " is flushed.");
 
         RsCreditPtr rs_credit_ptr_tmp{new RsCredit{rs_func_type_, reservation_station_.size()}};
         reservation_preceding_credit_out.send(rs_credit_ptr_tmp);
@@ -53,7 +53,8 @@ namespace TimingModel {
     }
 
     void ReservationStation::AllocateReStation(const TimingModel::InstPtr &inst_ptr) {
-        ReStationEntryPtr tmp_restation_entry;
+        ILOG(getName() << " get instructions: 1");
+        ReStationEntryPtr tmp_restation_entry {new ReStationEntry};
         tmp_restation_entry->inst_ptr = inst_ptr;
         if (!inst_ptr->getIsRs1Forward()) {
             tmp_restation_entry->rs1_valid = true;
@@ -68,22 +69,27 @@ namespace TimingModel {
                 schedule(sparta::Clock::Cycle(1));
     }
 
-    void ReservationStation::GetForwardingData(const TimingModel::InstPtr &forwarding_inst_ptr) {
-        for (auto &rs_entry_ptr: reservation_station_) {
-            if (!rs_entry_ptr->rs1_valid) {
-                if (rs_entry_ptr->inst_ptr->getRs1ForwardRob() == forwarding_inst_ptr->getRobTag()) {
-                    rs_entry_ptr->inst_ptr->setOperand1(forwarding_inst_ptr->getPhyRd());
+    void ReservationStation::GetForwardingData(const TimingModel::InstGroupPtr &forwarding_inst_group_ptr) {
+        for (auto& forwarding_inst_ptr: *forwarding_inst_group_ptr) {
+            for (auto &rs_entry_ptr: reservation_station_) {
+                if (!rs_entry_ptr->rs1_valid) {
+                    if (rs_entry_ptr->inst_ptr->getRs1ForwardRob() == forwarding_inst_ptr->getRobTag()) {
+                        rs_entry_ptr->inst_ptr->setOperand1(forwarding_inst_ptr->getPhyRd());
+                    }
                 }
-            }
-            if (!rs_entry_ptr->rs2_valid) {
-                if (rs_entry_ptr->inst_ptr->getRs2ForwardRob() == forwarding_inst_ptr->getRobTag()) {
-                    rs_entry_ptr->inst_ptr->setOperand2(forwarding_inst_ptr->getPhyRd());
+                if (!rs_entry_ptr->rs2_valid) {
+                    if (rs_entry_ptr->inst_ptr->getRs2ForwardRob() == forwarding_inst_ptr->getRobTag()) {
+                        rs_entry_ptr->inst_ptr->setOperand2(forwarding_inst_ptr->getPhyRd());
+                    }
                 }
             }
         }
     }
 
     void ReservationStation::PassingInst() {
+        if (reservation_station_.empty()) {
+            return;
+        }
         // in-order passing
         InstPtr inst_ptr_tmp;
         uint64_t produce_num = std::min(credit_, issue_num_);

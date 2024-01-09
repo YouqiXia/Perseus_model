@@ -45,4 +45,4 @@ add_subdirectory (${STF_LIB_BASE})
 add_executable(model ${DIR_SRCS})
 
 # link lib
-target_link_libraries(model SPARTA::sparta mavis ${STF_LINK_LIBS})
+target_link_libraries(model PRIVATE SPARTA::sparta mavis ${STF_LINK_LIBS})

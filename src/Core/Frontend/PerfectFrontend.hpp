@@ -23,7 +23,7 @@ namespace TimingModel {
                 sparta::ParameterSet(n)
             {}
 
-            PARAMETER(uint64_t, issue_num, 2, "the issuing bandwidth in a cycle")
+            PARAMETER(uint64_t, issue_num, 4, "the issuing bandwidth in a cycle")
             PARAMETER(std::string, input_file, "", "the stf entry")
         };
 

@@ -23,7 +23,7 @@ public:
             sparta::ParameterSet(n) 
         {}
 
-        PARAMETER(uint32_t, issue_width, 2, "the issuing bandwidth in a cycle")
+        PARAMETER(uint32_t, issue_width, 4, "the issuing bandwidth in a cycle")
         PARAMETER(uint32_t, isa_reg_num, 32, "the number of isa register file")
         PARAMETER(uint32_t, renaming_stage_queue_depth, 4, "the depth of renaming queue")
         PARAMETER(uint32_t, free_list_depth, 64, "the depth of freelist")
@@ -33,8 +33,12 @@ public:
 
     RenamingStage(sparta::TreeNode* node, const RenamingParameter* p);
 
+    ~RenamingStage();
+
 private:
-    void AcceptCredit_(const Credit&);
+    void AcceptRobCredit_(const Credit&);
+
+    void AcceptDispatchCredit_(const Credit&);
 
     void InitCredit_();
 
@@ -71,14 +75,16 @@ private:
             {&unit_port_set_, "following_renaming_credit_in", sparta::SchedulingPhase::Tick, 0};
 
         // with rob
+        sparta::DataInPort<Credit> rob_renaming_credit_in
+                {&unit_port_set_, "rob_renaming_credit_in", sparta::SchedulingPhase::Tick, 0};
+
         sparta::DataInPort<InstGroupPtr> Rob_cmt_inst_in
             {&unit_port_set_, "Rob_cmt_inst_in", sparta::SchedulingPhase::Tick, 0};
 
 
     // events
-
         sparta::SingleCycleUniqueEvent<> rename_event
-            {&unit_event_set_, "rename_event", CREATE_SPARTA_HANDLER(RenamingStage, RenameInst)};
+            {&unit_event_set_, "rename_event", CREATE_SPARTA_HANDLER(RenamingStage, RenameInst_)};
 
 private:
     InstQueue renaming_stage_queue_;
@@ -91,7 +97,9 @@ private:
 
     const uint64_t renaming_stage_queue_depth_;
 
-    Credit credit_ = 0;
+    Credit dispatch_credit_ = 0;
+
+    Credit rob_credit_ = 0;
 
 };
 

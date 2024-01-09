@@ -49,7 +49,7 @@ namespace TimingModel {
         if (credit_) {
             produce_inst_event_.schedule(1);
         }
-        ILOG("perfect frontend send " << inst_group_ptr.size() << " instructions to backend");
+        ILOG("perfect frontend send " << inst_group_ptr->size() << " instructions to backend");
         fetch_backend_inst_out.send(inst_group_ptr);
     }
 

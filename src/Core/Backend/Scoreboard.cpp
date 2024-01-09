@@ -18,6 +18,9 @@ namespace TimingModel {
     }
 
     bool Scoreboard::IsForwarding(PhyRegId_t phy_reg_idx) {
+        if (phy_reg_idx == 0) {
+            return false;
+        }
         sparta_assert(phy_reg_idx <= phy_regfile_num_, "Scoreboard access is out of range");
         return score_board_[phy_reg_idx].isValid();
     }
@@ -28,11 +31,17 @@ namespace TimingModel {
     }
 
     void Scoreboard::SetForwardingEntry(PhyRegId_t phy_reg_idx, RobIdx_t rob_idx) {
+        if (phy_reg_idx == 0) {
+            return;
+        }
         sparta_assert(phy_reg_idx <= phy_regfile_num_, "Scoreboard access is out of range");
         score_board_[phy_reg_idx] = rob_idx;
     }
 
     void Scoreboard::ClearForwardingEntry(PhyRegId_t phy_reg_idx) {
+        if (phy_reg_idx == 0) {
+            return;
+        }
         sparta_assert(phy_reg_idx <= phy_regfile_num_, "Scoreboard access is out of range");
         score_board_[phy_reg_idx].clearValid();
     }
