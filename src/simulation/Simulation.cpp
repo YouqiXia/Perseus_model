@@ -135,6 +135,9 @@ namespace TimingModel {
 
         sparta::bind(getRoot()->getChildAs<sparta::Port>("abstract_lsu.ports.backend_lsu_inst_in"), 
                      getRoot()->getChildAs<sparta::Port>("perfect_backend.ports.backend_lsu_inst_out"));
+
+        sparta::bind(getRoot()->getChildAs<sparta::Port>("abstract_lsu.ports.lsu_backend_wr_data_out"), 
+                     getRoot()->getChildAs<sparta::Port>("perfect_backend.ports.lsu_backend_wr_data_in"));
         
         sparta::bind(getRoot()->getChildAs<sparta::Port>("abstract_lsu.ports.backend_lsu_rob_idx_wakeup_in"), 
                      getRoot()->getChildAs<sparta::Port>("perfect_backend.ports.backend_lsu_rob_idx_wakeup_out"));

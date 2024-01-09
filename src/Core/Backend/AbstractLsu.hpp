@@ -67,6 +67,9 @@ namespace TimingModel {
         sparta::DataInPort<RobIdx> backend_lsu_rob_idx_wakeup_in
             {&unit_port_set_, "backend_lsu_rob_idx_wakeup_in", sparta::SchedulingPhase::Tick, 1};
 
+        sparta::DataOutPort<InstPtr> lsu_backend_wr_data_out
+            {&unit_port_set_, "lsu_backend_wr_data_out"};
+
         sparta::DataOutPort<Credit> backend_lsu_credit_out
             {&unit_port_set_, "backend_lsu_credit_out"};
 

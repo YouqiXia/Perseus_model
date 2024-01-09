@@ -31,6 +31,7 @@ namespace TimingModel {
         fetch_backend_inst_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectBackend, AllocateRobEntry, InstGroup));
         alu_backend_finish_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectBackend, Finish, RobIdx));
         lsu_backend_finish_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectBackend, Finish, RobIdx));
+        lsu_backend_wr_data_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectBackend, WriteBack, InstPtr));
         alu_backend_credit_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectBackend, AcceptCreditFromALU, Credit));
         lsu_backend_credit_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectBackend, AcceptCreditFromLSU, Credit));
 
@@ -114,6 +115,10 @@ namespace TimingModel {
 
     void PerfectBackend::Finish(const RobIdx& rob_idx) {
         rob_->FinishInst(rob_idx);
+    }
+
+    void PerfectBackend::WriteBack(const InstPtr& inst) {
+        ILOG("load insn writeback prf: " << inst);
     }
 
     void PerfectBackend::SetRobIssued(const RobIdx& rob_idx) {

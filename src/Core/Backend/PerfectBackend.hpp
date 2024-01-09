@@ -46,6 +46,8 @@ namespace TimingModel {
 
         void Finish(const RobIdx&);
 
+        void WriteBack(const InstPtr&);
+
         void SetRobIssued(const RobIdx&);
 
         void RobCommit();
@@ -70,6 +72,9 @@ namespace TimingModel {
 
         sparta::DataInPort<RobIdx> lsu_backend_finish_in
             {&unit_port_set_, "lsu_backend_finish_in", sparta::SchedulingPhase::Tick, 1};
+
+        sparta::DataInPort<InstPtr> lsu_backend_wr_data_in
+            {&unit_port_set_, "lsu_backend_wr_data_in", sparta::SchedulingPhase::Tick, 1};
 
         sparta::DataOutPort<Credit> fetch_backend_credit_out
             {&unit_port_set_, "fetch_backend_credit_out"};

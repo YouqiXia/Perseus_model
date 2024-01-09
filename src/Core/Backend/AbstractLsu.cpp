@@ -175,6 +175,9 @@ namespace TimingModel {
 
                     InstPtr inst_ptr = respMemInfoPtr->insn;
                     lsu_backend_finish_out.send(inst_ptr->getRobTag());
+                    if(inst_ptr->getFuType() == FuncType::LDU){
+                        lsu_backend_wr_data_out.send(inst_ptr);
+                    }
                     backend_lsu_credit_out.send(1);
 
                     ILOG("abstract lsu write back: Pc[0x" << std::hex << inst_ptr->getPC() << "]");
