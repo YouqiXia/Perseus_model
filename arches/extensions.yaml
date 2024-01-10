@@ -1,0 +1,24 @@
+top.extension.topo_extensions:
+  module_topology: ["mavis", "perfect_frontend","perfect_backend", "perfect_alu", "abstract_lsu", "l1d_cache", "l2_cache","abstract_memory"]
+  binding_topology: ["perfect_alu.ports.alu_backend_finish_out", "perfect_backend.ports.alu_backend_finish_in",
+                     "perfect_alu.ports.backend_alu_inst_in", "perfect_backend.ports.backend_alu_inst_out",
+                     "abstract_lsu.ports.lsu_backend_finish_out", "perfect_backend.ports.lsu_backend_finish_in",                     
+                     "abstract_lsu.ports.backend_lsu_inst_in", "perfect_backend.ports.backend_lsu_inst_out",
+                     "abstract_lsu.ports.lsu_backend_wr_data_out", "perfect_backend.ports.lsu_backend_wr_data_in",                     
+                     "abstract_lsu.ports.backend_lsu_rob_idx_wakeup_in", "perfect_backend.ports.backend_lsu_rob_idx_wakeup_out",
+                     "perfect_frontend.ports.fetch_backend_inst_out", "perfect_backend.ports.fetch_backend_inst_in",                 
+                     "perfect_frontend.ports.fetch_backend_credit_in", "perfect_backend.ports.fetch_backend_credit_out",
+                     "perfect_backend.ports.lsu_backend_credit_in", "abstract_lsu.ports.backend_lsu_credit_out",
+                     "perfect_backend.ports.alu_backend_credit_in", "perfect_alu.ports.backend_alu_credit_out",
+                     "abstract_lsu.ports.l1d_cache_lsu_credit_in", "l1d_cache.ports.out_upstream_credit",
+                     "abstract_lsu.ports.l1d_cache_lsu_in", "l1d_cache.ports.out_access_resp",
+                     "abstract_lsu.ports.lsu_l1d_cache_out", "l1d_cache.ports.in_access_req",
+                     "l1d_cache.ports.in_downstream_credit", "l2_cache.ports.out_upstream_credit",
+                     "l1d_cache.ports.in_access_resp", "l2_cache.ports.out_access_resp",
+                     "l1d_cache.ports.out_access_req", "l2_cache.ports.in_access_req",
+                     "l2_cache.ports.in_downstream_credit", "abstract_memory.ports.out_upstream_credit",
+                     "l2_cache.ports.in_access_resp", "abstract_memory.ports.mem_resp_out",
+                     "l2_cache.ports.out_access_req", "abstract_memory.ports.mem_req_in"]
+
+  fu_credit_map: [  ] 
+  fu_map: []
