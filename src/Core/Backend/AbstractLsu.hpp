@@ -43,18 +43,20 @@ namespace TimingModel {
 
         void handleAgu();
 
-        void WriteBack(const InstGroup&);
+        // split insn in issue queue to ldq/stq
+        void SplitInst();
 
-        // Issue/Re-issue ready instructions in the issue queue
-        void issueInst();
+        void InOrderIssue();
 
         void sendInsts(const InstGroup& inst_group);
 
-        bool isReadyToIssueInsts() const;
+        bool isReadyToSplitInsts();
 
         void handleCacheResp(const MemAccInfoGroup& resps);
 
         void acceptCredit(const Credit& credit);
+
+        void LSQ_Dealloc();
     public:
         // ports
         // sparta::DataOutPort<Credit> rob_wakeup_stq_idx_in
@@ -67,13 +69,13 @@ namespace TimingModel {
         sparta::DataInPort<RobIdx> backend_lsu_rob_idx_wakeup_in
             {&unit_port_set_, "backend_lsu_rob_idx_wakeup_in", sparta::SchedulingPhase::Tick, 1};
 
-        sparta::DataOutPort<InstPtr> lsu_backend_wr_data_out
+        sparta::DataOutPort<InstGroup> lsu_backend_wr_data_out
             {&unit_port_set_, "lsu_backend_wr_data_out"};
 
         sparta::DataOutPort<Credit> backend_lsu_credit_out
             {&unit_port_set_, "backend_lsu_credit_out"};
 
-        sparta::DataOutPort<RobIdx> lsu_backend_finish_out
+        sparta::DataOutPort<InstGroup> lsu_backend_finish_out
             {&unit_port_set_, "lsu_backend_finish_out"};
 
         //ports with cache
@@ -88,9 +90,17 @@ namespace TimingModel {
         //     {&unit_port_set_, "lsu_backend_wr_data_out"};
 
         // Event
+        // To split instruction
+        sparta::UniqueEvent<> uev_split_inst_{&unit_event_set_, "split_inst",
+                CREATE_SPARTA_HANDLER(AbstractLsu, SplitInst)};
+
         // To issue instruction
         sparta::UniqueEvent<> uev_issue_inst_{&unit_event_set_, "issue_inst",
-                CREATE_SPARTA_HANDLER(AbstractLsu, issueInst)};
+                CREATE_SPARTA_HANDLER(AbstractLsu, InOrderIssue)};
+
+        // To dealloc instruction
+        sparta::UniqueEvent<> uev_dealloc_inst_{&unit_event_set_, "dealloc_inst",
+                CREATE_SPARTA_HANDLER(AbstractLsu, LSQ_Dealloc)};
 
         MemAccInfoAllocator& abstract_lsu_mem_acc_info_allocator_;
     private:
@@ -99,14 +109,17 @@ namespace TimingModel {
 
         // inst queue
         using LoadStoreIssueQueue = sparta::Buffer<InstPtr>;
-        LoadStoreIssueQueue issue_queue_;
+        //LoadStoreIssueQueue issue_queue_;
+        LoopQueue<InstPtr> issue_queue_;
         const uint32_t issue_queue_size_;
 
         // ld and st queue
         LoopQueue<InstPtr> ld_queue_;
         LoopQueue<InstPtr> st_queue_;
+        // LoadStoreIssueQueue ld_queue_;
+        // LoadStoreIssueQueue st_queue_;
         // cache credit
-        Credit cache_credit_;
+        Credit cache_credit_ = 0;
     };
 
 }

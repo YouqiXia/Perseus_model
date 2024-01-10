@@ -9,7 +9,7 @@ namespace TimingModel {
         sparta::Unit(node),
         load_to_use_latency_(p->load_to_use_latency),
         cache_access_ports_num_(p->cache_access_ports_num),
-        issue_queue_("lsu_inst_queue", p->issue_queue_size, getClock()),
+        issue_queue_(p->issue_queue_size),
         issue_queue_size_(p->issue_queue_size),
         ld_queue_(p->ld_queue_size),
         st_queue_(p->st_queue_size),
@@ -32,88 +32,178 @@ namespace TimingModel {
         // Receive insts to issue_queue_
         for (InstPtr inst_ptr: inst_group) {
            ILOG("LSU get inst: " << inst_ptr);
-           issue_queue_.push_back(inst_ptr);
+           issue_queue_.Push(inst_ptr);
         }
 
+        uev_dealloc_inst_.schedule(sparta::Clock::Cycle(0));
         uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
+        uev_split_inst_.schedule(sparta::Clock::Cycle(0));
+        
     }
 
     void AbstractLsu::RobWakeUp(const RobIdx& rob_idx) {
         // wakeup store insn in issue_queue_
-        for (auto const &inst_ptr : issue_queue_) {
-            if(!inst_ptr->getStoreWkup() && (inst_ptr->getRobTag() == rob_idx)){
+        auto idx = issue_queue_.getHeader();
+        auto usage = issue_queue_.getUsage(); 
+        while(usage--) {
+            auto& inst_ptr = issue_queue_[idx];
+            if (!inst_ptr->getStoreWkup() && (inst_ptr->getRobTag() == rob_idx)) {
                 inst_ptr->setStoreWkup(true);
                 ILOG("Wake up store insn:" << inst_ptr);
                 break;
-            }
+            } 
+            idx = issue_queue_.getNextPtr(idx);
         }
 
+        uev_dealloc_inst_.schedule(sparta::Clock::Cycle(1));
         uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
+        uev_split_inst_.schedule(sparta::Clock::Cycle(1));
+        
     }
 
     void AbstractLsu::handleAgu() {
         // TODO add agu logic
     }
 
-    // Issue/Re-issue ready instructions in the issue queue
-    void AbstractLsu::issueInst()
-    {
-        // Instruction issue arbitration
-        // For now, we just pop every inst for queue to ldq & stq
-        for (auto const &inst_ptr : issue_queue_) {
-            if (!inst_ptr->getLsuIssued()) {
-                if (inst_ptr->getFuType() == FuncType::LDU) {
-                    if(!ld_queue_.full()) {
-                        ld_queue_.Push(inst_ptr);
-                        inst_ptr->setLsuIssued(true);
-
-                        ILOG("LSU issue load inst to ld_queue_: Pc[0x" << std::hex << inst_ptr->getPC() << "]");
-                    }
-                } else if (inst_ptr->getFuType() == FuncType::STU) {
-                    if(!inst_ptr->getStoreWkup()){
-                        ILOG("Rob NOT wakeup causes fail issue store insn:" << inst_ptr);
-                        break;
-                    }
-                    if(!st_queue_.full()) {
-                        st_queue_.Push(inst_ptr);
-                        inst_ptr->setLsuIssued(true);
-
-                        ILOG("LSU issue store inst to st_queue_: Pc[0x" << std::hex << inst_ptr->getPC() << "]");
-                    }
-                }
-            }
-        }
-
-        // Send request to cache
-        // TODO reordered insts from ld_queue_ and st_queue_
+    //control ldq/stq visit DCache in program order.
+    void AbstractLsu::InOrderIssue() {
+        ILOG("enter order control");
         uint64_t cnt = std::min(cache_credit_, cache_access_ports_num_);
+
+        auto ld_idx = ld_queue_.getHeader();
+        auto ld_usage = ld_queue_.getUsage();       
+        auto st_idx = st_queue_.getHeader();
+        auto st_usage = st_queue_.getUsage();
+        uint64_t first_to_issue_ld_idx = 0;
+        uint64_t first_to_issue_st_idx = 0;
+        uint32_t ld_to_issue_cnt = 0;
+        uint32_t st_to_issue_cnt = 0;
+        bool exist_ld_to_issue = false;
+        bool exist_st_to_issue = false;
         InstGroup insn_grp;
-        auto inst_ptr = issue_queue_.begin();
-        for(int i=0; i<cnt; i++){
-            if (!issue_queue_.empty() && cache_credit_) {
-                //send only one be req to cache each cycle
-                if ((*inst_ptr)->getLsuIssued()) {
-                    if ((*inst_ptr) == ld_queue_[ld_queue_.getHeader()]) {
-                        ld_queue_.Pop();
-                        insn_grp.emplace_back((*inst_ptr));
-                    } else if ((*inst_ptr) == st_queue_[st_queue_.getHeader()]) {
-                        st_queue_.Pop();
-                        insn_grp.emplace_back((*inst_ptr));
-                    } 
+
+        //count ld/st insn to be issued.
+        while(ld_usage--) {
+            auto inst_ptr = ld_queue_[ld_idx];
+            if (!inst_ptr->getLsuIssued()) {
+                ld_to_issue_cnt++;
+                if(ld_to_issue_cnt == 1) {
+                    first_to_issue_ld_idx = ld_idx;
                 }
-                inst_ptr++;
-            }
-            else{
-                sendInsts(insn_grp);
-                break;
-            }
-            sendInsts(insn_grp);
+            } 
+            ld_idx = ld_queue_.getNextPtr(ld_idx);
+        }        
+        while(st_usage--) {
+            auto inst_ptr = st_queue_[st_idx];
+            if (!inst_ptr->getLsuIssued()) {
+                st_to_issue_cnt++;
+                if(st_to_issue_cnt == 1) {
+                    first_to_issue_st_idx = st_idx;
+                }
+            } 
+            st_idx = st_queue_.getNextPtr(st_idx);
         }
 
-        // Schedule another instruction issue event if possible
-        if (isReadyToIssueInsts()) {
+        ILOG("issue_max = " << cnt << ", ld_to_issue_cnt = " << ld_to_issue_cnt << ", first_to_issue_ld_idx = " << first_to_issue_ld_idx <<
+             ", st_to_issue_cnt = " << st_to_issue_cnt << ", first_to_issue_st_idx = " << first_to_issue_st_idx);
+
+        //visit DCache in program order.
+        for(int i=0; i<cnt; i++) {
+            exist_ld_to_issue = false;
+            exist_st_to_issue = false;            
+            if(ld_to_issue_cnt != 0) {
+                exist_ld_to_issue = true;
+            }
+            if(st_to_issue_cnt != 0) {
+                exist_st_to_issue = true;
+            }
+            if(exist_ld_to_issue && exist_st_to_issue) {
+                auto& ld_inst_ptr = ld_queue_[first_to_issue_ld_idx];
+                auto& st_inst_ptr = st_queue_[first_to_issue_st_idx];
+                if(ld_inst_ptr->getUniqueID() > st_inst_ptr->getUniqueID()) {
+                    //larger means younger.
+                    st_inst_ptr->setLsuIssued(true);
+                    first_to_issue_st_idx++;
+                    st_to_issue_cnt--;
+                    insn_grp.emplace_back(st_inst_ptr);
+                }else {
+                    ld_inst_ptr->setLsuIssued(true);
+                    first_to_issue_ld_idx++;
+                    ld_to_issue_cnt--;
+                    insn_grp.emplace_back(ld_inst_ptr);
+                }
+            } else if (exist_ld_to_issue) {
+                auto& ld_inst_ptr = ld_queue_[first_to_issue_ld_idx];
+                ld_inst_ptr->setLsuIssued(true);
+                first_to_issue_ld_idx++;
+                ld_to_issue_cnt--;
+                insn_grp.emplace_back(ld_inst_ptr);
+            } else if (exist_st_to_issue) {
+                auto& st_inst_ptr = st_queue_[first_to_issue_st_idx];
+                st_inst_ptr->setLsuIssued(true);
+                first_to_issue_st_idx++;
+                st_to_issue_cnt--;
+                insn_grp.emplace_back(st_inst_ptr);
+            }
+        }
+        ILOG("mid order control")
+        sendInsts(insn_grp);
+        ILOG("exit order control");
+        if(!ld_queue_.empty() || !st_queue_.empty()) {
+            uev_dealloc_inst_.schedule(sparta::Clock::Cycle(1));
             uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
         }
+    }
+
+    // split load/store insn in issue_queue_ to ldq/stq
+    void AbstractLsu::SplitInst()
+    {
+        LSQ_Dealloc();
+
+        InOrderIssue();
+
+        Credit split_cnt = 0;
+        auto idx = issue_queue_.getHeader();
+        auto usage = issue_queue_.getUsage();
+        while(usage--) {
+            auto& inst_ptr = issue_queue_[idx];
+            if (inst_ptr->getFuType() == FuncType::LDU) {
+                if(!ld_queue_.full()) {
+                    inst_ptr->setLSQTag(ld_queue_.getTail());
+                    ld_queue_.Push(inst_ptr);
+                    issue_queue_.Pop();
+                    split_cnt++;
+                    ILOG("LSU issue load inst to ld_queue_: " << inst_ptr);
+                }else{
+                    break;
+                }
+            } else if (inst_ptr->getFuType() == FuncType::STU) {
+                if(!inst_ptr->getStoreWkup()){
+                    ILOG("Rob NOT wakeup causes fail issue store insn:" << inst_ptr);
+                    break;
+                }
+                if(!st_queue_.full()) {
+                    inst_ptr->setLSQTag(st_queue_.getTail());
+                    st_queue_.Push(inst_ptr);
+                    issue_queue_.Pop();
+                    split_cnt++;
+                    ILOG("LSU issue store inst to st_queue_: " << inst_ptr);
+                }else{
+                    break;
+                }
+            }
+            idx = issue_queue_.getNextPtr(idx);
+        }
+
+        backend_lsu_credit_out.send(split_cnt);
+
+        // Schedule another instruction split event if possible
+        if (isReadyToSplitInsts()) {
+            uev_split_inst_.schedule(sparta::Clock::Cycle(1));
+        }
+
+        uev_dealloc_inst_.schedule(sparta::Clock::Cycle(1));
+        uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
     }
 
     void AbstractLsu::sendInsts(const InstGroup& inst_group) {
@@ -123,7 +213,7 @@ namespace TimingModel {
             req->insn = insn;
             req->address = insn->getTargetVAddr();
             reqs.emplace_back(req);
-            ILOG("abstract lsu access cache: Pc[0x" << std::hex << insn->getPC() << "]");
+            ILOG("abstract lsu access cache: " << insn);
             cache_credit_--;
         }
         if(reqs.size())
@@ -131,14 +221,16 @@ namespace TimingModel {
     }
 
     // Check for ready to issue instructions
-    bool AbstractLsu::isReadyToIssueInsts() const
-    {
+    bool AbstractLsu::isReadyToSplitInsts() {
         // Check if ldq and stq is full
         // if (ld_queue_.full() && st_queue_.full()) {
         //     return false;
         // }
-
-        return !issue_queue_.empty();
+        bool ready = false;
+        if(!issue_queue_.empty()){
+            ready = true;
+        }
+        return ready;
     }
 
     void AbstractLsu::acceptCredit(const Credit& credit) {
@@ -147,17 +239,9 @@ namespace TimingModel {
         ILOG("abstract lsu get credits from cache: " << credit);
 
         // Schedule another instruction issue event if possible
-        if (isReadyToIssueInsts()) {
-            uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
+        if (isReadyToSplitInsts()) {
+            uev_split_inst_.schedule(sparta::Clock::Cycle(1));
         }
-    }
-
-    void AbstractLsu::WriteBack(const InstGroup& inst_group) {
-        for (InstPtr inst_ptr: inst_group) {
-            lsu_backend_finish_out.send(inst_ptr->getRobTag());
-        }
-
-        backend_lsu_credit_out.send(inst_group.size());
     }
 
     void AbstractLsu::SendInitCredit() {
@@ -166,24 +250,63 @@ namespace TimingModel {
     }
 
     void AbstractLsu::handleCacheResp(const MemAccInfoGroup& resps){
+        LSQ_Dealloc();
         // std::cout << "AbstractLsu::handleCacheResp, received cache resp." << std::endl;
         ILOG("AbstractLsu::handleCacheResp, received cache resp.");
+        InstGroup ld_insn_grp;
         for( auto respMemInfoPtr : resps) {
-            for (auto iter = issue_queue_.begin(); iter != issue_queue_.end(); iter++) {
-                if ((*iter) == respMemInfoPtr->insn) {
-                    issue_queue_.erase(iter);
-
-                    InstPtr inst_ptr = respMemInfoPtr->insn;
-                    lsu_backend_finish_out.send(inst_ptr->getRobTag());
-                    if(inst_ptr->getFuType() == FuncType::LDU){
-                        lsu_backend_wr_data_out.send(inst_ptr);
-                    }
-                    backend_lsu_credit_out.send(1);
-
-                    ILOG("abstract lsu write back: Pc[0x" << std::hex << inst_ptr->getPC() << "]");
-                    break;
-                }
+            auto inst_ptr = respMemInfoPtr->insn;
+            ILOG("LSQ Receive DCache Resp: " << inst_ptr);
+            if (inst_ptr->getFuType() == FuncType::LDU) {
+                ld_queue_[inst_ptr->getLSQTag()]->setResp(true);
+                ld_insn_grp.emplace_back(inst_ptr);
+            }else if (inst_ptr->getFuType() == FuncType::STU) {
+                st_queue_[inst_ptr->getLSQTag()]->setResp(true);
             }
+        }
+
+        lsu_backend_wr_data_out.send(ld_insn_grp); //for load insn, writeback to prf when get resp.
+
+        uev_dealloc_inst_.schedule(sparta::Clock::Cycle(1));
+
+        uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
+    }
+
+    void AbstractLsu::LSQ_Dealloc() {
+        auto ld_idx = ld_queue_.getHeader();
+        auto ld_usage = ld_queue_.getUsage();       
+        auto st_idx = st_queue_.getHeader();
+        auto st_usage = st_queue_.getUsage();
+        InstGroup insn_grp;
+
+        while(ld_usage--) {
+            auto inst_ptr = ld_queue_[ld_idx];
+            if (inst_ptr->getLsuIssued() && inst_ptr->getResp()) {
+                insn_grp.emplace_back(inst_ptr);
+                ILOG("load insn dealloc from LDQ: " << inst_ptr);
+                ld_queue_.Pop();
+                ld_idx = ld_queue_.getNextPtr(ld_idx);
+            } else {
+                break;
+            }           
+        }        
+        while(st_usage--) {
+            auto inst_ptr = st_queue_[st_idx];
+            if (inst_ptr->getLsuIssued() && inst_ptr->getResp()) {
+                insn_grp.emplace_back(inst_ptr);
+                ILOG("store insn dealloc from STQ: " << inst_ptr);
+                st_queue_.Pop();
+                st_idx = st_queue_.getNextPtr(st_idx);
+            } else {
+                break;
+            }            
+        }
+
+        lsu_backend_finish_out.send(insn_grp);
+
+        if (!ld_queue_.empty() || !st_queue_.empty()) {
+            uev_dealloc_inst_.schedule(sparta::Clock::Cycle(1));
+            uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
         }
     }
 }

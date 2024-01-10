@@ -158,11 +158,17 @@ namespace TimingModel
         void setRobTag(uint64_t RobTag) { inst_.RobTag = RobTag; }
         uint64_t getRobTag() { return inst_.RobTag; }
 
+        void setLSQTag(uint64_t LSQTag) { inst_.LSQTag = LSQTag; }
+        uint64_t getLSQTag() { return inst_.LSQTag; }
+
         void setLsuIssued(bool issued) { inst_.LsuIssued = issued; }
         bool getLsuIssued() { return inst_.LsuIssued; }
 
         void setStoreWkup(bool wkup) { inst_.IsStoreWkup = wkup; }
         bool getStoreWkup() { return inst_.IsStoreWkup; }
+
+        void setResp(bool getresp) { inst_.IsGetResp = getresp; }
+        bool getResp() { return inst_.IsGetResp; }
 
         void setPhyRs1(PhyRegId_t PhyRs1) { inst_.PhyRs1 = PhyRs1; }
         uint64_t getPhyRs1() { return inst_.PhyRs1; }

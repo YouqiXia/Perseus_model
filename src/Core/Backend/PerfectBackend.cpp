@@ -30,8 +30,8 @@ namespace TimingModel {
     {
         fetch_backend_inst_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectBackend, AllocateRobEntry, InstGroup));
         alu_backend_finish_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectBackend, Finish, RobIdx));
-        lsu_backend_finish_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectBackend, Finish, RobIdx));
-        lsu_backend_wr_data_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectBackend, WriteBack, InstPtr));
+        lsu_backend_finish_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectBackend, LSQFinish, InstGroup));
+        lsu_backend_wr_data_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectBackend, WriteBack, InstGroup));
         alu_backend_credit_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectBackend, AcceptCreditFromALU, Credit));
         lsu_backend_credit_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectBackend, AcceptCreditFromLSU, Credit));
 
@@ -117,8 +117,16 @@ namespace TimingModel {
         rob_->FinishInst(rob_idx);
     }
 
-    void PerfectBackend::WriteBack(const InstPtr& inst) {
-        ILOG("load insn writeback prf: " << inst);
+    void PerfectBackend::LSQFinish(const InstGroup& inst_group) {
+        for (InstPtr inst_ptr: inst_group) {
+            rob_->FinishInst(inst_ptr->getRobTag());
+        }
+    }
+
+    void PerfectBackend::WriteBack(const InstGroup& inst_group) {
+        for (InstPtr inst: inst_group) {
+            ILOG("load insn writeback prf: " << inst);
+        }
     }
 
     void PerfectBackend::SetRobIssued(const RobIdx& rob_idx) {
