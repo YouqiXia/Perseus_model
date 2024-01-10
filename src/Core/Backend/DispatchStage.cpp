@@ -30,21 +30,18 @@ namespace TimingModel {
             (DispatchStage, HandleFlush_, FlushingCriteria));
 
         // credits initialization
-        for (auto& func_pair: getFuncMap()) {
+        FuncMap& fu_map = getFuncMap();
+        for (auto& func_pair: fu_map) {
             rs_credits_[func_pair.first] = Credit(0);
-        }
 
-        // credits in ports initialization
-        for (auto& func_pair: getFuncMap()) {
+            // credits in ports initialization
             rs_dispatch_credits_in.emplace_back(new sparta::DataInPort<RsCreditPtr>
                     (&unit_port_set_, func_pair.first+"_rs_dispatch_credit_in", sparta::SchedulingPhase::Tick, 0));
             rs_dispatch_credits_in.back()->registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA
                 (DispatchStage, AcceptCredit_, RsCreditPtr));
             *(rs_dispatch_credits_in.back()) >> sparta::GlobalOrderingPoint(node, "dispatch_node");
-        }
 
-        // construct ports will be connected with Reservation Station
-        for (auto& func_pair: getFuncMap()) {
+            // construct ports will be connected with Reservation Station
             sparta::SpartaSharedPointer<sparta::DataOutPort<InstPtr>> tmp_out_port_ptr
                 {new sparta::DataOutPort<InstPtr>
                         (&unit_port_set_, "dispatch_"+func_pair.first+"_rs_out")};
@@ -125,7 +122,8 @@ namespace TimingModel {
 
     void DispatchStage::SelectInst_() {
         uint64_t produce_max = issue_num_;
-        for (auto& func_pair: getFuncMap()) {
+        FuncMap& fu_map = getFuncMap();
+        for (auto& func_pair: fu_map) {
             if (!produce_max) {
                 break;
             }

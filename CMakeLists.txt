@@ -24,6 +24,11 @@ endif()
 # source
 file(GLOB_RECURSE DIR_SRCS "src/*.cc" "src/*.cpp" "src/*.c")
 
+# Profile build flags
+set(CMAKE_CXX_FLAGS_PROFILE   "-O3 -pg -g -ftime-trace")
+set(CMAKE_CXX_FLAGS_FASTDEBUG "-O3 -g")
+set(CMAKE_CXX_FLAGS_DEBUG     "-O0 -g")
+
 # head file
 include_directories(./src)
 include_directories(./src/basic)

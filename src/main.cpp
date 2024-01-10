@@ -22,6 +22,7 @@ int main(int argc, char **argv) {
 
     sparta::app::DefaultValues DEFAULTS;
     DEFAULTS.auto_summary_default = "off";
+    DEFAULTS.arch_arg_default = "extensions";
     DEFAULTS.arch_search_dirs = {"arches"}; // Where --arch will be resolved by default
 
     // try/catch block to ensure proper destruction of the cls/sim classes in

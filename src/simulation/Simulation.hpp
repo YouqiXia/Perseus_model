@@ -7,9 +7,14 @@
 #include <string>
 
 #include "olympia/OlympiaAllocators.hpp"
+#include "sparta/simulation/ParameterSet.hpp"
+#include "sparta/utils/Utils.hpp"
+#include "basic/Instruction.hpp"
+#include "ExtensionsCfg.hpp"
 
 
 namespace TimingModel {
+    extern std::map<std::string, sparta::ResourceFactoryBase*> factory_map;
 
     const uint64_t max_run_time = 200;
 
@@ -33,6 +38,10 @@ namespace TimingModel {
         void bindTree_() override;
 
         void BuildFuncRelatives_();
+
+        void buildModuleTopology_(TopoExtensions::ModuleTopology&, sparta::TreeNode*);
+
+        void bindBindingTopology_(TopoExtensions::BindingTopology&);
 
     private:
         std::string workload_;

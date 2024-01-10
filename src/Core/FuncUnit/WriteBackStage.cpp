@@ -14,7 +14,8 @@ namespace TimingModel {
             issue_num_(p->issue_num)
     {
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(WriteBackStage, SendInitCredit_));
-        for (auto &func_pair: getFuncMap()) {
+        FuncMap& fu_map = getFuncMap();
+        for (auto &func_pair: fu_map) {
             auto *func_unit_write_back_in_tmp = new sparta::DataInPort<FuncInstPtr>
                     {&unit_port_set_, func_pair.first + "_write_back_port_in", sparta::SchedulingPhase::Tick, 0};
             auto *func_unit_credit_out_tmp = new sparta::DataOutPort<Credit>
