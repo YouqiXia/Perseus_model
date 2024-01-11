@@ -170,6 +170,9 @@ namespace TimingModel
         void setResp(bool getresp) { inst_.IsGetResp = getresp; }
         bool getResp() { return inst_.IsGetResp; }
 
+        void setAddrReady(bool ready) { inst_.IsAddrReady = ready; }
+        bool getAddrReady() { return inst_.IsAddrReady; }
+
         void setPhyRs1(PhyRegId_t PhyRs1) { inst_.PhyRs1 = PhyRs1; }
         uint64_t getPhyRs1() { return inst_.PhyRs1; }
 

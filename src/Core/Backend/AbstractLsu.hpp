@@ -29,6 +29,8 @@ namespace TimingModel {
             PARAMETER(uint64_t, ld_queue_size, 3, "load queue size")
             PARAMETER(uint64_t, st_queue_size, 3, "store queue size")
             PARAMETER(uint64_t, cache_access_ports_num, 1, "cache access ports number")
+            PARAMETER(Credit, agu_num, 2, "agu number")
+            PARAMETER(uint64_t, agu_latency, 0, "agu calculate latency")
         };
 
         static const char* name;
@@ -41,14 +43,14 @@ namespace TimingModel {
 
         void RobWakeUp(const RobIdx&);
 
-        void handleAgu();
+        void handleAgu(const InstGroup&);
 
         // split insn in issue queue to ldq/stq
         void SplitInst();
 
         void InOrderIssue();
 
-        void sendInsts(const InstGroup& inst_group);
+        void sendInsts(const InstGroup&);
 
         bool isReadyToSplitInsts();
 
@@ -102,6 +104,9 @@ namespace TimingModel {
         sparta::UniqueEvent<> uev_dealloc_inst_{&unit_event_set_, "dealloc_inst",
                 CREATE_SPARTA_HANDLER(AbstractLsu, LSQ_Dealloc)};
 
+        sparta::PayloadEvent<InstGroup> ev_agu_
+            {&unit_event_set_, "handle_agu", CREATE_SPARTA_HANDLER_WITH_DATA(AbstractLsu, handleAgu, InstGroup)};
+
         MemAccInfoAllocator& abstract_lsu_mem_acc_info_allocator_;
     private:
         const uint64_t load_to_use_latency_;
@@ -120,6 +125,11 @@ namespace TimingModel {
         // LoadStoreIssueQueue st_queue_;
         // cache credit
         Credit cache_credit_ = 0;
+
+        const Credit agu_num_;
+
+        const uint64_t agu_latency_;
+
     };
 
 }

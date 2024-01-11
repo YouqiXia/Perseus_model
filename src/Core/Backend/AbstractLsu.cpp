@@ -13,6 +13,8 @@ namespace TimingModel {
         issue_queue_size_(p->issue_queue_size),
         ld_queue_(p->ld_queue_size),
         st_queue_(p->st_queue_size),
+        agu_num_(p->agu_num),
+        agu_latency_(p->agu_latency),
         abstract_lsu_mem_acc_info_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))->
                                  mem_acc_info_allocator)
     {
@@ -61,8 +63,16 @@ namespace TimingModel {
         
     }
 
-    void AbstractLsu::handleAgu() {
-        // TODO add agu logic
+    void AbstractLsu::handleAgu(const InstGroup& inst_group) {
+        for (InstPtr inst: inst_group) {
+            if(inst->getFuType()==FuncType::LDU) {
+                ld_queue_[inst->getLSQTag()]->setAddrReady(true);
+                ILOG("set load insn addr ready: " << inst);
+            } else if (inst->getFuType()==FuncType::STU) {
+                st_queue_[inst->getLSQTag()]->setAddrReady(true);
+                ILOG("set store insn addr ready: " << inst);
+            }         
+        }
     }
 
     //control ldq/stq visit DCache in program order.
@@ -86,7 +96,11 @@ namespace TimingModel {
         while(ld_usage--) {
             auto inst_ptr = ld_queue_[ld_idx];
             if (!inst_ptr->getLsuIssued()) {
-                ld_to_issue_cnt++;
+                if(inst_ptr->getAddrReady()) {
+                    ld_to_issue_cnt++;
+                }else {
+                    break;
+                }
                 if(ld_to_issue_cnt == 1) {
                     first_to_issue_ld_idx = ld_idx;
                 }
@@ -96,7 +110,11 @@ namespace TimingModel {
         while(st_usage--) {
             auto inst_ptr = st_queue_[st_idx];
             if (!inst_ptr->getLsuIssued()) {
-                st_to_issue_cnt++;
+                if(inst_ptr->getAddrReady()) {
+                    st_to_issue_cnt++;
+                }else {
+                    break;
+                }
                 if(st_to_issue_cnt == 1) {
                     first_to_issue_st_idx = st_idx;
                 }
@@ -163,6 +181,7 @@ namespace TimingModel {
         InOrderIssue();
 
         Credit split_cnt = 0;
+        InstGroup agu_insn_grp;
         auto idx = issue_queue_.getHeader();
         auto usage = issue_queue_.getUsage();
         while(usage--) {
@@ -170,11 +189,12 @@ namespace TimingModel {
             if (inst_ptr->getFuType() == FuncType::LDU) {
                 if(!ld_queue_.full()) {
                     inst_ptr->setLSQTag(ld_queue_.getTail());
+                    agu_insn_grp.emplace_back(inst_ptr);
                     ld_queue_.Push(inst_ptr);
                     issue_queue_.Pop();
                     split_cnt++;
                     ILOG("LSU issue load inst to ld_queue_: " << inst_ptr);
-                }else{
+                }else {
                     break;
                 }
             } else if (inst_ptr->getFuType() == FuncType::STU) {
@@ -184,18 +204,24 @@ namespace TimingModel {
                 }
                 if(!st_queue_.full()) {
                     inst_ptr->setLSQTag(st_queue_.getTail());
+                    agu_insn_grp.emplace_back(inst_ptr);
                     st_queue_.Push(inst_ptr);
                     issue_queue_.Pop();
                     split_cnt++;
                     ILOG("LSU issue store inst to st_queue_: " << inst_ptr);
-                }else{
+                } else {
                     break;
                 }
+            }
+            if(split_cnt >= agu_num_) {
+                break;
             }
             idx = issue_queue_.getNextPtr(idx);
         }
 
         backend_lsu_credit_out.send(split_cnt);
+        ILOG("schedule handleAgu");
+        ev_agu_.preparePayload(agu_insn_grp)->schedule(agu_latency_);
 
         // Schedule another instruction split event if possible
         if (isReadyToSplitInsts()) {
