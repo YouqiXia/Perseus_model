@@ -96,6 +96,9 @@ namespace TimingModel {
         sparta::UniqueEvent<> uev_split_inst_{&unit_event_set_, "split_inst",
                 CREATE_SPARTA_HANDLER(AbstractLsu, SplitInst)};
 
+        sparta::PayloadEvent<InstGroup> ev_agu_
+            {&unit_event_set_, "handle_agu", CREATE_SPARTA_HANDLER_WITH_DATA(AbstractLsu, handleAgu, InstGroup)};
+        
         // To issue instruction
         sparta::UniqueEvent<> uev_issue_inst_{&unit_event_set_, "issue_inst",
                 CREATE_SPARTA_HANDLER(AbstractLsu, InOrderIssue)};
@@ -103,9 +106,6 @@ namespace TimingModel {
         // To dealloc instruction
         sparta::UniqueEvent<> uev_dealloc_inst_{&unit_event_set_, "dealloc_inst",
                 CREATE_SPARTA_HANDLER(AbstractLsu, LSQ_Dealloc)};
-
-        sparta::PayloadEvent<InstGroup> ev_agu_
-            {&unit_event_set_, "handle_agu", CREATE_SPARTA_HANDLER_WITH_DATA(AbstractLsu, handleAgu, InstGroup)};
 
         MemAccInfoAllocator& abstract_lsu_mem_acc_info_allocator_;
     private:

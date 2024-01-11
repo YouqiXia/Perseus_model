@@ -28,6 +28,8 @@ namespace TimingModel {
         l1d_cache_lsu_credit_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(AbstractLsu, acceptCredit, Credit));
 
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(AbstractLsu, SendInitCredit));
+
+        uev_dealloc_inst_ >> uev_issue_inst_; 
     }
 
     void AbstractLsu::handleDispatch(const InstGroup& inst_group) {
@@ -37,9 +39,7 @@ namespace TimingModel {
            issue_queue_.Push(inst_ptr);
         }
 
-        uev_dealloc_inst_.schedule(sparta::Clock::Cycle(0));
-        uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
-        uev_split_inst_.schedule(sparta::Clock::Cycle(0));
+        uev_split_inst_.schedule(sparta::Clock::Cycle(1));
         
     }
 
@@ -57,8 +57,6 @@ namespace TimingModel {
             idx = issue_queue_.getNextPtr(idx);
         }
 
-        uev_dealloc_inst_.schedule(sparta::Clock::Cycle(1));
-        uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
         uev_split_inst_.schedule(sparta::Clock::Cycle(1));
         
     }
@@ -72,6 +70,9 @@ namespace TimingModel {
                 st_queue_[inst->getLSQTag()]->setAddrReady(true);
                 ILOG("set store insn addr ready: " << inst);
             }         
+        }
+        if (!issue_queue_.empty()) {
+            uev_split_inst_.schedule(sparta::Clock::Cycle(1));
         }
     }
 
@@ -176,10 +177,6 @@ namespace TimingModel {
     // split load/store insn in issue_queue_ to ldq/stq
     void AbstractLsu::SplitInst()
     {
-        LSQ_Dealloc();
-
-        InOrderIssue();
-
         Credit split_cnt = 0;
         InstGroup agu_insn_grp;
         auto idx = issue_queue_.getHeader();
@@ -220,8 +217,10 @@ namespace TimingModel {
         }
 
         backend_lsu_credit_out.send(split_cnt);
-        ILOG("schedule handleAgu");
-        ev_agu_.preparePayload(agu_insn_grp)->schedule(agu_latency_);
+        if (agu_insn_grp.size() > 0) {
+            ILOG("schedule handleAgu");
+            ev_agu_.preparePayload(agu_insn_grp)->schedule(agu_latency_);
+        }
 
         // Schedule another instruction split event if possible
         if (isReadyToSplitInsts()) {
@@ -276,7 +275,6 @@ namespace TimingModel {
     }
 
     void AbstractLsu::handleCacheResp(const MemAccInfoGroup& resps){
-        LSQ_Dealloc();
         // std::cout << "AbstractLsu::handleCacheResp, received cache resp." << std::endl;
         ILOG("AbstractLsu::handleCacheResp, received cache resp.");
         InstGroup ld_insn_grp;
