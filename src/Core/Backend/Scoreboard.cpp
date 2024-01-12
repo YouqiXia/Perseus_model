@@ -11,7 +11,11 @@ namespace TimingModel {
                            sparta::log::MessageSource &info_logger) :
             score_board_(phy_regfile_num, 0),
             phy_regfile_num_(phy_regfile_num)
-    {}
+    {
+        for (auto& score_board_entry: score_board_) {
+            score_board_entry.clearValid();
+        }
+    }
 
     void Scoreboard::Flush() {
         score_board_.clear();

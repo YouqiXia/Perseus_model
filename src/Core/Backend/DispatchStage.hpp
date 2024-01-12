@@ -9,7 +9,6 @@
 
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/ports/SignalPort.hpp"
-#include "sparta/utils/ValidValue.hpp"
 
 #include <string>
 
@@ -66,6 +65,7 @@ namespace TimingModel {
 
         void SelectInst_();
 
+        void PopIssueQueue_();
 
     private:
         // ports
@@ -98,6 +98,9 @@ namespace TimingModel {
 
             sparta::SingleCycleUniqueEvent<> dispatch_issue_events_
                 {&unit_event_set_, "dispatch_issue_events_", CREATE_SPARTA_HANDLER(DispatchStage, IssueInst_)};
+
+            sparta::SingleCycleUniqueEvent<> dispatch_pop_events_
+                {&unit_event_set_, "dispatch_pop_events_", CREATE_SPARTA_HANDLER(DispatchStage, PopIssueQueue_)};
 
             sparta::SingleCycleUniqueEvent<> dispatch_scoreboard_events_
                 {&unit_event_set_, "dispatch_scoreboard_events_", CREATE_SPARTA_HANDLER(DispatchStage, CheckRegStatus_)};

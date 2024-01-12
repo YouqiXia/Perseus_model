@@ -153,7 +153,7 @@ namespace TimingModel
         void setRs1ForwardRob(uint64_t Rs1ForwardRob) { inst_.Rs1ForwardRob = Rs1ForwardRob; }
         uint64_t getRs1ForwardRob() { return inst_.Rs1ForwardRob; }
 
-        void setIsRs2Forward(bool IsRs2Forward) { inst_.RobTag = IsRs2Forward; }
+        void setIsRs2Forward(bool IsRs2Forward) { inst_.IsRs2Forward = IsRs2Forward; }
         bool getIsRs2Forward() { return inst_.IsRs2Forward; }
 
         void setRs2ForwardRob(uint64_t Rs2ForwardRob) { inst_.Rs2ForwardRob = Rs2ForwardRob; }

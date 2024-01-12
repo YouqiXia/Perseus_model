@@ -37,7 +37,6 @@ namespace TimingModel {
     }
 
     RenamingStage::~RenamingStage() {
-        std::cout << "haha" << std::endl;
     }
 
     void RenamingStage::AcceptRobCredit_(const Credit& credit) {
@@ -51,7 +50,7 @@ namespace TimingModel {
     void RenamingStage::AcceptDispatchCredit_(const Credit& credit) {
         dispatch_credit_ += credit;
 
-        ILOG("RenamingStage get rob credits: " << credit);
+        ILOG("RenamingStage get dispatch credits: " << credit);
 
         rename_event.schedule(sparta::Clock::Cycle(0));
     }
@@ -84,13 +83,17 @@ namespace TimingModel {
     }
 
     void RenamingStage::RenameInst_() {
-        if (renaming_stage_queue_.empty()) {
+        if (renaming_stage_queue_.empty() || free_list_.IsEmpty()) {
             return;
         }
+        ILOG(getName() << " rename instructions");
         uint64_t produce_inst_num = std::min<uint64_t>(dispatch_credit_, rob_credit_);
         produce_inst_num = std::min<uint64_t>(produce_inst_num, issue_width_);
         InstGroupPtr inst_group_tmp_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
 
+        if (produce_inst_num == 0) {
+            return;
+        }
         renaming_preceding_credit_out.send(produce_inst_num);
 
         while(produce_inst_num--) {
@@ -105,11 +108,18 @@ namespace TimingModel {
             --rob_credit_;
         }
 
-        if (!renaming_stage_queue_.empty()) {
+        uint64_t whole_credit_ = std::min(dispatch_credit_, rob_credit_);
+
+        if (!renaming_stage_queue_.empty() && whole_credit_ > 0) {
             rename_event.schedule(sparta::Clock::Cycle(1));
         }
 
-        renaming_following_inst_out.send(inst_group_tmp_ptr);
+        if (!inst_group_tmp_ptr->empty()) {
+            renaming_following_inst_out.send(inst_group_tmp_ptr);
+        }
+
+        ILOG(getName() << " queue size is after update: " << renaming_stage_queue_.size());
+
     }
 
     void RenamingStage::RenameInstImp_(const InstPtr& inst_ptr) {
@@ -120,7 +130,10 @@ namespace TimingModel {
         if (inst_ptr->getIsaRd() != 0) {
             renaming_table_[inst_ptr->getIsaRd()] = phy_reg_idx;
             inst_ptr->setPhyRd(phy_reg_idx);
+            ILOG("free list pop: " << free_list_.Front() << " rob tag: " << inst_ptr->getRobTag());
             free_list_.Pop();
+        } else {
+            inst_ptr->setPhyRd(0);
         }
     }
 
@@ -133,9 +146,15 @@ namespace TimingModel {
 
     void RenamingStage::RobCommit_(const TimingModel::InstGroupPtr &inst_group_ptr) {
         for (auto& inst_ptr: *inst_group_ptr) {
-            free_list_.BackupPop();
-            free_list_.Push(inst_ptr->getLPhyRd());
+            if (inst_ptr->getPhyRd() != 0) {
+                free_list_.BackupPop();
+            }
+            if (inst_ptr->getLPhyRd() != 0) {
+                free_list_.Push(inst_ptr->getLPhyRd());
+                rename_event.schedule(1);
+            }
             renaming_table_.GetBackup(inst_ptr->getIsaRd()) = inst_ptr->getPhyRd();
+            ILOG("free list push: " << inst_ptr->getLPhyRd() << " rob tag: " << inst_ptr->getRobTag());
         }
     }
 }

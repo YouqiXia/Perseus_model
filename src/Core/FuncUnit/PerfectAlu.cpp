@@ -14,7 +14,7 @@ namespace TimingModel {
     }
 
     void PerfectAlu::WriteBack_(const InstPtr& inst_ptr) {
-        ILOG("alu get inst: " << inst_ptr->getPC());
+        ILOG(getName() << " get inst: " << inst_ptr->getPC());
         Process_(inst_ptr);
         FuncInstPtr func_inst_ptr {new FuncInst{func_type_, inst_ptr}};
         func_following_finish_out.send(func_inst_ptr);

@@ -10,10 +10,16 @@
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/ports/SignalPort.hpp"
 
+#include "sparta/statistics/Counter.hpp"
+#include "sparta/statistics/StatisticDef.hpp"
+#include "sparta/statistics/StatisticInstance.hpp"
+
 #include <string>
 
 #include "basic/Inst.hpp"
 #include "basic/InstGroup.hpp"
+
+#include "resources/LoopQueue.hpp"
 
 namespace TimingModel {
 
@@ -29,9 +35,17 @@ namespace TimingModel {
             PARAMETER(uint32_t, rob_depth, 32, "the number of isa register file")
         };
 
+        struct RobEntry {
+            InstPtr inst_ptr;
+            bool valid;
+            bool finish;
+        };
+
         static const char* name;
 
         Rob(sparta::TreeNode* node, const RobParameter* p);
+
+        ~Rob();
 
     private:
         void HandleFlush_(const FlushingCriteria&);
@@ -71,9 +85,15 @@ namespace TimingModel {
                 {&unit_event_set_, "commit_event", CREATE_SPARTA_HANDLER(Rob, Commit_)};
 
     private:
-        InstQueue rob_;
+        LoopQueue<RobEntry> rob_;
 
-        sparta::Queue<bool> finish_queue_;
+        sparta::Counter             num_retired_;
+
+        sparta::StatisticDef        stat_ipc_;
+
+        sparta::StatisticInstance   ipc_;
+
+        const uint64_t retire_heartbeat_ = 100000;
 
         const uint64_t issue_width_;
 

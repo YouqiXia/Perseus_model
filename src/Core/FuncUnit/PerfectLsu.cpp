@@ -16,10 +16,10 @@ namespace TimingModel {
     void PerfectLsu::WriteBack_(const InstPtr& inst_ptr) {
         FuncInstPtr func_inst_ptr {new FuncInst{func_type_, inst_ptr}};
         if (inst_ptr->getFuType() == FuncType::LDU) {
-            ILOG("lsu get load inst: " << inst_ptr->getPC());
+            ILOG(getName() << " get load inst: " << inst_ptr->getRobTag());
             func_following_finish_out.send(func_inst_ptr, load_to_use_latency_ - 1);
         } else if (inst_ptr->getFuType() == FuncType::STU) {
-            ILOG("lsu get store inst: " << inst_ptr->getPC());
+            ILOG(getName() << " get store inst: " << inst_ptr->getRobTag());
             func_following_finish_out.send(func_inst_ptr, load_to_use_latency_ - 1);
         }
     }

@@ -25,11 +25,15 @@ namespace TimingModel {
             func_unit_write_back_in_tmp->registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA
                                                                  (WriteBackStage, AcceptFuncInst_, FuncInstPtr));
         }
+
+        for (auto& func_credit_pair: getFuncCredit()) {
+            func_credit_map_[func_credit_pair.first] = func_credit_pair.second;
+        }
     }
 
     void WriteBackStage::AcceptFuncInst_(const TimingModel::FuncInstPtr &func_inst_ptr) {
         ILOG(func_inst_ptr->func_type << " get instruction");
-        func_inst_map_[func_inst_ptr->func_type] = func_inst_ptr->inst_ptr;
+        func_inst_map_[func_inst_ptr->func_type].emplace_back(func_inst_ptr->inst_ptr);
         arbitrate_inst_event.schedule(0);
     }
 
@@ -46,10 +50,20 @@ namespace TimingModel {
             if (!produce_num) {
                 break;
             }
-            inst_group_ptr_tmp->emplace_back(func_inst_pair.second);
+            inst_group_ptr_tmp->emplace_back(func_inst_pair.second.front());
+            ILOG(getName() << " arbitrate instructions rob tag: " << func_inst_pair.second.front()->getRobTag());
+            func_inst_pair.second.erase(func_inst_pair.second.begin());
+            if (func_inst_pair.second.empty()) {
+                func_pop_pending_queue_.emplace_back(func_inst_pair.first);
+            }
             func_unit_credit_ports_out_.at(func_inst_pair.first)->send(1);
             produce_num--;
         }
+
+        for (auto& func_type: func_pop_pending_queue_) {
+            func_inst_map_.erase(func_type);
+        }
+        func_pop_pending_queue_.clear();
 
         if (!inst_group_ptr_tmp->empty()) {
             write_back_following_port_out.send(inst_group_ptr_tmp);

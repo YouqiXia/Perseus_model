@@ -58,10 +58,13 @@ namespace TimingModel {
     private:
         uint64_t issue_num_;
 
-        std::map<FuncUnitType, InstPtr> func_inst_map_;
+        std::map<FuncUnitType, std::vector<InstPtr>> func_inst_map_;
+        std::vector<FuncUnitType> func_pop_pending_queue_;
 
         std::map<FuncUnitType, sparta::DataInPort<FuncInstPtr>*> func_unit_write_back_ports_in_;
         std::map<FuncUnitType, sparta::DataOutPort<Credit>*> func_unit_credit_ports_out_;
+
+        std::map<FuncUnitType, Credit> func_credit_map_;
     };
 
 }

@@ -13,8 +13,17 @@ namespace TimingModel {
              sparta::Unit(node),
              issue_width_(p->issue_width),
              rob_depth_(p->rob_depth),
-             rob_("rob_queue", p->rob_depth, getClock(), &unit_stat_set_),
-             finish_queue_("finish_queue", p->rob_depth, getClock(), &unit_stat_set_)
+             rob_(p->rob_depth),
+             stat_ipc_(&unit_stat_set_,
+                       "ipc",
+                       "Instructions retired per cycle",
+                       &unit_stat_set_,
+                       "total_number_retired/cycles"),
+             num_retired_(&unit_stat_set_,
+                          "total_number_retired",
+                          "The total number of instructions retired by this core",
+                          sparta::Counter::COUNT_NORMAL),
+             ipc_(&stat_ipc_)
     {
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Rob, InitCredit_));
         rob_flush_in.registerConsumerHandler
@@ -23,6 +32,14 @@ namespace TimingModel {
             (CREATE_SPARTA_HANDLER_WITH_DATA(Rob, AllocateRob_, InstGroupPtr));
         write_back_rob_finish_in.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(Rob, Finish_, InstGroupPtr));
+        preceding_rob_inst_in >> sparta::GlobalOrderingPoint(node, "rob_dispatch_node");
+    }
+
+    Rob::~Rob() {
+        std::cout << "model: Retired " << num_retired_.get()
+                  << " instructions in " << getClock()->currentCycle()
+                  << " overall IPC: " << ipc_.getValue()
+                  << std::endl;
     }
 
     void Rob::InitCredit_() {
@@ -35,21 +52,22 @@ namespace TimingModel {
 
         rob_preceding_credit_out.send(rob_.size());
         rob_.clear();
-        finish_queue_.clear();
     }
 
     void Rob::AllocateRob_(const TimingModel::InstGroupPtr &inst_group_ptr) {
         ILOG("rob get instructions: " << inst_group_ptr->size());
         for (auto& inst_ptr: *inst_group_ptr) {
-            inst_ptr->setRobTag(rob_.push(inst_ptr).getIndex());
-            finish_queue_.push(false);
+            inst_ptr->setRobTag(rob_.tail());
+            rob_.push({inst_ptr, true, false});
+            ILOG("rob allocate instruction tag is: " << inst_ptr->getRobTag());
         }
         commit_event.schedule(1);
     }
 
     void Rob::Finish_(const TimingModel::InstGroupPtr &inst_group_ptr) {
         for (auto& inst_ptr: *inst_group_ptr) {
-            finish_queue_.access(inst_ptr->getRobTag()) = true;
+            ILOG("rob finish instruction rob tag is: " << inst_ptr->getRobTag());
+            rob_[inst_ptr->getRobTag()].finish = true;
         }
     }
 
@@ -57,16 +75,37 @@ namespace TimingModel {
         InstGroupPtr inst_group_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
         uint64_t issue_num = std::min(issue_width_, uint64_t(rob_.size()));
         while(issue_num--) {
-            if (finish_queue_.front()) {
-                inst_group_ptr->emplace_back(rob_.front());
+            if (rob_.front().finish) {
+                inst_group_ptr->emplace_back(rob_.front().inst_ptr);
                 rob_.pop();
-                finish_queue_.pop();
             } else {
                 break;
             }
         }
         if (!inst_group_ptr->empty()) {
             Rob_cmt_inst_out.send(inst_group_ptr);
+        }
+        uint64_t commit_num = inst_group_ptr->size();
+
+        if (commit_num) {
+            rob_preceding_credit_out.send(commit_num);
+        }
+        ILOG(getName() << " commit instructions: " << commit_num << " , remaining: " << rob_.size());
+        if (rob_.front().valid) {
+            ILOG(getName() << " rob front id: " << rob_.front().inst_ptr->getUniqueID());
+        }
+
+        num_retired_ += commit_num;
+
+        if((num_retired_ % retire_heartbeat_) == 0 && num_retired_ != 0) {
+            std::cout << "model: Retired " << num_retired_.get()
+                      << " instructions in " << getClock()->currentCycle()
+                      << " overall IPC: " << ipc_.getValue()
+                      << std::endl;
+        }
+
+        if (!rob_.empty()) {
+            commit_event.schedule(1);
         }
     }
 

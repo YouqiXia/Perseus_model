@@ -94,7 +94,7 @@ namespace TimingModel {
         FuncUnitType rs_func_type_;
         uint64_t issue_num_;
         uint64_t rs_depth_;
-        sparta::Queue<ReStationEntryPtr> reservation_station_;
+        std::vector<ReStationEntryPtr> reservation_station_;
         Credit credit_ = 0;
     };
 }

@@ -172,9 +172,9 @@ struct InstInfo {
 
     /* Scheduler info */
     RobIdx_t     RobTag;
-    bool         IsRs1Forward;
+    bool         IsRs1Forward = false;
     RobIdx_t     Rs1ForwardRob;
-    bool         IsRs2Forward;
+    bool         IsRs2Forward = false;
     RobIdx_t     Rs2ForwardRob;
 
     PhyRegId_t   PhyRs1;
