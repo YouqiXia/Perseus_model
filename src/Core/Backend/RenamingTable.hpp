@@ -25,6 +25,7 @@ namespace TimingModel {
         PhyRegId_t& GetBackup(IsaRegId_t);
 
     private:
+        IsaRegId_t isa_reg_num_;
         std::vector<PhyRegId_t> renaming_table_;
         std::vector<PhyRegId_t> renaming_table_backup_;
     };

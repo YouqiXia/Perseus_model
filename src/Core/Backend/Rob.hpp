@@ -95,6 +95,8 @@ namespace TimingModel {
 
         const uint64_t retire_heartbeat_ = 100000;
 
+        uint64_t times_ = 0;
+
         const uint64_t issue_width_;
 
         const uint64_t rob_depth_;

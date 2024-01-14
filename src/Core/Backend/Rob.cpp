@@ -97,7 +97,8 @@ namespace TimingModel {
 
         num_retired_ += commit_num;
 
-        if((num_retired_ % retire_heartbeat_) == 0 && num_retired_ != 0) {
+        if((num_retired_ > times_ * retire_heartbeat_) && num_retired_ != 0) {
+            ++times_;
             std::cout << "model: Retired " << num_retired_.get()
                       << " instructions in " << getClock()->currentCycle()
                       << " overall IPC: " << ipc_.getValue()
