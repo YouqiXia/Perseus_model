@@ -16,10 +16,13 @@ const char USAGE[] =
     "    [-h,--help] <workload [stf trace or JSON]>\n"
     "\n";
 
+
+sparta::Scheduler* g_scheduler;
 int main(int argc, char **argv) {
     std::string workload;
     const char * WORKLOAD = "workload";
-
+    sparta::Scheduler scheduler;
+    g_scheduler = &scheduler;
     sparta::app::DefaultValues DEFAULTS;
     DEFAULTS.auto_summary_default = "off";
     DEFAULTS.arch_arg_default = "extensions";
@@ -55,7 +58,7 @@ int main(int argc, char **argv) {
 
         if (vm.count("run") != 0) {
             // Create the simulator
-            sparta::Scheduler scheduler;
+
             TimingModel::Simulation sim(scheduler,
                                         workload);
 

@@ -33,6 +33,11 @@ namespace TimingModel {
                 PARAMETER(uint32_t, cache_latency, 1, "cache access latency")
                 PARAMETER(uint32_t, upstream_access_ports_num, 1, "upstream access ports number")
                 PARAMETER(uint32_t, downstream_access_ports_num, 1, "downstream access ports number")
+                PARAMETER(uint32_t, upstream_access_ports_bandwidth, 16, "upstream access ports number")
+                PARAMETER(uint32_t, downstream_access_ports_bandwidth, 16, "downstream access ports number")
+                PARAMETER(uint32_t, cache_level, 1, "upstream access ports number")
+                PARAMETER(bool, upstream_is_core, true, "upstream is core")
+                PARAMETER(bool, downstream_is_mem, true, "downstream is core")
             };
             static const char name[];
 
@@ -40,7 +45,7 @@ namespace TimingModel {
 
         
         private:
-	    const uint32_t init_credits_;
+	        const uint32_t init_credits_;
             //Functional interface
             virtual void access(const MemAccInfoGroup& req){};
 
@@ -58,19 +63,25 @@ namespace TimingModel {
 
             virtual void recvCredit(const Credit& in);
 
-            virtual void InReqAbitor();
+            virtual void inReqArbiter();
 
-            virtual void OutReqAbitor();
+            virtual void outReqArbiter();
+
+            virtual void outRespArbiter();
 
             virtual setTags& accessTagRam(const MemAccInfoPtr& req);
 
             virtual setData& accessDataRam(const MemAccInfoPtr& req);
 
-            void makeResp(const MemAccInfoPtr& req, MemAccInfoPtr& resp);
+            void makeResp(const MemAccInfoPtr& req);
+
+            void makeCriticalResp(const MemAccInfoPtr& req);
+
+            void makeNonCriticalResp(const MemAccInfoPtr& req);
 
             virtual uint32_t allocMshr(const MemAccInfoPtr& req);
 
-            virtual void handle_mshr();
+            virtual void handleMshr();
 
             virtual void deallocMshr(uint32_t id){ return mshr.deallocate(id);};
 
@@ -78,9 +89,11 @@ namespace TimingModel {
 
             virtual void mshrRefill();
 
-            virtual void mshrSendResp();
+            virtual void mshrDeallocate();
 
             virtual void mshrEvict();
+
+            virtual void mshrRecvResp(uint32_t id, uint32_t subindex);
 
             virtual bool checkMshrAvail(){ return mshr.isAvail(); };
 
@@ -121,10 +134,16 @@ namespace TimingModel {
             
 
             //events.
-            sparta::UniqueEvent<> ev_handle_mshr{&unit_event_set_, "ev_handle_mshr", 
-                    CREATE_SPARTA_HANDLER(BaseCache, handle_mshr)};
+            sparta::SingleCycleUniqueEvent<> ev_handle_mshr{&unit_event_set_, "ev_handle_mshr", 
+                    CREATE_SPARTA_HANDLER(BaseCache, handleMshr)};
+            sparta::SingleCycleUniqueEvent<> ev_out_req_arbiter{&unit_event_set_, "ev_out_req_arbiter", 
+                    CREATE_SPARTA_HANDLER(BaseCache, outReqArbiter)};
+            sparta::SingleCycleUniqueEvent<> ev_in_req_arbiter{&unit_event_set_, "ev_in_req_arbiter", 
+                    CREATE_SPARTA_HANDLER(BaseCache, inReqArbiter)};
+            sparta::SingleCycleUniqueEvent<> ev_out_resp_arbiter{&unit_event_set_, "ev_out_resp_arbiter", 
+                    CREATE_SPARTA_HANDLER(BaseCache, outRespArbiter)};
 
-            
+
             uint32_t cacheline_size_;
             uint32_t way_num_;
             uint32_t set_num_;
@@ -140,12 +159,22 @@ namespace TimingModel {
             Credit next_level_credit;
             uint32_t upstream_access_ports_num_;
             uint32_t downstream_access_ports_num_;
+            uint32_t upstream_access_ports_bandwidth_;
+            uint32_t downstream_access_ports_bandwidth_;
+            uint32_t cache_level_;
+            bool upstream_is_core_;
+            bool downstream_is_mem_;
+
 
             std::vector<setTags> tagram;
             std::vector<setData> dataram;
             MSHR mshr;
 
             MemAccInfoAllocator& mem_acc_info_allocator_;
+            std::vector<MemAccInfoPtr>  out_resp_queue;
+            std::vector<MemAccInfoPtr>  in_req_queue;
+            std::vector<MemAccInfoPtr>  out_req_queue;
+
 
             sparta::Counter cache_hits_{getStatisticSet(), "cache_hits",
                     "Number of cache hits", sparta::Counter::COUNT_NORMAL};

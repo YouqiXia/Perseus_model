@@ -6,10 +6,10 @@ namespace TimingModel {
         __FIRST = NO_TYPE,
         ALLOCATE,
         SEND_REQ,
-        RECV_RESP,
+        RECV_CRITICAL_SEG,
+        RECV_WHOLE_LINE,
         EVICT,
         REFILL,
-        SEND_RESP,
         NUM_TYPES,
         __LAST = NUM_TYPES
     };
@@ -69,10 +69,6 @@ namespace TimingModel {
             return queue[header];
         }
 
-        void recvResp(uint32_t id){
-            sparta_assert((queue[id].status == MshrStatus::SEND_REQ));
-            queue[id].status = MshrStatus::RECV_RESP; 
-        }
         bool isEmpty(){ return (used == 0); }
 
     };

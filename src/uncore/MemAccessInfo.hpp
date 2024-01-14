@@ -24,7 +24,17 @@ public:
     InstPtr insn;
     uint8_t* data;
     uint32_t mshrid;
+    uint32_t subindex;
 
+    MemAccInfo(){
+        address = 0;
+        length = 0;
+        mem_op = MemOp::NO_TYPE;
+        insn = nullptr;
+        data = nullptr;
+        mshrid = 0;
+        subindex = 0;  
+    }
     MemAccInfo& operator=(MemAccInfo & rval){
         address = rval.address;
         length = rval.length;
@@ -32,6 +42,7 @@ public:
         insn = rval.insn;
         data = rval.data;
         mshrid = rval.mshrid;
+        subindex = rval.subindex;
         return *this;
     }
 };

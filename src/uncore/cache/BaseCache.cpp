@@ -19,6 +19,11 @@ namespace TimingModel {
         next_level_credit(0),
         upstream_access_ports_num_(p->upstream_access_ports_num),
         downstream_access_ports_num_(p->downstream_access_ports_num),
+        upstream_access_ports_bandwidth_(p->upstream_access_ports_bandwidth),
+        downstream_access_ports_bandwidth_(p->downstream_access_ports_bandwidth),
+        cache_level_(p->cache_level),
+        upstream_is_core_(p->upstream_is_core),
+        downstream_is_mem_(p->downstream_is_mem),
         mem_acc_info_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))->
                                  mem_acc_info_allocator)
     {
@@ -45,6 +50,10 @@ namespace TimingModel {
         }
         //mshr init
         mshr.resize(mshr_size_);
+        //
+        out_resp_queue.resize(0);
+        in_req_queue.resize(0);
+        out_req_queue.resize(0);
 
         //input request
         in_access_req.registerConsumerHandler
@@ -74,7 +83,6 @@ namespace TimingModel {
             return;
         }
 
-        MemAccInfoGroup resps;
         for (auto req: reqs){
             setTags& read_setTags = accessTagRam(req);
             setData& read_setData = accessDataRam(req);
@@ -83,10 +91,11 @@ namespace TimingModel {
             bool hit = tagCompare(read_setTags, req->address, hit_index);
             if(hit){
                 MemAccInfoPtr resp = sparta::allocate_sparta_shared_pointer<MemAccInfo>(mem_acc_info_allocator_);
-                makeResp(req, resp);
-                resps.emplace_back(resp);
+                makeResp(req);
                 cache_hits_++;
+                sendCredit();
                 ILOG("request hit addr: "<<HEX16(req->address) );
+                ev_out_resp_arbiter.schedule(1);
             }else{
                 bool mshr_avail = checkMshrAvail();
                 sparta_assert((mshr_avail));
@@ -94,10 +103,7 @@ namespace TimingModel {
                 cache_misses_++;
                 ILOG("request miss addr: "<<HEX16(req->address) << " mshr id: " << id);
             }
-            sendCredit();
         }
-        if (resps.size() > 0)
-            sendResp(resps, cache_latency_);
     }
 
     setTags& BaseCache::accessTagRam(const MemAccInfoPtr& req){
@@ -115,10 +121,53 @@ namespace TimingModel {
         ILOG("access data ram addr: " << HEX16(addr) << " index " << index);
         return dataram[index];
     }
-    void BaseCache::makeResp(const MemAccInfoPtr& req, MemAccInfoPtr& resp){
-        resp = req;
+
+    void BaseCache::makeResp(const MemAccInfoPtr& req){
+        if(upstream_is_core_){
+            out_resp_queue.emplace_back(req);
+        }else{
+            uint32_t cnt = cacheline_size_/upstream_access_ports_bandwidth_;
+
+            for(auto i=0u; i<cnt; i++){
+                MemAccInfoPtr resp = sparta::allocate_sparta_shared_pointer<MemAccInfo>(mem_acc_info_allocator_);
+                *resp = *req;
+                resp->subindex = i;
+                out_resp_queue.emplace_back(resp);
+            }
+        }
+        ev_out_resp_arbiter.schedule(1);
     }
 
+    void BaseCache::makeCriticalResp(const MemAccInfoPtr& req){
+        if(upstream_is_core_){
+            out_resp_queue.emplace_back(req);
+            ILOG("upstream_is_core_ is true and send req addr: " << HEX16(req->address));
+        }else{
+            MemAccInfoPtr resp = sparta::allocate_sparta_shared_pointer<MemAccInfo>(mem_acc_info_allocator_);
+            *resp = *req;
+            resp->subindex = 0;
+            out_resp_queue.emplace_back(resp);
+            ILOG("upstream_is_core_ is false and send req addr: " << HEX16(req->address));
+        }
+        ev_out_resp_arbiter.schedule(1);
+    }
+    void BaseCache::makeNonCriticalResp(const MemAccInfoPtr& req){
+        if(upstream_is_core_){
+            ILOG("upstream_is_core_ is true and send no req");
+            return;
+        }else{
+            uint32_t cnt = cacheline_size_/upstream_access_ports_bandwidth_;
+            
+            for(auto i=1u; i<cnt; i++){
+                MemAccInfoPtr resp = sparta::allocate_sparta_shared_pointer<MemAccInfo>(mem_acc_info_allocator_);
+                *resp = *req;
+                resp->subindex = i;
+                out_resp_queue.emplace_back(resp);
+                ILOG("upstream_is_core_ is false and send req addr: " << HEX16(req->address));
+            }
+        }
+        ev_out_resp_arbiter.schedule(1);
+    }
     bool BaseCache::tagCompare(std::vector<TagEntry>& settag, uint64_t access_addr, uint32_t& index){
         sparta_assert((way_num_ == settag.size()));
         uint64_t tag = getTag(access_addr);
@@ -159,11 +208,10 @@ namespace TimingModel {
         return id;
     };
 
-    void BaseCache::handle_mshr(){
+    void BaseCache::handleMshr(){
         if(!mshr.isEmpty()){
-            mshrSendResp();
+            mshrDeallocate();
         }
-        
         if(!mshr.isEmpty()){
             mshrRefill();
             mshrEvict();
@@ -195,8 +243,10 @@ namespace TimingModel {
     void BaseCache::recvResp(const MemAccInfoGroup& resps){
         sparta_assert((resps.size() <= downstream_access_ports_num_));
         for (auto resp : resps){
-            ILOG("MSHR recv resp mshrid " << resp->mshrid << " for resp addr " << HEX16(resp->address));
-            mshr.recvResp(resp->mshrid);
+            ILOG("MSHR recv resp mshrid " << resp->mshrid 
+                << " subindex "<< resp->subindex 
+                << " for resp addr " << HEX16(resp->address));
+            mshrRecvResp(resp->mshrid, resp->subindex);
         }
         ev_handle_mshr.schedule(1);
     }
@@ -224,7 +274,7 @@ namespace TimingModel {
     void BaseCache::mshrRefill(){
         uint32_t header = mshr.header;
         for(int i=0; i<mshr.used; i++){
-            if((mshr.queue[header+i].status == MshrStatus::RECV_RESP)
+            if((mshr.queue[header+i].status == MshrStatus::RECV_WHOLE_LINE)
             ||(mshr.queue[header+i].status == MshrStatus::EVICT)){
                 uint64_t addr = mshr.queue[header+i].req->address;
                 uint32_t way_id = 0;
@@ -244,7 +294,7 @@ namespace TimingModel {
     void BaseCache::mshrEvict(){
         uint32_t header = mshr.header;
         for(int i=0; i<mshr.used; i++){
-            if(mshr.queue[header+i].status == MshrStatus::RECV_RESP){
+            if(mshr.queue[header+i].status == MshrStatus::RECV_WHOLE_LINE){
                 uint64_t addr = mshr.queue[header+i].req->address;
                 uint32_t way_id = 0;
                 uint32_t index = getIndex(addr);
@@ -260,35 +310,64 @@ namespace TimingModel {
         }
     }
 
-    void BaseCache::OutReqAbitor(){
+    void BaseCache::mshrRecvResp(uint32_t id, uint32_t subindex){
+        sparta_assert((mshr.queue[id].status == MshrStatus::SEND_REQ)||(mshr.queue[id].status == MshrStatus::RECV_CRITICAL_SEG));
+        if(downstream_is_mem_){
+            mshr.queue[id].status = MshrStatus::RECV_WHOLE_LINE;
+            makeResp(mshr.queue[id].req);
+            ILOG("downstream_is_mem_ true and makeResp all");
+            return;
+        }
+        if(subindex == 0){
+            mshr.queue[id].status = MshrStatus::RECV_CRITICAL_SEG;
+            makeCriticalResp(mshr.queue[id].req);
+        }else if(subindex == cacheline_size_/downstream_access_ports_bandwidth_-1){
+            sparta_assert((mshr.queue[id].status == MshrStatus::RECV_CRITICAL_SEG));
+            mshr.queue[id].status = MshrStatus::RECV_WHOLE_LINE;
+            makeNonCriticalResp(mshr.queue[id].req);
+        }
+    }
+
+
+    void BaseCache::outReqArbiter(){
 
 
     }
 
-    void BaseCache::InReqAbitor(){
+    void BaseCache::inReqArbiter(){
 
 
     }
+    void BaseCache::outRespArbiter(){
+        uint32_t queue_size = out_resp_queue.size();
+        if(queue_size == 0)
+            return;
 
-
-    void BaseCache::mshrSendResp(){
-        uint32_t header = mshr.header;
+        uint32_t send_cnt = std::min(upstream_access_ports_num_, queue_size);
         MemAccInfoGroup resps;
-        uint32_t cnt = std::min(mshr.used, upstream_access_ports_num_);
-        for(int i=0; i<cnt; i++){
+        for(auto i = 0u; i<send_cnt; i++){
+            resps.emplace_back(out_resp_queue[i]);
+        }
+        for(auto i = 0u; i<send_cnt; i++){
+            out_resp_queue.erase(out_resp_queue.begin());
+        }
+        if (resps.size() > 0)
+            sendResp(resps, cache_latency_);
+        
+        if((queue_size-send_cnt) > 0)
+            ev_out_resp_arbiter.schedule(1);
+    }
+
+    void BaseCache::mshrDeallocate(){
+        uint32_t header = mshr.header;
+        for(int i=0; i<mshr.used; i++){
             if(mshr.queue[header+i].status == MshrStatus::REFILL){
-                resps.emplace_back(mshr.queue[header+i].req);
-                mshr.queue[header+i].status = MshrStatus::SEND_RESP;
-                ILOG("MSHR entry send response id " << header+i 
-                    << " for request addr " << HEX16(mshr.queue[header+i].req->address) 
-                    << " and deallocate mshr entry idd: " << (header+i));
-                //one entry once
+                ILOG("MSHR entry deallocatemshr entry id: " << (header+i) 
+                    << " request addr " << HEX16(mshr.queue[header+i].req->address));
                 mshr.deallocate(header+i);
                 sendCredit();
             }
         }
-        if (resps.size() > 0)
-            sendResp(resps, cache_latency_);
     }
     bool BaseCache::checkWayAvail(uint32_t index, uint32_t way_avail){
         for(int wi=0; wi<way_num_; wi++){
