@@ -11,7 +11,7 @@
 #include "sparta/utils/Utils.hpp"
 #include "basic/Instruction.hpp"
 #include "ExtensionsCfg.hpp"
-
+#include "ResourceMapFactory.hpp"
 
 namespace TimingModel {
     extern std::map<std::string, sparta::ResourceFactoryBase*> factory_map;
@@ -45,6 +45,8 @@ namespace TimingModel {
 
     private:
         std::string workload_;
+
+        ResourceMapFactory resource_map_factory_;
     };
 }
 

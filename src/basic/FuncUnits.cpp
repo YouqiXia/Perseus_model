@@ -2,22 +2,9 @@
 #include "simulation/ExtensionsCfg.hpp"
 
 namespace TimingModel {
-    FuncMap func_map{
-            {"LSU" , {FuncType::STU, FuncType::LDU}},
-            {"ALU1", {FuncType::ALU, FuncType::MUL, FuncType::DIV, FuncType::BRU, FuncType::CSR}},
-            {"ALU2", {FuncType::ALU, FuncType::MUL, FuncType::DIV, FuncType::BRU, FuncType::CSR}},
-            {"ALU3", {FuncType::ALU, FuncType::MUL, FuncType::DIV, FuncType::BRU, FuncType::CSR}},
-            {"ALU4", {FuncType::ALU, FuncType::MUL, FuncType::DIV, FuncType::BRU, FuncType::CSR}}
-    };
+    FuncMap func_map;
 
-    FuncCreditMap func_credit_map{
-            {"LSU" , 10},
-            {"ALU1", 2},
-            {"ALU2", 2},
-            {"ALU3", 2},
-            {"ALU4", 2}
-    };
-
+    FuncCreditMap func_credit_map;
 
     FuncMap& getFuncMap() {
         return func_map;

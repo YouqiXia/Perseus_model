@@ -1,5 +1,5 @@
 top.extension.topo_extensions:
-  module_topology: ["mavis", "perfect_frontend","renaming_stage", "rob", "dispatch_stage", "write_back_stage"]
+  module_topology: ["mavis", "perfect_frontend", "renaming_stage", "rob", "dispatch_stage", "write_back_stage"]
   binding_topology: ["perfect_frontend.ports.fetch_backend_inst_out", "renaming_stage.ports.preceding_renaming_inst_in",
                      "renaming_stage.ports.renaming_following_inst_out", "rob.ports.preceding_rob_inst_in",
                      "renaming_stage.ports.renaming_following_inst_out", "dispatch_stage.ports.preceding_dispatch_inst_in",
@@ -14,10 +14,12 @@ top.extension.topo_extensions:
                     ["ALU1", "2"],
                     ["ALU2", "2"],
                     ["ALU3", "2"],
-                    ["ALU4", "2"]] 
+                    ["ALU4", "2"],
+                 ]
   fu_map: [
     ["LSU", "FuncType::STU", "FuncType::LDU"],
     ["ALU1", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"],
     ["ALU2", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"],
     ["ALU3", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"],
-    ["ALU4", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"]]
+    ["ALU4", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"],
+    ]

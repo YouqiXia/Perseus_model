@@ -1,0 +1,88 @@
+//
+// Created by yzhang on 1/14/24.
+//
+
+#pragma once
+
+#include <map>
+#include <string>
+
+#include "sparta/simulation/ResourceFactory.hpp"
+
+#include "olympia/MavisUnit.hpp"
+
+#include "Core/Frontend/PerfectFrontend.hpp"
+
+#include "Core/Backend/RenamingStage.hpp"
+#include "Core/Backend/Rob.hpp"
+#include "Core/Backend/DispatchStage.hpp"
+#include "Core/Backend/ReservationStation.hpp"
+
+#include "Core/FuncUnit/PerfectAlu.hpp"
+#include "Core/FuncUnit/PerfectLsu.hpp"
+#include "Core/FuncUnit/WriteBackStage.hpp"
+
+namespace TimingModel {
+    class ResourceMapFactory {
+    private:
+        std::map<std::string, sparta::ResourceFactoryBase*> factories_map;
+
+    public:
+        ResourceMapFactory() {
+            // Resource Factory
+            // mavis
+            RegisterResource(TimingModel::MavisUnit::name ,
+                             new MavisFactoy);
+
+            // Frontend
+            RegisterResource(TimingModel::PerfectFrontend::name ,
+                             new sparta::ResourceFactory<TimingModel::PerfectFrontend,
+                                     TimingModel::PerfectFrontend::PerfectFrontendParameter>);
+            // Backend
+            RegisterResource(TimingModel::RenamingStage::name ,
+                             new sparta::ResourceFactory<TimingModel::RenamingStage,
+                                     TimingModel::RenamingStage::RenamingParameter>);
+
+            RegisterResource(TimingModel::Rob::name ,
+                             new sparta::ResourceFactory<TimingModel::Rob,
+                                     TimingModel::Rob::RobParameter>);
+
+            RegisterResource(TimingModel::DispatchStage::name ,
+                             new sparta::ResourceFactory<TimingModel::DispatchStage,
+                                     TimingModel::DispatchStage::DispatchStageParameter>);
+
+            RegisterResource(TimingModel::ReservationStation::name ,
+                             new sparta::ResourceFactory<TimingModel::ReservationStation,
+                                     TimingModel::ReservationStation::ReservationStationParameter>);
+
+            // Function Unit
+            RegisterResource(TimingModel::PerfectAlu::name ,
+                             new sparta::ResourceFactory<TimingModel::PerfectAlu,
+                                     TimingModel::PerfectAlu::PerfectAluParameter>);
+
+            RegisterResource(TimingModel::PerfectLsu::name ,
+                             new sparta::ResourceFactory<TimingModel::PerfectLsu,
+                                     TimingModel::PerfectLsu::PerfectLsuParameter>);
+
+            RegisterResource(TimingModel::WriteBackStage::name ,
+                             new sparta::ResourceFactory<TimingModel::WriteBackStage,
+                                     TimingModel::WriteBackStage::WriteBackStageParameter>);
+        };
+
+        ~ResourceMapFactory() {
+            for (auto& factory_pair: factories_map) {
+                delete factory_pair.second;
+            }
+        }
+
+        void RegisterResource(std::string resource_name, sparta::ResourceFactoryBase* factory_ptr) {
+            assert(factories_map.find(resource_name) == factories_map.end());
+            factories_map[resource_name] = factory_ptr;
+        }
+
+        sparta::ResourceFactoryBase* operator[](std::string resource_name) {
+            assert(factories_map.find(resource_name) != factories_map.end());
+            return factories_map[resource_name];
+        }
+    };
+}

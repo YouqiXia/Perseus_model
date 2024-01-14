@@ -4,66 +4,14 @@
 #include <memory>
 #include <cstdint>
 
-#include "olympia/MavisUnit.hpp"
 #include "olympia/OlympiaAllocators.hpp"
 
 #include "FuncUnits.hpp"
 
-#include "Core/Frontend/PerfectFrontend.hpp"
-
-#include "Core/Backend/RenamingStage.hpp"
-#include "Core/Backend/Rob.hpp"
-#include "Core/Backend/DispatchStage.hpp"
-#include "Core/Backend/ReservationStation.hpp"
-
-#include "Core/FuncUnit/PerfectAlu.hpp"
-#include "Core/FuncUnit/PerfectLsu.hpp"
-#include "Core/FuncUnit/WriteBackStage.hpp"
-
 namespace TimingModel {
-    // Resource Factory
-    // Frontend
-    sparta::ResourceFactory<TimingModel::PerfectFrontend,
-            TimingModel::PerfectFrontend::PerfectFrontendParameter> perfect_frontend_factory;
-
-    // Backend
-    sparta::ResourceFactory<TimingModel::RenamingStage,
-            TimingModel::RenamingStage::RenamingParameter> renaming_stage_factory;
-
-    sparta::ResourceFactory<TimingModel::Rob,
-            TimingModel::Rob::RobParameter> rob_factory;
-
-    sparta::ResourceFactory<TimingModel::DispatchStage,
-            TimingModel::DispatchStage::DispatchStageParameter> dispatch_stage_factory;
-
-    sparta::ResourceFactory<TimingModel::ReservationStation,
-            TimingModel::ReservationStation::ReservationStationParameter> reservation_station_factory;
-
-    // Function Unit
-    sparta::ResourceFactory<TimingModel::PerfectAlu,
-                            TimingModel::PerfectAlu::PerfectAluParameter> perfect_alu_factory;
-
-    sparta::ResourceFactory<TimingModel::PerfectLsu,
-                            TimingModel::PerfectLsu::PerfectLsuParameter> perfect_lsu_factory;
-
-    sparta::ResourceFactory<TimingModel::WriteBackStage,
-            TimingModel::WriteBackStage::WriteBackStageParameter> write_back_stage_factory;
 
     // third party units
-    MavisFactoy mavis_fact;
     std::unique_ptr<OlympiaAllocators> global_allocators;
-
-    std::map<std::string, sparta::ResourceFactoryBase*> factories_map = {
-        {"mavis",                           &mavis_fact},
-        {PerfectFrontend::name,             &perfect_frontend_factory},
-        {RenamingStage::name,               &renaming_stage_factory},
-        {Rob::name,                         &rob_factory},
-        {DispatchStage::name,               &dispatch_stage_factory},
-        {ReservationStation::name,          &reservation_station_factory},
-        {PerfectAlu::name,                  &perfect_alu_factory},
-        {PerfectLsu::name,                  &perfect_lsu_factory},
-        {WriteBackStage::name,              &write_back_stage_factory}
-    };
 
     // Simulation
     Simulation::Simulation(sparta::Scheduler& Sched,
@@ -80,7 +28,7 @@ namespace TimingModel {
 
     void Simulation::buildTree_() {
 
-        global_allocators.reset(new OlympiaAllocators(getRoot()));
+        global_allocators = std::make_unique<OlympiaAllocators>(getRoot());
         getRoot()->addExtensionFactory(TimingModel::TopoExtensions::name,
                                         [&]()->sparta::TreeNode::ExtensionsBase * {return new TimingModel::TopoExtensions();});
         auto module_topo = TimingModel::getModuleTopology(getRoot());
@@ -98,7 +46,7 @@ namespace TimingModel {
                                                                           sparta::TreeNode::GROUP_NAME_NONE,
                                                                           sparta::TreeNode::GROUP_IDX_NONE,
                                                                           "reservation station",
-                                                                          &reservation_station_factory);
+                                                                          resource_map_factory_[ReservationStation::name]);
             reservation_station_tmp->getParameterSet()->getParameter("rs_func_type")->setValueFromString(func_pair.first);
 
             sparta::ResourceTreeNode * func_units_tmp;
@@ -108,14 +56,14 @@ namespace TimingModel {
                                                                      sparta::TreeNode::GROUP_NAME_NONE,
                                                                      sparta::TreeNode::GROUP_IDX_NONE,
                                                                      func_pair.first,
-                                                                     &perfect_lsu_factory);
+                                                                     resource_map_factory_[PerfectLsu::name]);
             } else {
                 func_units_tmp = new sparta::ResourceTreeNode(getRoot(),
                                                                      "func_"+func_pair.first,
                                                                      sparta::TreeNode::GROUP_NAME_NONE,
                                                                      sparta::TreeNode::GROUP_IDX_NONE,
                                                                      func_pair.first,
-                                                                     &perfect_alu_factory);
+                                                                     resource_map_factory_[PerfectAlu::name]);
             }
             func_units_tmp->getParameterSet()->getParameter("func_type")->setValueFromString(func_pair.first);
             to_delete_.emplace_back(reservation_station_tmp);
@@ -168,8 +116,7 @@ namespace TimingModel {
                                                           sparta::TreeNode::GROUP_NAME_NONE,
                                                           sparta::TreeNode::GROUP_IDX_NONE,
                                                           node_name,
-
-                                                          factories_map[node_name]);
+                                                          resource_map_factory_[node_name]);
             to_delete_.emplace_back(node_tmp);
             if(node_name.compare("perfect_frontend") == 0){
                 node_tmp->getParameterSet()->getParameter("input_file")->setValueFromString(workload_);
