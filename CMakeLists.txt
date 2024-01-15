@@ -6,9 +6,16 @@ set (CMAKE_CXX_STANDARD_REQUIRED ON)
 project(model)
 
 # set sparta directory
-set(SPARTA_SEARCH_DIR /usr/local)
-set(SPARTA_INCLUDE_DIRS ${SPARTA_SEARCH_DIR}/include/sparta)
+if(IS_DIRECTORY ${SPARTA_SEARCH_DIR})
+  message (STATUS "Using '${SPARTA_SEARCH_DIR}' for sparta install")
+elseif(DEFINED ENV{CONDA_PREFIX})
+  message (STATUS "Looking for SPARTA in the conda environment: '$ENV{CONDA_PREFIX}'")
+  set(SPARTA_SEARCH_DIR $ENV{CONDA_PREFIX})
+else()
+  message (STATUS "If needed, please provide the location where sparta is installed: -DSPARTA_SEARCH_DIR=<directory>")
+endif()
 set(CMAKE_MODULE_PATH "${SPARTA_SEARCH_DIR}/lib/cmake/sparta" ${CMAKE_MODULE_PATH})
+
 find_package(Sparta REQUIRED)
 
 # set up STF lib
