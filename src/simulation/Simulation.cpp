@@ -80,10 +80,12 @@ namespace TimingModel {
 
         FuncMap& fu_map = getFuncMap();
 
-        // dispatch stage -> separate rs
         for (auto& func_pair: fu_map) {
+            /* Instruction */
+            // dispatch stage -> separate rs
             sparta::bind(getRoot()->getChildAs<sparta::Port>("dispatch_stage.ports.dispatch_"+func_pair.first+"_rs_out"),
                          getRoot()->getChildAs<sparta::Port>("rs_"+func_pair.first+".ports.preceding_reservation_inst_in"));
+
             // separate rs -> function units
             sparta::bind(getRoot()->getChildAs<sparta::Port>("rs_"+func_pair.first+".ports.reservation_following_inst_out"),
                          getRoot()->getChildAs<sparta::Port>("func_"+func_pair.first+".ports.preceding_func_inst_in"));
@@ -91,6 +93,7 @@ namespace TimingModel {
             // function units -> write back arbiter
             sparta::bind(getRoot()->getChildAs<sparta::Port>("func_"+func_pair.first+".ports.func_following_finish_out"),
                          getRoot()->getChildAs<sparta::Port>("write_back_stage.ports."+func_pair.first+"_write_back_port_in"));
+
             // write back -> separate rs
             sparta::bind(getRoot()->getChildAs<sparta::Port>("write_back_stage.ports.write_back_following_port_out"),
                          getRoot()->getChildAs<sparta::Port>("rs_"+func_pair.first+".ports.forwarding_reservation_inst_in"));
@@ -98,9 +101,16 @@ namespace TimingModel {
             // separate rs -> dispatch stage
             sparta::bind(getRoot()->getChildAs<sparta::Port>("rs_"+func_pair.first+".ports.reservation_preceding_credit_out"),
                          getRoot()->getChildAs<sparta::Port>("dispatch_stage.ports."+func_pair.first+"_rs_dispatch_credit_in"));
-            // write back -> separate rs
+
+            /* Credit */
+            // write back -> function unit
             sparta::bind(getRoot()->getChildAs<sparta::Port>("write_back_stage.ports."+ func_pair.first + "_rs_credit_out"),
+                         getRoot()->getChildAs<sparta::Port>("func_"+func_pair.first+".ports.write_back_func_credit_in"));
+
+            // function unit -> separate rs
+            sparta::bind(getRoot()->getChildAs<sparta::Port>("func_"+func_pair.first+".ports.func_rs_credit_out"),
                          getRoot()->getChildAs<sparta::Port>("rs_"+func_pair.first+".ports.following_reservation_credit_in"));
+
         }
 
         // precedes

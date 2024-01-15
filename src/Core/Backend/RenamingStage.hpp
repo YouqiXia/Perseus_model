@@ -27,6 +27,7 @@ public:
         PARAMETER(uint32_t, isa_reg_num, 32, "the number of isa register file")
         PARAMETER(uint32_t, renaming_stage_queue_depth, 4, "the depth of renaming queue")
         PARAMETER(uint32_t, free_list_depth, 64, "the depth of freelist")
+        PARAMETER(bool, is_perfect_lsu, true, "if it cooperates with a perfect lsu")
     };
 
     static const char* name;
@@ -39,6 +40,12 @@ private:
     void AcceptRobCredit_(const Credit&);
 
     void AcceptDispatchCredit_(const Credit&);
+
+    void AcceptLsuCredit_(const Credit&);
+
+    void CreditDecrease_();
+
+    void CreditWithoutLsuDecrease_();
 
     void InitCredit_();
 
@@ -76,10 +83,17 @@ private:
 
         // with rob
         sparta::DataInPort<Credit> rob_renaming_credit_in
-                {&unit_port_set_, "rob_renaming_credit_in", sparta::SchedulingPhase::Tick, 0};
+            {&unit_port_set_, "rob_renaming_credit_in", sparta::SchedulingPhase::Tick, 0};
 
         sparta::DataInPort<InstGroupPtr> Rob_cmt_inst_in
             {&unit_port_set_, "Rob_cmt_inst_in", sparta::SchedulingPhase::Tick, 0};
+
+        // with lsu
+//        sparta::DataOutPort<InstPtr> renaming_lsu_allocate_out
+//            {&unit_port_set_, "renaming_lsu_allocate_out"};
+
+//        sparta::DataInPort<Credit> lsu_renaming_credit_in
+//            {&unit_port_set_, "lsu_renaming_credit_in", sparta::SchedulingPhase::Tick, 0};
 
 
     // events
@@ -97,9 +111,13 @@ private:
 
     const uint64_t renaming_stage_queue_depth_;
 
+    const bool is_perfect_lsu_;
+
     Credit dispatch_credit_ = 0;
 
     Credit rob_credit_ = 0;
+
+    Credit lsu_credit_ = 256;
 
 };
 
