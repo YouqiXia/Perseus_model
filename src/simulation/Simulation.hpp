@@ -14,10 +14,6 @@
 #include "ResourceMapFactory.hpp"
 
 namespace TimingModel {
-    extern std::map<std::string, sparta::ResourceFactoryBase*> factory_map;
-
-    const uint64_t max_run_time = 200;
-
     class Simulation : public sparta::app::Simulation {
     public:
         Simulation(sparta::Scheduler& scheduler,

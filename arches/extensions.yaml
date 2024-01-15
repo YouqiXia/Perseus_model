@@ -14,12 +14,12 @@ top.extension.topo_extensions:
                     ["ALU1", "2"],
                     ["ALU2", "2"],
                     ["ALU3", "2"],
-                    ["ALU4", "2"],
+                    ["ALU4", "2"]
                  ]
   fu_map: [
     ["LSU", "FuncType::STU", "FuncType::LDU"],
     ["ALU1", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"],
     ["ALU2", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"],
     ["ALU3", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"],
-    ["ALU4", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"],
+    ["ALU4", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"]
     ]
