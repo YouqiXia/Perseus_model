@@ -2,3 +2,5 @@
 .idea/
 cmake-build-debug/
 build/
+[rR]elease/
+[dD]ebug/

@@ -8,6 +8,7 @@
 #include "Core/Backend/PerfectBackend.hpp"
 #include "uncore/cache/BaseCache.hpp"
 #include "uncore/memory/AbstractMemory.hpp"
+#include "uncore/memory/DRAMsim3.hpp"
 #include <memory>
 #include <cstdint>
 
@@ -31,6 +32,8 @@ namespace TimingModel {
                             TimingModel::BaseCache::BaseCacheParameterSet> base_cache_factory;
     sparta::ResourceFactory<TimingModel::AbstractMemroy,
                             TimingModel::AbstractMemroy::AbstractMemroyParameterSet> abstract_memroy_factory;    
+    sparta::ResourceFactory<TimingModel::DRAMsim3,
+                            TimingModel::DRAMsim3::DRAMsim3ParameterSet> DRAMsim3_factory;
     MavisFactoy mavis_fact;
     std::unique_ptr<OlympiaAllocators> global_allocators;
 
@@ -43,6 +46,7 @@ namespace TimingModel {
         {"l1d_cache",                       &base_cache_factory},
         {"l2_cache",                        &base_cache_factory},
         {"abstract_memory",                 &abstract_memroy_factory},
+        {"DRAMsim3",                        &DRAMsim3_factory},
     };
 
     // Simulation

@@ -36,6 +36,7 @@ include_directories(./src/uncore)
 include_directories(thirdparty/mavis)
 include_directories(thirdparty/stf_lib)
 include_directories(thirdparty/DRAMsim3/src)
+include_directories(thirdparty/DRAMsim3/ext/headers)
 include_directories(${SPARTA_INCLUDE_DIRS})
 
 # Create a few links like reports and arch directories
@@ -53,4 +54,4 @@ add_subdirectory(thirdparty/DRAMsim3)
 add_executable(model ${DIR_SRCS})
 
 # link lib
-target_link_libraries(model SPARTA::sparta mavis ${STF_LINK_LIBS})
+target_link_libraries(model SPARTA::sparta mavis dramsim3 ${STF_LINK_LIBS})
