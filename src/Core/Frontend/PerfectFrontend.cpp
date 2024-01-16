@@ -17,7 +17,7 @@ namespace TimingModel {
         inst_generator_ = InstGenerator::createGenerator(mavis_facade_, p->input_file, false);
         backend_fetch_credit_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectFrontend, AcceptCredit, Credit));
 
-        dut_ = new Vhaha;
+        dut_ = new VBackend;
         Verilated::traceEverOn(true);
         m_trace_ = new VerilatedVcdC;
         dut_->trace(m_trace_, 7);

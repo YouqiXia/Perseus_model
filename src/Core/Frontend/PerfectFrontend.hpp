@@ -5,7 +5,7 @@
 
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/ports/SignalPort.hpp"
-#include "Vhaha.h"
+#include "VBackend.h"
 #include "verilated_vcd_c.h"
 
 // #include "basic/Instruction.hh"
@@ -61,7 +61,7 @@ namespace TimingModel {
 
         std::unique_ptr<InstGenerator> inst_generator_;
 
-        Vhaha *dut_ = nullptr;
+        VBackend *dut_ = nullptr;
 
         VerilatedVcdC *m_trace_ = nullptr;
 

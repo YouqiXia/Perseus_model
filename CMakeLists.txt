@@ -62,7 +62,7 @@ add_subdirectory(mavis)
 add_subdirectory (${STF_LIB_BASE})
 
 # verilate
-set(TOP_MODULE haha)
+set(TOP_MODULE Backend)
 file(GLOB_RECURSE V_FILES ${PROJECT_SOURCE_DIR}/cosim/*.v)
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/obj_dir)
 execute_process(
