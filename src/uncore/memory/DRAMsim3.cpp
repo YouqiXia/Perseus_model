@@ -25,6 +25,7 @@ namespace TimingModel {
     }
 
     DRAMsim3::~DRAMsim3(){
+        memory_system.PrintStats();
     }
 
     void DRAMsim3::SendInitCredit(){
