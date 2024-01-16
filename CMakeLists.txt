@@ -6,9 +6,16 @@ set (CMAKE_CXX_STANDARD_REQUIRED ON)
 project(model)
 
 # set sparta directory
-set(SPARTA_SEARCH_DIR /usr/local)
-set(SPARTA_INCLUDE_DIRS ${SPARTA_SEARCH_DIR}/include/sparta)
+if(IS_DIRECTORY ${SPARTA_SEARCH_DIR})
+  message (STATUS "Using '${SPARTA_SEARCH_DIR}' for sparta install")
+elseif(DEFINED ENV{CONDA_PREFIX})
+  message (STATUS "Looking for SPARTA in the conda environment: '$ENV{CONDA_PREFIX}'")
+  set(SPARTA_SEARCH_DIR $ENV{CONDA_PREFIX})
+else()
+  message (STATUS "If needed, please provide the location where sparta is installed: -DSPARTA_SEARCH_DIR=<directory>")
+endif()
 set(CMAKE_MODULE_PATH "${SPARTA_SEARCH_DIR}/lib/cmake/sparta" ${CMAKE_MODULE_PATH})
+
 find_package(Sparta REQUIRED)
 
 # set up STF lib
@@ -29,12 +36,20 @@ set(CMAKE_CXX_FLAGS_PROFILE   "-O3 -pg -g -ftime-trace")
 set(CMAKE_CXX_FLAGS_FASTDEBUG "-O3 -g")
 set(CMAKE_CXX_FLAGS_DEBUG     "-O0 -g")
 
+# Verilator include path
+set (VERILATOR_INCLUDE "/usr/share/verilator/include")
+set (DIR_SRCS ${VERILATOR_INCLUDE}/verilated.cpp ${DIR_SRCS})
+set (DIR_SRCS ${VERILATOR_INCLUDE}/verilated_vcd_c.cpp ${DIR_SRCS})
+
 # head file
 include_directories(./src)
 include_directories(./src/basic)
 include_directories(mavis)
 include_directories(stf_lib)
 include_directories(${SPARTA_INCLUDE_DIRS})
+include_directories(${VERILATOR_INCLUDE})
+include_directories(${CMAKE_BINARY_DIR}/obj_dir)
+
 
 # Create a few links like reports and arch directories
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/reports    ${CMAKE_CURRENT_BINARY_DIR}/reports         SYMBOLIC)
@@ -45,6 +60,22 @@ file(CREATE_LINK ${PROJECT_SOURCE_DIR}/traces     ${CMAKE_CURRENT_BINARY_DIR}/tr
 # thirdparty link lib
 add_subdirectory(mavis)
 add_subdirectory (${STF_LIB_BASE})
+
+# verilate
+set(TOP_MODULE Backend)
+file(GLOB_RECURSE V_FILES ${PROJECT_SOURCE_DIR}/cosim/*.v)
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/obj_dir)
+execute_process(
+    COMMAND verilator --trace -cc ${V_FILES} --top-module ${TOP_MODULE} -Mdir ${CMAKE_BINARY_DIR}/obj_dir
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/cosim/
+)
+execute_process(
+    COMMAND make -f V${TOP_MODULE}.mk
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/obj_dir/
+)
+
+# Link library
+link_libraries(${CMAKE_BINARY_DIR}/obj_dir/V${TOP_MODULE}__ALL.a)
 
 # add_subdirectory()
 add_executable(model ${DIR_SRCS})
