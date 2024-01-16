@@ -69,11 +69,7 @@ namespace TimingModel {
                                      TimingModel::WriteBackStage::WriteBackStageParameter>);
         };
 
-        ~ResourceMapFactory() {
-            for (auto& factory_pair: factories_map) {
-                delete factory_pair.second;
-            }
-        }
+        ~ResourceMapFactory() {}
 
         void RegisterResource(std::string resource_name, sparta::ResourceFactoryBase* factory_ptr) {
             assert(factories_map.find(resource_name) == factories_map.end());

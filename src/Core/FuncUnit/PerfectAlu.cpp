@@ -11,6 +11,12 @@ namespace TimingModel {
     {
         preceding_func_inst_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectAlu, WriteBack_, InstPtr));
         preceding_func_inst_in >> sparta::GlobalOrderingPoint(node, "backend_alu_multiport_order");
+
+        write_back_func_credit_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectAlu, AcceptCredit_, Credit));
+    }
+
+    void PerfectAlu::AcceptCredit_(const Credit& credit) {
+        func_rs_credit_out.send(credit);
     }
 
     void PerfectAlu::WriteBack_(const InstPtr& inst_ptr) {

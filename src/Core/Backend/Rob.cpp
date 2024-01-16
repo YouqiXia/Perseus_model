@@ -71,6 +71,12 @@ namespace TimingModel {
         }
     }
 
+    void Rob::TryWakeupStore() {
+        if (rob_.front().inst_ptr->getFuType() == FuncType::STU) {
+//            Rob_lsu_wakeup_out.send(rob_.front().inst_ptr);
+        }
+    }
+
     void Rob::Commit_() {
         InstGroupPtr inst_group_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
         uint64_t issue_num = std::min(issue_width_, uint64_t(rob_.size()));
@@ -82,6 +88,8 @@ namespace TimingModel {
                 break;
             }
         }
+        TryWakeupStore();
+
         if (!inst_group_ptr->empty()) {
             Rob_cmt_inst_out.send(inst_group_ptr);
         }
