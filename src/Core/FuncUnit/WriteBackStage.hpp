@@ -31,6 +31,11 @@ namespace TimingModel {
             {}
 
             PARAMETER(uint64_t, issue_num, 4, "the issuing bandwidth in a cycle")
+            #ifndef ABSLSU
+            PARAMETER(uint64_t, wb_latency, 0, "write back latency")
+            #else
+            PARAMETER(uint64_t, wb_latency, 1, "write back latency")
+            #endif
         };
 
         static const char* name;
@@ -65,6 +70,8 @@ namespace TimingModel {
         std::map<FuncUnitType, sparta::DataOutPort<Credit>*> func_unit_credit_ports_out_;
 
         std::map<FuncUnitType, Credit> func_credit_map_;
+
+        uint64_t wb_latency_;
     };
 
 }

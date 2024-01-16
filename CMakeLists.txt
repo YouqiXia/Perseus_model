@@ -5,6 +5,8 @@ set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(model)
 
+#add_definitions(-DABSLSU)
+
 # set sparta directory
 set(SPARTA_SEARCH_DIR /usr/local)
 set(SPARTA_INCLUDE_DIRS ${SPARTA_SEARCH_DIR}/include/sparta)
@@ -32,6 +34,7 @@ set(CMAKE_CXX_FLAGS_DEBUG     "-O0 -g")
 # head file
 include_directories(./src)
 include_directories(./src/basic)
+include_directories(./src/uncore)
 include_directories(mavis)
 include_directories(stf_lib)
 include_directories(${SPARTA_INCLUDE_DIRS})

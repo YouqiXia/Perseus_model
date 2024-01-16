@@ -85,6 +85,7 @@ namespace TimingModel {
     void RenamingStage::AllocateInst_(const InstGroupPtr& inst_group_ptr) {
         ILOG("renaming stage get instructions: " << inst_group_ptr->size());
         for (auto& inst_ptr: *inst_group_ptr) {
+            ILOG("renaming stage get instructions: " << inst_ptr);
             renaming_stage_queue_.push(inst_ptr);
         }
 
@@ -128,6 +129,7 @@ namespace TimingModel {
             auto inst_tmp_ptr = renaming_stage_queue_.front();
             RenameInstImp_(inst_tmp_ptr);
             inst_group_tmp_ptr->emplace_back(inst_tmp_ptr);
+            ILOG("send insn to following: " << inst_tmp_ptr);
             renaming_stage_queue_.pop();
             if (inst_tmp_ptr->getFuType() == FuncType::STU && inst_tmp_ptr->getFuType() == FuncType::LDU) {
                 inst_lsu_group_tmp_ptr->emplace_back(inst_tmp_ptr);
@@ -187,6 +189,7 @@ namespace TimingModel {
                 rename_event.schedule(1);
             }
             renaming_table_.GetBackup(inst_ptr->getIsaRd()) = inst_ptr->getPhyRd();
+            ILOG("insn release resource: " << inst_ptr);
             ILOG("free list push: " << inst_ptr->getLPhyRd() << " rob tag: " << inst_ptr->getRobTag());
         }
     }

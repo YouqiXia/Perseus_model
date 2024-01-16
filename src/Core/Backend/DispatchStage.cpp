@@ -65,6 +65,7 @@ namespace TimingModel {
     void DispatchStage::AllocateInst_(const TimingModel::InstGroupPtr &inst_group_ptr) {
         for (auto& inst_ptr: *inst_group_ptr) {
             ILOG(getName() << " get instruction rob tag: " << inst_ptr->getRobTag());
+            ILOG("get inst from preceding: " << inst_ptr);
             IssueQueueEntryPtr issue_entry_ptr_tmp {new IssueQueueEntry};
             issue_entry_ptr_tmp->inst_ptr = inst_ptr;
             inst_queue_.push(issue_entry_ptr_tmp);
@@ -182,6 +183,7 @@ namespace TimingModel {
     void DispatchStage::IssueInst_() {
         for (auto& dispatch_pending_pair: dispatch_pending_queue_) {
             ILOG(getName() << " issue instruction rob tag: " << dispatch_pending_pair.second->getRobTag());
+            ILOG("issue insn to following: " << dispatch_pending_pair.second);
             dispatch_rs_out.at(dispatch_pending_pair.first)->send(dispatch_pending_pair.second);
         }
         dispatch_pending_queue_.clear();

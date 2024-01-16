@@ -59,6 +59,7 @@ namespace TimingModel {
         for (auto& inst_ptr: *inst_group_ptr) {
             inst_ptr->setRobTag(rob_.tail());
             rob_.push({inst_ptr, true, false});
+            ILOG("get insn from preceding: " << inst_ptr);
             ILOG("rob allocate instruction tag is: " << inst_ptr->getRobTag());
         }
         commit_event.schedule(1);
@@ -67,6 +68,7 @@ namespace TimingModel {
     void Rob::Finish_(const TimingModel::InstGroupPtr &inst_group_ptr) {
         for (auto& inst_ptr: *inst_group_ptr) {
             ILOG("rob finish instruction rob tag is: " << inst_ptr->getRobTag());
+            ILOG("rob finish instruction: " << inst_ptr);
             rob_[inst_ptr->getRobTag()].finish = true;
         }
     }
