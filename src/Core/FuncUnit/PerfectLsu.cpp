@@ -9,8 +9,16 @@ namespace TimingModel {
         func_type_(p->func_type),
         load_to_use_latency_(p->load_to_use_latency)
     {
-        preceding_func_inst_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectLsu, WriteBack_, InstPtr));
+        preceding_func_inst_in.registerConsumerHandler
+            (CREATE_SPARTA_HANDLER_WITH_DATA(PerfectLsu, WriteBack_, InstPtr));
         preceding_func_inst_in >> sparta::GlobalOrderingPoint(node, "backend_lsu_multiport_order");
+
+        write_back_func_credit_in.registerConsumerHandler
+            (CREATE_SPARTA_HANDLER_WITH_DATA(PerfectLsu, AcceptCredit_, Credit));
+    }
+
+    void PerfectLsu::AcceptCredit_(const Credit& credit) {
+        func_rs_credit_out.send(credit);
     }
 
     void PerfectLsu::WriteBack_(const InstPtr& inst_ptr) {

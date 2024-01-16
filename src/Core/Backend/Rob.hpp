@@ -54,12 +54,14 @@ namespace TimingModel {
 
         void AllocateRob_(const InstGroupPtr&);
 
+        void TryWakeupStore();
+
         void InitCredit_();
 
         void Commit_();
 
     private:
-        // ports
+        /* ports */
         // flush
         sparta::DataInPort<FlushingCriteria> rob_flush_in
                 {&unit_port_set_, "rob_flush_in", sparta::SchedulingPhase::Tick, 1};
@@ -79,8 +81,11 @@ namespace TimingModel {
         sparta::DataOutPort<InstGroupPtr> Rob_cmt_inst_out
                 {&unit_port_set_, "Rob_cmt_inst_out"};
 
+        // with lsu wakeup
+//        sparta::DataOutPort<InstPtr> Rob_lsu_wakeup_out
+//                {&unit_port_set_, "Rob_lsu_wakeup_out"};
 
-        // events
+        /* events */
         sparta::SingleCycleUniqueEvent<> commit_event
                 {&unit_event_set_, "commit_event", CREATE_SPARTA_HANDLER(Rob, Commit_)};
 
