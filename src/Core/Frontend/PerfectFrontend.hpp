@@ -5,6 +5,8 @@
 
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/ports/SignalPort.hpp"
+#include "Vhaha.h"
+#include "verilated_vcd_c.h"
 
 // #include "basic/Instruction.hh"
 #include "basic/Inst.hpp"
@@ -23,7 +25,7 @@ namespace TimingModel {
                 sparta::ParameterSet(n)
             {}
 
-            PARAMETER(uint64_t, issue_num, 4, "the issuing bandwidth in a cycle")
+            PARAMETER(uint64_t, issue_num, 2, "the issuing bandwidth in a cycle")
             PARAMETER(std::string, input_file, "", "the stf entry")
         };
 
@@ -58,5 +60,11 @@ namespace TimingModel {
         MavisType* mavis_facade_ = nullptr;
 
         std::unique_ptr<InstGenerator> inst_generator_;
+
+        Vhaha *dut_ = nullptr;
+
+        VerilatedVcdC *m_trace_ = nullptr;
+
+        uint64_t sim_time_ = 0;
     };
 }
