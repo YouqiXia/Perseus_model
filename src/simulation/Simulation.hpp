@@ -11,9 +11,11 @@
 #include "sparta/utils/Utils.hpp"
 #include "basic/Instruction.hpp"
 #include "ExtensionsCfg.hpp"
+#include "variable.hpp"
 
 
 namespace TimingModel {
+
     extern std::map<std::string, sparta::ResourceFactoryBase*> factory_map;
 
     const uint64_t max_run_time = 200;
@@ -21,7 +23,8 @@ namespace TimingModel {
     class Simulation : public sparta::app::Simulation {
     public:
         Simulation(sparta::Scheduler& scheduler,
-                   const std::string workload);
+                   const std::string workload,
+                   VAR::DRAMinput DRAMinput);
 
         virtual ~Simulation();
 
@@ -45,6 +48,7 @@ namespace TimingModel {
 
     private:
         std::string workload_;
+        VAR::DRAMinput dram_input_;
     };
 }
 

@@ -13,7 +13,7 @@ namespace TimingModel {
         mem_acc_info_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))->
                                  mem_acc_info_allocator),
         memory_system(
-            config_file, output_dir,
+            p->config_file, p->output_dir,
             std::bind(&DRAMsim3::Read_CallBack, this, std::placeholders::_1),
             std::bind(&DRAMsim3::Write_CallBack, this, std::placeholders::_1)
         )

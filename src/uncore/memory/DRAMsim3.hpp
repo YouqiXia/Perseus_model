@@ -11,8 +11,6 @@
 
 namespace TimingModel {
     using dramsim3::MemorySystem;
-    const std::string config_file = "/work/home/jhxiao/Project/Genshin_model/thirdparty/DRAMsim3/configs/DDR4_8Gb_x8_3200.ini";
-    const std::string output_dir = "/work/home/jhxiao/Project/Genshin_model/";
 
     class DRAMsim3: public sparta::Unit{
         public:
@@ -24,8 +22,8 @@ namespace TimingModel {
 
                 PARAMETER(uint32_t, access_latency, 5, "memory access latency")
                 PARAMETER(uint32_t, upstream_access_ports_num, 1, "upstream access ports number")
-                // PARAMETER(std::string, config_file, "", "DRAM config file")
-                // PARAMETER(std::string, output_dir, "", "DRAM output dir")
+                PARAMETER(std::string, config_file, "", "DRAM config file")
+                PARAMETER(std::string, output_dir, "", "DRAM output dir")
             };
 
             DRAMsim3(sparta::TreeNode* node, const DRAMsim3ParameterSet* p);
@@ -60,8 +58,6 @@ namespace TimingModel {
             std::vector<MemAccInfoPtr> memory_req_queue;
             uint64_t memory_req_queue_num = 8;
             MemAccInfoAllocator& mem_acc_info_allocator_;
-            // const std::string config_file;
-            // const std::string output_dir;
 
             bool last_write = false;
             bool get_next = true;

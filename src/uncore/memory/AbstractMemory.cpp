@@ -12,7 +12,7 @@ namespace TimingModel {
         mem_req_in.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(AbstractMemroy, receive_mem_req, MemAccInfoGroup));
         // mem_req_in.setPortDelay(static_cast<sparta::Clock::Cycle>(1));
-        // sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(AbstractMemroy, SendInitCredit));
+        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(AbstractMemroy, SendInitCredit));
     }
     void AbstractMemroy::SendInitCredit() {
         out_upstream_credit.send(upstream_access_ports_num_);
