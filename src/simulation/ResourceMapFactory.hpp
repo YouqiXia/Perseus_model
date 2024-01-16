@@ -16,6 +16,7 @@
 #include "Core/Backend/RenamingStage.hpp"
 #include "Core/Backend/Rob.hpp"
 #include "Core/Backend/DispatchStage.hpp"
+#include "Core/Backend/PhysicalRegfile.hpp"
 #include "Core/Backend/ReservationStation.hpp"
 
 #include "Core/FuncUnit/PerfectAlu.hpp"
@@ -53,6 +54,10 @@ namespace TimingModel {
             RegisterResource(TimingModel::DispatchStage::name ,
                              new sparta::ResourceFactory<TimingModel::DispatchStage,
                                      TimingModel::DispatchStage::DispatchStageParameter>);
+
+            RegisterResource(TimingModel::PhysicalRegfile::name ,
+                             new sparta::ResourceFactory<TimingModel::PhysicalRegfile,
+                                     TimingModel::PhysicalRegfile::PhysicalRegfileParameter>);
 
             RegisterResource(TimingModel::ReservationStation::name ,
                              new sparta::ResourceFactory<TimingModel::ReservationStation,

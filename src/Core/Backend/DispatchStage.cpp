@@ -10,7 +10,6 @@ namespace TimingModel {
 
     DispatchStage::DispatchStage(sparta::TreeNode *node, const DispatchStageParameter *p) :
             sparta::Unit(node),
-            phy_regfile_(p->phy_reg_num, 0),
             issue_num_(p->issue_num),
             inst_queue_depth_(p->issue_queue_depth),
             scoreboard_("scoreboard", p->phy_reg_num, info_logger_),
@@ -28,6 +27,9 @@ namespace TimingModel {
 
         dispatch_flush_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA
             (DispatchStage, HandleFlush_, FlushingCriteria));
+
+        physical_reg_dispatch_read_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA
+            (DispatchStage, ReadFromPhysicalReg_, InstGroupPtr));
 
         // credits initialization
         FuncMap& fu_map = getFuncMap();
@@ -55,8 +57,11 @@ namespace TimingModel {
             dispatch_pop_events_ >> dispatch_select_events_ >>
             dispatch_scoreboard_events_ >> dispatch_get_operator_events_ >> dispatch_issue_events_;
 
-            sparta::GlobalOrderingPoint(node, "dispatch_node") >> dispatch_select_events_;
+            physical_reg_dispatch_read_in >> sparta::GlobalOrderingPoint(node, "dispatch_physical_reg_node");
+            sparta::GlobalOrderingPoint(node, "dispatch_physical_reg_node") >> dispatch_issue_events_;
+
             write_back_dispatch_port_in >> sparta::GlobalOrderingPoint(node, "dispatch_node");
+            sparta::GlobalOrderingPoint(node, "dispatch_node") >> dispatch_select_events_;
 
             sparta::GlobalOrderingPoint(node, "rob_dispatch_node") >> dispatch_scoreboard_events_;
 
@@ -77,24 +82,14 @@ namespace TimingModel {
 
     void DispatchStage::ReadPhyReg_() {
         ILOG(getName() << " read physical register.");
-        for (auto& inst_pair : dispatch_pending_queue_) {
-            auto inst_ptr = inst_pair.second;
-            if (inst_ptr->getRs1Type() != RegType_t::NONE && !inst_ptr->getIsRs1Forward()) {
-                if (inst_ptr->getPhyRs1() == 0) {
-                    inst_ptr->setOperand1(0);
-                } else {
-                    inst_ptr->setOperand1(phy_regfile_[inst_ptr->getPhyRs1()]);
-                }
-            }
-
-            if (inst_ptr->getRs2Type() != RegType_t::NONE && !inst_ptr->getIsRs2Forward()) {
-                if (inst_ptr->getPhyRs2() == 0) {
-                    inst_ptr->setOperand2(0);
-                } else {
-                    inst_ptr->setOperand2(phy_regfile_[inst_ptr->getPhyRs2()]);
-                }
-            }
+        InstGroupPtr inst_group_tmp_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
+        for (auto& dispatch_pending_pair : dispatch_pending_queue_) {
+            inst_group_tmp_ptr->emplace_back(dispatch_pending_pair.second);
         }
+        dispatch_physical_reg_read_out.send(inst_group_tmp_ptr);
+    }
+
+    void DispatchStage::ReadFromPhysicalReg_(const TimingModel::InstGroupPtr &inst_group_ptr) {
     }
 
     void DispatchStage::CheckRegStatus_() {
@@ -110,7 +105,6 @@ namespace TimingModel {
                 continue;
             }
             scoreboard_.ClearForwardingEntry(inst_ptr->getPhyRd());
-            phy_regfile_[inst_ptr->getPhyRd()] = inst_ptr->getRdResult();
         }
     }
 
