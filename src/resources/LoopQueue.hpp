@@ -6,120 +6,162 @@
 
 #include <vector>
 #include <stdint.h>
+#include <iostream>
 
-template <typename T>
-class LoopQueue
-{
-private:
-    std::vector<T>  m_dataVec;
-    uint64_t        m_header;
-    uint64_t        m_tail;
-    uint64_t        m_usage;
-public:
+namespace resources {
 
-    LoopQueue(uint64_t depth)
-    {
-        this->m_dataVec.resize(depth);
-        this->clear();
-    };
+    template<typename T>
+    class LoopQueue {
+    private:
+        std::vector<T> dataVec_;
+        uint32_t head_;
+        uint32_t tail_;
+        uint32_t usage_;
+        uint32_t depth_;
 
-    ~LoopQueue(){ this->clear(); };
+    public:
+        using size_type = uint32_t;
+        using value_type = T;
+        using pointer = typename std::vector<value_type>::pointer;
+        using iterator = typename std::vector<value_type>::iterator;
+        using const_iterator = typename std::vector<value_type>::const_iterator;
 
-    uint64_t head(){
-        return this->m_header;
-    };
+    public:
+        LoopQueue(uint32_t depth) :
+                depth_(depth) {
+            clear();
+        };
 
-    uint64_t tail(){
-        return this->m_tail;
-    };
+        ~LoopQueue() { clear(); };
 
-    uint64_t getLastest(){
-        return this->getLastPtr(this->m_tail);
-    };
+        void clear() {
+            tail_ = 0;
+            head_ = 0;
+            usage_ = 0;
+            dataVec_.clear();
+            dataVec_.resize(depth_);
+        };
 
-    uint64_t getDepth(){
-        return this->m_dataVec.size();
-    };
-
-    uint64_t size(){
-        return this->m_usage;
-    };
-
-    uint64_t getAvailEntryCount(){
-        return this->m_dataVec.size() - this->m_usage;
-    };
-
-    bool full(){
-        return this->m_usage == this->m_dataVec.size();
-    };
-
-    bool empty(){
-        return this->m_usage == 0;
-    };
-
-    void HeaderInc(){
-        if(this->m_header == this->m_dataVec.size() - 1){
-            this->m_header = 0;
-        }else{
-            this->m_header++;
+        uint32_t capacity() const {
+            return dataVec_.size();
         }
-        this->m_usage--;
-    };
 
-    void TailInc(){
-        if(this->m_tail == this->m_dataVec.size() - 1){
-            this->m_tail = 0;
-        }else{
-            this->m_tail++;
+        size_type size() const {
+            return usage_;
+        };
+
+        size_type numFree() const {
+            return dataVec_.size() - usage_;
+        };
+
+        uint32_t head() { return head_; }
+
+        uint32_t tail() { return tail_; }
+
+        bool full() const {
+            return usage_ == dataVec_.size();
+        };
+
+        bool empty() const {
+            return usage_ == 0;
+        };
+
+        const value_type &read(uint64_t idx) const {
+            return dataVec_[idx];
         }
-        this->m_usage++;
-    };
 
-    uint64_t  getNextPtr(const uint64_t CurPtr){
-        if(CurPtr == this->m_dataVec.size() - 1){
-            return 0;
-        }else{
-            return CurPtr+1;
+        value_type &access(uint64_t idx) {
+            return dataVec_[idx];
+        }
+
+        value_type &front() {
+            return dataVec_[head_];
+        };
+
+        value_type &back() {
+            uint32_t index = decrementIndexValue_(tail_);
+            return dataVec_[index];
+        };
+
+        iterator push(const value_type &data) {
+            assert(!full());
+            dataVec_[tail_] = data;
+            uint32_t allocate_idx = tail_;
+            usage_++;
+            tail_ = incrementIndexValue_(tail_);
+            return iterator(&dataVec_[tail_]);
+        };
+
+//    iterator push(const value_type&& data){
+//        dataVec_[tail_](std::move(data));
+//        uint32_t allocate_idx = tail_;
+//        tail_ = incrementIndexValue_(tail_);
+//        return iterator(&dataVec_[tail_]);
+//    };
+
+        void pop() {
+            assert(!empty());
+            usage_--;
+            head_ = incrementIndexValue_(head_);
+        };
+
+        void pop_back() {
+            assert(!empty());
+            usage_--;
+            tail_ = decrementIndexValue_(tail_);
+        };
+
+//    iterator begin() {
+//        return iterator(&dataVec_[head_]);
+//    }
+//
+//    const_iterator begin() const {
+//        return iterator(&dataVec_[head_]);
+//    }
+//
+//    iterator end() {
+//        uint32_t index = decrementIndexValue_(tail_);
+//        return iterator(&dataVec_[index]);
+//    }
+//
+//    const_iterator end() const {
+//        uint32_t index = decrementIndexValue_(tail_);
+//        return iterator(&dataVec_[index]);
+//    }
+
+        std::ostream &operator<<(std::ostream &os) {
+            uint32_t idx = head_;
+            size_type usage = usage_;
+            while (usage--) {
+                os << dataVec_[idx] << ", ";
+                idx = incrementIndexValue_(idx);
+            }
+            os << std::endl;
+            return os;
+        }
+
+    private:
+        uint32_t incrementIndexValue_(uint32_t idx) {
+            if (idx == dataVec_.size() - 1) {
+                return 0;
+            } else {
+                return idx + 1;
+            }
+        }
+
+        uint32_t decrementIndexValue_(uint32_t idx) {
+            if (idx == 0) {
+                return dataVec_.size() - 1;
+            } else {
+                return idx - 1;
+            }
         }
     };
 
-    uint64_t  getLastPtr(const uint64_t CurPtr){
-        if(CurPtr == 0){
-            return this->m_dataVec.size() - 1;
-        }else{
-            return CurPtr-1;
-        }
-    };
-
-    void push(const T& data){
-        this->m_dataVec[this->m_tail] = data;
-        this->TailInc();
-    };
-
-    void pop(){
-        this->HeaderInc();
-    };
-
-    T& operator[](uint64_t pos){
-        return this->m_dataVec[pos];
+    template<class T>
+    std::ostream &operator<<(std::ostream &os, LoopQueue<T> loop_queue) {
+        loop_queue << os;
+        return os;
     }
 
-    T&  front(){
-        return this->m_dataVec[m_header];
-    };
-
-    T&  back(){
-        return this->m_dataVec[m_tail];
-    };
-
-    void clear(){
-        this->m_tail = 0;
-        this->m_header = 0;
-        this->m_usage = 0;
-
-        uint64_t size = this->m_dataVec.size();
-        this->m_dataVec.clear();
-        this->m_dataVec.resize(size);
-    };
-
-};
+}

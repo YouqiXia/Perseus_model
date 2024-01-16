@@ -11,7 +11,7 @@
 #include "olympia/OlympiaAllocators.hpp"
 
 #include "basic/Inst.hpp"
-#include "resources/LoopQueue.hpp"
+#include "oldresources/LoopQueue.hpp"
 
 #include "WriteBackStage.hpp"
 
