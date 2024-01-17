@@ -41,7 +41,11 @@ private:
 
     void AcceptDispatchCredit_(const Credit&);
 
-    void AcceptLsuCredit_(const Credit&);
+    void AcceptLoadQueueCredit_(const Credit&);
+
+    void AcceptStoreQueueCredit_(const Credit&);
+
+    void AcceptLsuAllocateIdx(const InstGroupPtr&);
 
     void CreditDecrease_();
 
@@ -92,8 +96,14 @@ private:
 //        sparta::DataOutPort<InstPtr> renaming_lsu_allocate_out
 //            {&unit_port_set_, "renaming_lsu_allocate_out"};
 
-//        sparta::DataInPort<Credit> lsu_renaming_credit_in
+//        sparta::DataInPort<Credit> lsu_renaming_ldq_credit_in
 //            {&unit_port_set_, "lsu_renaming_credit_in", sparta::SchedulingPhase::Tick, 0};
+
+//        sparta::DataInPort<Credit> lsu_renaming_stq_credit_in
+//            {&unit_port_set_, "lsu_renaming_credit_in", sparta::SchedulingPhase::Tick, 0};
+
+//        sparta::DataInPort<Credit> lsu_renaming_allocate_in
+//            {&unit_port_set_, "lsu_renaming_allocate_in", sparta::SchedulingPhase::Tick, 0};
 
 
     // events
@@ -117,7 +127,9 @@ private:
 
     Credit rob_credit_ = 0;
 
-    Credit lsu_credit_ = 256;
+    Credit ldq_credit_ = 256;
+
+    Credit stq_credit_ = 256;
 
 };
 
