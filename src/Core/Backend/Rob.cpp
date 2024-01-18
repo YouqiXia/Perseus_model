@@ -36,9 +36,15 @@ namespace TimingModel {
     }
 
     Rob::~Rob() {
-        std::cout << "model: Retired " << num_retired_.get()
+        std::cout << std::endl
+                  << "============================================================="
+                  << std::endl
+                  << "model: Retired " << num_retired_.get()
                   << " instructions in " << getClock()->currentCycle()
                   << " overall IPC: " << ipc_.getValue()
+                  << std::endl
+                  << "============================================================="
+                  << std::endl
                   << std::endl;
     }
 
@@ -59,6 +65,7 @@ namespace TimingModel {
         for (auto& inst_ptr: *inst_group_ptr) {
             inst_ptr->setRobTag(rob_.tail());
             rob_.push({inst_ptr, true, false});
+            ILOG("get insn from preceding: " << inst_ptr);
             ILOG("rob allocate instruction tag is: " << inst_ptr->getRobTag());
         }
         commit_event.schedule(1);
@@ -67,7 +74,8 @@ namespace TimingModel {
     void Rob::Finish_(const TimingModel::InstGroupPtr &inst_group_ptr) {
         for (auto& inst_ptr: *inst_group_ptr) {
             ILOG("rob finish instruction rob tag is: " << inst_ptr->getRobTag());
-            rob_[inst_ptr->getRobTag()].finish = true;
+            ILOG("rob finish instruction: " << inst_ptr);
+            rob_.access(inst_ptr->getRobTag()).finish = true;
         }
     }
 

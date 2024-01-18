@@ -61,6 +61,8 @@ namespace TimingModel {
 
         void ReadPhyReg_();
 
+        void ReadFromPhysicalReg_(const InstGroupPtr&);
+
         void IssueInst_();
 
         void SelectInst_();
@@ -80,6 +82,13 @@ namespace TimingModel {
 
             sparta::DataOutPort<Credit> dispatch_preceding_credit_out
                 {&unit_port_set_, "dispatch_preceding_credit_out"};
+
+            // with physical register file
+            sparta::DataOutPort<InstGroupPtr> dispatch_physical_reg_read_out
+                    {&unit_port_set_, "dispatch_physical_reg_read_out"};
+
+            sparta::DataInPort<InstGroupPtr> physical_reg_dispatch_read_in
+                    {&unit_port_set_, "dispatch_physical_reg_read_in", sparta::SchedulingPhase::Tick, 1};
 
             // with rs -> also should be constructed in dispatch stage constructor
             std::map<FuncUnitType, sparta::SpartaSharedPointer<sparta::DataOutPort<InstPtr>>> dispatch_rs_out;
@@ -112,8 +121,6 @@ namespace TimingModel {
         uint64_t issue_num_;
 
         std::map<FuncUnitType, Credit> rs_credits_;
-
-        PhysicalReg phy_regfile_;
 
         Scoreboard scoreboard_;
 
