@@ -1,0 +1,34 @@
+top.extension.topo_extensions:
+  module_topology: ["mavis", "perfect_frontend", "renaming_stage", "rob", "dispatch_stage", "write_back_stage", "l1d_cache", "l2_cache","abstract_memory"]
+  binding_topology: ["perfect_frontend.ports.fetch_backend_inst_out", "renaming_stage.ports.preceding_renaming_inst_in",
+                     "renaming_stage.ports.renaming_following_inst_out", "rob.ports.preceding_rob_inst_in",
+                     "renaming_stage.ports.renaming_following_inst_out", "dispatch_stage.ports.preceding_dispatch_inst_in",
+                     "write_back_stage.ports.write_back_following_port_out", "rob.ports.write_back_rob_finish_in",
+                     "write_back_stage.ports.write_back_following_port_out", "dispatch_stage.ports.write_back_dispatch_port_in",
+                     "rob.ports.Rob_cmt_inst_out", "renaming_stage.ports.Rob_cmt_inst_in",
+                     "renaming_stage.ports.renaming_preceding_credit_out", "perfect_frontend.ports.backend_fetch_credit_in",
+                     "rob.ports.rob_preceding_credit_out", "renaming_stage.ports.rob_renaming_credit_in",
+                     "dispatch_stage.ports.dispatch_preceding_credit_out", "renaming_stage.ports.following_renaming_credit_in",
+                     "func_LSU.ports.l1d_cache_lsu_credit_in", "l1d_cache.ports.out_upstream_credit",
+                     "func_LSU.ports.l1d_cache_lsu_in", "l1d_cache.ports.out_access_resp",
+                     "func_LSU.ports.lsu_l1d_cache_out", "l1d_cache.ports.in_access_req",
+                     "l1d_cache.ports.in_downstream_credit", "l2_cache.ports.out_upstream_credit",
+                     "l1d_cache.ports.in_access_resp", "l2_cache.ports.out_access_resp",
+                     "l1d_cache.ports.out_access_req", "l2_cache.ports.in_access_req",
+                     "l2_cache.ports.in_downstream_credit", "abstract_memory.ports.out_upstream_credit",
+                     "l2_cache.ports.in_access_resp", "abstract_memory.ports.mem_resp_out",
+                     "l2_cache.ports.out_access_req", "abstract_memory.ports.mem_req_in"]
+
+  fu_credit_map: [  ["LSU", "10"],
+                    ["ALU1", "2"],
+                    ["ALU2", "2"],
+                    ["ALU3", "2"],
+                    ["ALU4", "2"]
+                 ]
+  fu_map: [
+    ["LSU", "FuncType::STU", "FuncType::LDU"],
+    ["ALU1", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"],
+    ["ALU2", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"],
+    ["ALU3", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"],
+    ["ALU4", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"]
+    ]

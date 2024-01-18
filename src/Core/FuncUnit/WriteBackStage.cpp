@@ -11,13 +11,14 @@ namespace TimingModel {
     WriteBackStage::WriteBackStage(sparta::TreeNode *node,
                                    const TimingModel::WriteBackStage::WriteBackStageParameter *p) :
             sparta::Unit(node),
-            issue_num_(p->issue_num)
+            issue_num_(p->issue_num),
+            wb_latency_(p->wb_latency)
     {
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(WriteBackStage, SendInitCredit_));
         FuncMap& fu_map = getFuncMap();
         for (auto &func_pair: fu_map) {
             auto *func_unit_write_back_in_tmp = new sparta::DataInPort<FuncInstPtr>
-                    {&unit_port_set_, func_pair.first + "_write_back_port_in", sparta::SchedulingPhase::Tick, 0};
+                    {&unit_port_set_, func_pair.first + "_write_back_port_in", sparta::SchedulingPhase::Tick, wb_latency_};
             auto *func_unit_credit_out_tmp = new sparta::DataOutPort<Credit>
                     {&unit_port_set_,  func_pair.first + "_rs_credit_out"};
             func_unit_write_back_ports_in_[func_pair.first] = func_unit_write_back_in_tmp;
@@ -52,6 +53,7 @@ namespace TimingModel {
             }
             inst_group_ptr_tmp->emplace_back(func_inst_pair.second.front());
             ILOG(getName() << " arbitrate instructions rob tag: " << func_inst_pair.second.front()->getRobTag());
+            ILOG(getName() << " arbitrate instructions: " << func_inst_pair.second.front());
             func_inst_pair.second.erase(func_inst_pair.second.begin());
             if (func_inst_pair.second.empty()) {
                 func_pop_pending_queue_.emplace_back(func_inst_pair.first);

@@ -90,7 +90,7 @@ namespace TimingModel {
                 {&unit_event_set_, "commit_event", CREATE_SPARTA_HANDLER(Rob, Commit_)};
 
     private:
-        LoopQueue<RobEntry> rob_;
+        resources::LoopQueue<RobEntry> rob_;
 
         sparta::Counter             num_retired_;
 

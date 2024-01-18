@@ -1,14 +1,24 @@
 top.extension.topo_extensions:
-  module_topology: ["mavis", "perfect_frontend", "renaming_stage", "rob", "dispatch_stage", "write_back_stage"]
+  module_topology: ["mavis", "perfect_frontend", "renaming_stage", "rob", "dispatch_stage", "physical_regfile", "write_back_stage"]
   binding_topology: ["perfect_frontend.ports.fetch_backend_inst_out", "renaming_stage.ports.preceding_renaming_inst_in",
-                     "renaming_stage.ports.renaming_following_inst_out", "rob.ports.preceding_rob_inst_in",
-                     "renaming_stage.ports.renaming_following_inst_out", "dispatch_stage.ports.preceding_dispatch_inst_in",
+                    "renaming_stage.ports.renaming_following_inst_out", "rob.ports.preceding_rob_inst_in",
+                    "renaming_stage.ports.renaming_following_inst_out", "dispatch_stage.ports.preceding_dispatch_inst_in",
+                    "rob.ports.Rob_cmt_inst_out", "renaming_stage.ports.Rob_cmt_inst_in",
+                    "renaming_stage.ports.renaming_preceding_credit_out", "perfect_frontend.ports.backend_fetch_credit_in",
+                    "rob.ports.rob_preceding_credit_out", "renaming_stage.ports.rob_renaming_credit_in",
+                    "dispatch_stage.ports.dispatch_preceding_credit_out", "renaming_stage.ports.following_renaming_credit_in",
+                    # dispatch -> physical regfile
+                    "dispatch_stage.ports.dispatch_physical_reg_read_out", "physical_regfile.ports.preceding_physical_regfile_read_in",
+                    # physical regfile -> dispatch
+                    "physical_regfile.ports.physical_regfile_following_read_out", "dispatch_stage.ports.dispatch_physical_reg_read_in",
+                    # write back -> physical regfile
+                    "write_back_stage.ports.write_back_following_port_out", "physical_regfile.ports.preceding_physical_regfile_write_in",
+                    # write back -> rob
                      "write_back_stage.ports.write_back_following_port_out", "rob.ports.write_back_rob_finish_in",
-                     "write_back_stage.ports.write_back_following_port_out", "dispatch_stage.ports.write_back_dispatch_port_in",
-                     "rob.ports.Rob_cmt_inst_out", "renaming_stage.ports.Rob_cmt_inst_in",
-                     "renaming_stage.ports.renaming_preceding_credit_out", "perfect_frontend.ports.backend_fetch_credit_in",
-                     "rob.ports.rob_preceding_credit_out", "renaming_stage.ports.rob_renaming_credit_in",
-                     "dispatch_stage.ports.dispatch_preceding_credit_out", "renaming_stage.ports.following_renaming_credit_in"]
+                    # write back -> dispatch
+                     "write_back_stage.ports.write_back_following_port_out", "dispatch_stage.ports.write_back_dispatch_port_in"
+                    ]
+
 
   fu_credit_map: [  ["LSU", "10"],
                     ["ALU1", "2"],

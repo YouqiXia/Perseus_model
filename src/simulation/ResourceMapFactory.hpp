@@ -16,11 +16,15 @@
 #include "Core/Backend/RenamingStage.hpp"
 #include "Core/Backend/Rob.hpp"
 #include "Core/Backend/DispatchStage.hpp"
+#include "Core/Backend/PhysicalRegfile.hpp"
 #include "Core/Backend/ReservationStation.hpp"
 
 #include "Core/FuncUnit/PerfectAlu.hpp"
 #include "Core/FuncUnit/PerfectLsu.hpp"
+#include "Core/FuncUnit/AbstractLsu.hpp"
 #include "Core/FuncUnit/WriteBackStage.hpp"
+#include "uncore/cache/BaseCache.hpp"
+#include "uncore/memory/AbstractMemory.hpp"
 
 namespace TimingModel {
     class ResourceMapFactory {
@@ -51,6 +55,10 @@ namespace TimingModel {
                              new sparta::ResourceFactory<TimingModel::DispatchStage,
                                      TimingModel::DispatchStage::DispatchStageParameter>);
 
+            RegisterResource(TimingModel::PhysicalRegfile::name ,
+                             new sparta::ResourceFactory<TimingModel::PhysicalRegfile,
+                                     TimingModel::PhysicalRegfile::PhysicalRegfileParameter>);
+
             RegisterResource(TimingModel::ReservationStation::name ,
                              new sparta::ResourceFactory<TimingModel::ReservationStation,
                                      TimingModel::ReservationStation::ReservationStationParameter>);
@@ -64,9 +72,22 @@ namespace TimingModel {
                              new sparta::ResourceFactory<TimingModel::PerfectLsu,
                                      TimingModel::PerfectLsu::PerfectLsuParameter>);
 
+            RegisterResource(TimingModel::AbstractLsu::name ,
+                             new sparta::ResourceFactory<TimingModel::AbstractLsu,
+                                     TimingModel::AbstractLsu::AbstractLsuParameter>);
+
             RegisterResource(TimingModel::WriteBackStage::name ,
                              new sparta::ResourceFactory<TimingModel::WriteBackStage,
                                      TimingModel::WriteBackStage::WriteBackStageParameter>);
+            RegisterResource("l1d_cache" ,
+                             new sparta::ResourceFactory<TimingModel::BaseCache,
+                                     TimingModel::BaseCache::BaseCacheParameterSet>);
+            RegisterResource("l2_cache",
+                             new sparta::ResourceFactory<TimingModel::BaseCache,
+                                     TimingModel::BaseCache::BaseCacheParameterSet>);
+            RegisterResource(TimingModel::AbstractMemroy::name,
+                             new sparta::ResourceFactory<TimingModel::AbstractMemroy,
+                                     TimingModel::AbstractMemroy::AbstractMemroyParameterSet>);
         };
 
         ~ResourceMapFactory() {}

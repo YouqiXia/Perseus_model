@@ -56,6 +56,7 @@ namespace TimingModel {
 
     void ReservationStation::AllocateReStation(const TimingModel::InstPtr &inst_ptr) {
         ILOG(getName() << " get instructions: 1");
+        ILOG("get insn from preceding: " << inst_ptr);
         ReStationEntryPtr tmp_restation_entry {new ReStationEntry};
         tmp_restation_entry->inst_ptr = inst_ptr;
         if (!inst_ptr->getIsRs1Forward()) {
@@ -101,6 +102,7 @@ namespace TimingModel {
         // in-order passing
         InstPtr inst_ptr_tmp;
         uint64_t produce_num = std::min(credit_, issue_num_);
+        ILOG("produce_num = " << produce_num << ", credit_ = " << credit_ << ", issue_num = " << issue_num_);
         for (auto rs_entry_iter = reservation_station_.begin();
                 rs_entry_iter != reservation_station_.end(); ++rs_entry_iter) {
             if (produce_num == 0) {
@@ -113,12 +115,15 @@ namespace TimingModel {
                 inst_ptr_tmp = rs_entry_iter->get()->inst_ptr;
                 reservation_station_.erase(rs_entry_iter);
                 break;
+            } else {
+                ILOG(getName() << " insn operand not ready: " << rs_entry_iter->get()->inst_ptr);
             }
         }
 
         RsCreditPtr rs_credit_ptr_tmp {new RsCredit{rs_func_type_, 1}};
         if (inst_ptr_tmp != nullptr) {
             reservation_preceding_credit_out.send(rs_credit_ptr_tmp);
+            ILOG("send insn to following: " << inst_ptr_tmp);
             reservation_following_inst_out.send(inst_ptr_tmp);
         }
 
