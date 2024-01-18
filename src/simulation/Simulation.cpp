@@ -64,7 +64,7 @@ namespace TimingModel {
                                                                      sparta::TreeNode::GROUP_NAME_NONE,
                                                                      sparta::TreeNode::GROUP_IDX_NONE,
                                                                      func_pair.first,
-                                                                     resource_map_factory_[AbstractLsu::name]);
+                                                                     resource_map_factory_[LSUShell::name]);
                 #endif
             } else {
                 func_units_tmp = new sparta::ResourceTreeNode(getRoot(),

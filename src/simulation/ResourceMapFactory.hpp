@@ -21,7 +21,9 @@
 
 #include "Core/FuncUnit/PerfectAlu.hpp"
 #include "Core/FuncUnit/PerfectLsu.hpp"
-#include "Core/FuncUnit/AbstractLsu.hpp"
+#include "Core/FuncUnit/LSU/LSUShell.hpp"
+#include "Core/FuncUnit/LSU/Agu.hpp"
+#include "Core/FuncUnit/LSU/Lsq.hpp"
 #include "Core/FuncUnit/WriteBackStage.hpp"
 #include "uncore/cache/BaseCache.hpp"
 #include "uncore/memory/AbstractMemory.hpp"
@@ -72,9 +74,17 @@ namespace TimingModel {
                              new sparta::ResourceFactory<TimingModel::PerfectLsu,
                                      TimingModel::PerfectLsu::PerfectLsuParameter>);
 
-            RegisterResource(TimingModel::AbstractLsu::name ,
-                             new sparta::ResourceFactory<TimingModel::AbstractLsu,
-                                     TimingModel::AbstractLsu::AbstractLsuParameter>);
+            RegisterResource(TimingModel::LSUShell::name ,
+                             new sparta::ResourceFactory<TimingModel::LSUShell,
+                                     TimingModel::LSUShell::LSUShellParameter>);
+
+            RegisterResource(TimingModel::AGU::name ,
+                             new sparta::ResourceFactory<TimingModel::AGU,
+                                     TimingModel::AGU::AGUParameter>);
+
+            RegisterResource(TimingModel::LSQ::name ,
+                             new sparta::ResourceFactory<TimingModel::LSQ,
+                                     TimingModel::LSQ::LSQParameter>);
 
             RegisterResource(TimingModel::WriteBackStage::name ,
                              new sparta::ResourceFactory<TimingModel::WriteBackStage,

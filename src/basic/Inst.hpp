@@ -111,17 +111,17 @@ namespace TimingModel
         void setLSQTag(uint64_t LSQTag) { inst_.LSQTag = LSQTag; }
         uint64_t getLSQTag() { return inst_.LSQTag; }
 
-        void setLsuIssued(bool issued) { inst_.LsuIssued = issued; }
-        bool getLsuIssued() { return inst_.LsuIssued; }
+        // void setLsuIssued(bool issued) { inst_.LsuIssued = issued; }
+        // bool getLsuIssued() { return inst_.LsuIssued; }
 
         void setStoreWkup(bool wkup) { inst_.IsStoreWkup = wkup; }
         bool getStoreWkup() { return inst_.IsStoreWkup; }
 
-        void setResp(bool getresp) { inst_.IsGetResp = getresp; }
-        bool getResp() { return inst_.IsGetResp; }
+        // void setResp(bool getresp) { inst_.IsGetResp = getresp; }
+        // bool getResp() { return inst_.IsGetResp; }
 
-        void setAddrReady(bool ready) { inst_.IsAddrReady = ready; }
-        bool getAddrReady() { return inst_.IsAddrReady; }
+        // void setAddrReady(bool ready) { inst_.IsAddrReady = ready; }
+        // bool getAddrReady() { return inst_.IsAddrReady; }
 
         void setIsRvcInst(bool IsRvcInst) { inst_.IsRvcInst = IsRvcInst; }
         bool getIsRvcInst() { return inst_.IsRvcInst; }

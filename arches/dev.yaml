@@ -1,20 +1,47 @@
 top.extension.topo_extensions:
-  module_topology: ["mavis", "perfect_frontend", "renaming_stage", "rob", "dispatch_stage", "write_back_stage", "l1d_cache", "l2_cache","abstract_memory"]
+  module_topology: ["mavis", "perfect_frontend", "renaming_stage", "rob", "dispatch_stage",  "physical_regfile", "write_back_stage", "AGU", "LSQ", "l1d_cache", "l2_cache","abstract_memory"]
   binding_topology: ["perfect_frontend.ports.fetch_backend_inst_out", "renaming_stage.ports.preceding_renaming_inst_in",
                      "renaming_stage.ports.renaming_following_inst_out", "rob.ports.preceding_rob_inst_in",
                      "renaming_stage.ports.renaming_following_inst_out", "dispatch_stage.ports.preceding_dispatch_inst_in",
-                     "write_back_stage.ports.write_back_following_port_out", "rob.ports.write_back_rob_finish_in",
-                     "write_back_stage.ports.write_back_following_port_out", "dispatch_stage.ports.write_back_dispatch_port_in",
                      "rob.ports.Rob_cmt_inst_out", "renaming_stage.ports.Rob_cmt_inst_in",
                      "renaming_stage.ports.renaming_preceding_credit_out", "perfect_frontend.ports.backend_fetch_credit_in",
                      "rob.ports.rob_preceding_credit_out", "renaming_stage.ports.rob_renaming_credit_in",
                      "dispatch_stage.ports.dispatch_preceding_credit_out", "renaming_stage.ports.following_renaming_credit_in",
-                     "func_LSU.ports.l1d_cache_lsu_credit_in", "l1d_cache.ports.out_upstream_credit",
-                     "func_LSU.ports.l1d_cache_lsu_in", "l1d_cache.ports.out_access_resp",
-                     "func_LSU.ports.lsu_l1d_cache_out", "l1d_cache.ports.in_access_req",
+                     # dispatch -> physical regfile
+                     "dispatch_stage.ports.dispatch_physical_reg_read_out", "physical_regfile.ports.preceding_physical_regfile_read_in",
+                     # physical regfile -> dispatch
+                     "physical_regfile.ports.physical_regfile_following_read_out", "dispatch_stage.ports.dispatch_physical_reg_read_in",
+                     # write back -> physical regfile
+                     "write_back_stage.ports.write_back_following_port_out", "physical_regfile.ports.preceding_physical_regfile_write_in",
+                     # write back -> rob
+                     "write_back_stage.ports.write_back_following_port_out", "rob.ports.write_back_rob_finish_in",
+                     # write back -> dispatch
+                     "write_back_stage.ports.write_back_following_port_out", "dispatch_stage.ports.write_back_dispatch_port_in",
+                     # rob ->lsq
+                     "rob.ports.Rob_lsu_wakeup_out", "LSQ.ports.Rob_lsu_wakeup_in", 
+                     # renaming -> lsq
+                     "renaming_stage.ports.renaming_lsu_allocate_out", "LSQ.ports.renaming_lsu_allocate_in",
+                     # lsq -> renaming
+                     "LSQ.ports.lsu_renaming_ldq_credit_out", "renaming_stage.ports.lsu_renaming_ldq_credit_in", 
+                     "LSQ.ports.lsu_renaming_stq_credit_out", "renaming_stage.ports.lsu_renaming_stq_credit_in",
+                     "LSQ.ports.lsu_renaming_allocate_out", "renaming_stage.ports.lsu_renaming_allocate_in",
+                     # agu <-> LSUShell
+                     "AGU.ports.preceding_func_inst_in", "func_LSU.ports.preceding_func_inst_bp_out",
+                     "AGU.ports.func_rs_credit_out", "func_LSU.ports.func_rs_credit_bp_in",
+                     # lsu <-> LSUShell
+                     "LSQ.ports.func_following_finish_out", "func_LSU.ports.func_following_finish_bp_in",
+                     "LSQ.ports.write_back_func_credit_in", "func_LSU.ports.write_back_func_credit_bp_out",
+                     # agu <-> lsq
+                     "AGU.ports.agu_lsq_inst_out", "LSQ.ports.agu_lsq_inst_in",
+                     # lsq <-> l1dc
+                     "LSQ.ports.l1d_cache_lsu_credit_in", "l1d_cache.ports.out_upstream_credit",
+                     "LSQ.ports.l1d_cache_lsu_in", "l1d_cache.ports.out_access_resp",
+                     "LSQ.ports.lsu_l1d_cache_out", "l1d_cache.ports.in_access_req",
+                     # l1d <-> l2
                      "l1d_cache.ports.in_downstream_credit", "l2_cache.ports.out_upstream_credit",
                      "l1d_cache.ports.in_access_resp", "l2_cache.ports.out_access_resp",
                      "l1d_cache.ports.out_access_req", "l2_cache.ports.in_access_req",
+                     #l2  <-> mem
                      "l2_cache.ports.in_downstream_credit", "abstract_memory.ports.out_upstream_credit",
                      "l2_cache.ports.in_access_resp", "abstract_memory.ports.mem_resp_out",
                      "l2_cache.ports.out_access_req", "abstract_memory.ports.mem_req_in"]

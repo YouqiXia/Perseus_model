@@ -16,7 +16,15 @@ top.extension.topo_extensions:
                     # write back -> rob
                      "write_back_stage.ports.write_back_following_port_out", "rob.ports.write_back_rob_finish_in",
                     # write back -> dispatch
-                     "write_back_stage.ports.write_back_following_port_out", "dispatch_stage.ports.write_back_dispatch_port_in"
+                     "write_back_stage.ports.write_back_following_port_out", "dispatch_stage.ports.write_back_dispatch_port_in",
+                    # rob ->lsu
+                    "rob.ports.Rob_lsu_wakeup_out", "func_LSU.ports.Rob_lsu_wakeup_in", 
+                    # renaming -> lsu
+                    "renaming_stage.ports.renaming_lsu_allocate_out", "func_LSU.ports.renaming_lsu_allocate_in",
+                    # lsu -> renaming
+                    "func_LSU.ports.lsu_renaming_ldq_credit_out", "renaming_stage.ports.lsu_renaming_ldq_credit_in", 
+                    "func_LSU.ports.lsu_renaming_stq_credit_out", "renaming_stage.ports.lsu_renaming_stq_credit_in",
+                    "func_LSU.ports.lsu_renaming_allocate_out", "renaming_stage.ports.lsu_renaming_allocate_in", 
                     ]
 
 

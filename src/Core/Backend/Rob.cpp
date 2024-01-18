@@ -80,8 +80,11 @@ namespace TimingModel {
     }
 
     void Rob::TryWakeupStore() {
-        if (rob_.front().inst_ptr->getFuType() == FuncType::STU) {
-//            Rob_lsu_wakeup_out.send(rob_.front().inst_ptr);
+        if(rob_.empty()) {
+            return;
+        }
+        if (rob_.front().inst_ptr->getFuType() == FuncType::STU && !rob_.front().inst_ptr->getStoreWkup()) {
+            Rob_lsu_wakeup_out.send(rob_.front().inst_ptr);
         }
     }
 
@@ -96,7 +99,9 @@ namespace TimingModel {
                 break;
             }
         }
+        ILOG("before rob wakeup store ");
         TryWakeupStore();
+        ILOG("after rob wakeup store ");
 
         if (!inst_group_ptr->empty()) {
             Rob_cmt_inst_out.send(inst_group_ptr);

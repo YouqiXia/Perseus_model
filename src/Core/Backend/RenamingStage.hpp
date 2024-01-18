@@ -93,17 +93,17 @@ private:
             {&unit_port_set_, "Rob_cmt_inst_in", sparta::SchedulingPhase::Tick, 0};
 
         // with lsu
-//        sparta::DataOutPort<InstPtr> renaming_lsu_allocate_out
-//            {&unit_port_set_, "renaming_lsu_allocate_out"};
+       sparta::DataOutPort<InstGroupPtr> renaming_lsu_allocate_out
+           {&unit_port_set_, "renaming_lsu_allocate_out"};
 
-//        sparta::DataInPort<Credit> lsu_renaming_ldq_credit_in
-//            {&unit_port_set_, "lsu_renaming_credit_in", sparta::SchedulingPhase::Tick, 0};
+       sparta::DataInPort<Credit> lsu_renaming_ldq_credit_in
+           {&unit_port_set_, "lsu_renaming_ldq_credit_in", sparta::SchedulingPhase::Tick, 0};
 
-//        sparta::DataInPort<Credit> lsu_renaming_stq_credit_in
-//            {&unit_port_set_, "lsu_renaming_credit_in", sparta::SchedulingPhase::Tick, 0};
+       sparta::DataInPort<Credit> lsu_renaming_stq_credit_in
+           {&unit_port_set_, "lsu_renaming_stq_credit_in", sparta::SchedulingPhase::Tick, 0};
 
-//        sparta::DataInPort<Credit> lsu_renaming_allocate_in
-//            {&unit_port_set_, "lsu_renaming_allocate_in", sparta::SchedulingPhase::Tick, 0};
+       sparta::DataInPort<InstGroupPtr> lsu_renaming_allocate_in
+           {&unit_port_set_, "lsu_renaming_allocate_in", sparta::SchedulingPhase::Tick, 0};
 
 
     // events
@@ -127,9 +127,9 @@ private:
 
     Credit rob_credit_ = 0;
 
-    Credit ldq_credit_ = 256;
+    Credit ldq_credit_ = 0;
 
-    Credit stq_credit_ = 256;
+    Credit stq_credit_ = 0;
 
 };
 
