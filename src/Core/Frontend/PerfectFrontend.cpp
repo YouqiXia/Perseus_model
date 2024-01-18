@@ -22,6 +22,9 @@ namespace TimingModel {
         m_trace_ = new VerilatedVcdC;
         dut_->trace(m_trace_, 7);
         m_trace_->open("waveform.vcd");
+
+        /* Init backend signals */
+        dut_->clk_i = 0;
         dut_->pc_first_i = 0;
         dut_->pc_second_i = 0;
     }
@@ -60,6 +63,8 @@ namespace TimingModel {
         ILOG("perfect frontend send " << inst_group_ptr->size() << " instructions to backend");
         fetch_backend_inst_out.send(inst_group_ptr);
 
+        /* Verilator feed signals into backend RTL */
+        dut_->clk_i = 1;
         int index = 0;
         for (auto & inst : *inst_group_ptr) {
             if (index == 0) {
@@ -71,9 +76,14 @@ namespace TimingModel {
             index ++;
         }
         dut_->eval();
-
         m_trace_->dump(sim_time_);
         sim_time_ ++;
+
+        dut_->clk_i = 0;
+        dut_->eval();
+        m_trace_->dump(sim_time_);
+        sim_time_ ++;
+
     }
 
 }
