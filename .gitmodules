@@ -1,12 +1,9 @@
 [submodule "thirdparty/stf_lib"]
 	path = thirdparty/stf_lib
 	url = https://github.com/sparcians/stf_lib.git
-	branch = master
 [submodule "thirdparty/DRAMsim3"]
 	path = thirdparty/DRAMsim3
 	url = https://github.com/umd-memsys/DRAMsim3.git
-	branch = master
 [submodule "thirdparty/mavis"]
 	path = thirdparty/mavis
 	url = https://github.com/sparcians/mavis.git
-	branch = main
