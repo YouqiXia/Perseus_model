@@ -5,8 +5,6 @@ set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(model)
 
-#add_definitions(-DABSLSU)
-
 # set sparta directory
 set(SPARTA_SEARCH_DIR /usr/local)
 set(SPARTA_INCLUDE_DIRS ${SPARTA_SEARCH_DIR}/include/sparta)
@@ -14,7 +12,7 @@ set(CMAKE_MODULE_PATH "${SPARTA_SEARCH_DIR}/lib/cmake/sparta" ${CMAKE_MODULE_PAT
 find_package(Sparta REQUIRED)
 
 # set up STF lib
-set (STF_LIB_BASE ${PROJECT_SOURCE_DIR}/stf_lib)
+set (STF_LIB_BASE ${PROJECT_SOURCE_DIR}/thirdparty/stf_lib)
 set (DISABLE_STF_DOXYGEN ON)
 
 if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
@@ -35,22 +33,25 @@ set(CMAKE_CXX_FLAGS_DEBUG     "-O0 -g")
 include_directories(./src)
 include_directories(./src/basic)
 include_directories(./src/uncore)
-include_directories(mavis)
-include_directories(stf_lib)
+include_directories(thirdparty/mavis)
+include_directories(thirdparty/stf_lib)
+include_directories(thirdparty/DRAMsim3/src)
+include_directories(thirdparty/DRAMsim3/ext/headers)
 include_directories(${SPARTA_INCLUDE_DIRS})
 
 # Create a few links like reports and arch directories
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/reports    ${CMAKE_CURRENT_BINARY_DIR}/reports         SYMBOLIC)
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/arches     ${CMAKE_CURRENT_BINARY_DIR}/arches          SYMBOLIC)
-file(CREATE_LINK ${PROJECT_SOURCE_DIR}/mavis/json ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)
+file(CREATE_LINK ${PROJECT_SOURCE_DIR}/thirdparty/mavis/json ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/traces     ${CMAKE_CURRENT_BINARY_DIR}/traces          SYMBOLIC)
 
 # thirdparty link lib
-add_subdirectory(mavis)
+add_subdirectory(thirdparty/mavis)
 add_subdirectory (${STF_LIB_BASE})
+add_subdirectory(thirdparty/DRAMsim3)
 
 # add_subdirectory()
 add_executable(model ${DIR_SRCS})
 
 # link lib
-target_link_libraries(model PRIVATE SPARTA::sparta mavis ${STF_LINK_LIBS})
+target_link_libraries(model SPARTA::sparta mavis dramsim3 ${STF_LINK_LIBS})
