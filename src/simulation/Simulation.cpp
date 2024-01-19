@@ -9,6 +9,8 @@
 #include "uncore/cache/BaseCache.hpp"
 #include "uncore/memory/AbstractMemory.hpp"
 #include "uncore/memory/DRAMsim3.hpp"
+#include "uncore/cache/L1dCache.hpp"
+#include "uncore/cache/L2Cache.hpp"
 #include <memory>
 #include <cstdint>
 
@@ -30,6 +32,10 @@ namespace TimingModel {
                             TimingModel::PerfectBackend::PerfectBackendParameter> perfect_backend_factory;
     sparta::ResourceFactory<TimingModel::BaseCache,
                             TimingModel::BaseCache::BaseCacheParameterSet> base_cache_factory;
+    sparta::ResourceFactory<TimingModel::L1dCache,
+                            TimingModel::L1dCache::L1dCacheParameterSet> l1d_cache_factory;
+    sparta::ResourceFactory<TimingModel::L2Cache,
+                            TimingModel::L2Cache::L2CacheParameterSet> l2_cache_factory;
     sparta::ResourceFactory<TimingModel::AbstractMemroy,
                             TimingModel::AbstractMemroy::AbstractMemroyParameterSet> abstract_memroy_factory;    
     sparta::ResourceFactory<TimingModel::DRAMsim3,
@@ -43,8 +49,8 @@ namespace TimingModel {
         {PerfectBackend::name,              &perfect_backend_factory},
         {PerfectAlu::name,                  &perfect_alu_factory},
         {AbstractLsu::name,                 &abstract_lsu_factory},
-        {"l1d_cache",                       &base_cache_factory},
-        {"l2_cache",                        &base_cache_factory},
+        {"l1d_cache",                       &l1d_cache_factory},
+        {"l2_cache",                        &l2_cache_factory},
         {"abstract_memory",                 &abstract_memroy_factory},
         {"DRAMsim3",                        &DRAMsim3_factory},
     };

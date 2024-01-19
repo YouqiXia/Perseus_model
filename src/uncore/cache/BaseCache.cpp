@@ -21,9 +21,6 @@ namespace TimingModel {
         downstream_access_ports_num_(p->downstream_access_ports_num),
         upstream_access_ports_bandwidth_(p->upstream_access_ports_bandwidth),
         downstream_access_ports_bandwidth_(p->downstream_access_ports_bandwidth),
-        cache_level_(p->cache_level),
-        upstream_is_core_(p->upstream_is_core),
-        downstream_is_mem_(p->downstream_is_mem),
         mem_acc_info_allocator_(sparta::notNull(OlympiaAllocators::getOlympiaAllocators(node))->
                                  mem_acc_info_allocator)
     {
@@ -123,50 +120,50 @@ namespace TimingModel {
     }
 
     void BaseCache::makeResp(const MemAccInfoPtr& req){
-        if(upstream_is_core_){
-            out_resp_queue.emplace_back(req);
-        }else{
-            uint32_t cnt = cacheline_size_/upstream_access_ports_bandwidth_;
+        // if(upstream_is_core_){
+        //     out_resp_queue.emplace_back(req);
+        // }else{
+        //     uint32_t cnt = cacheline_size_/upstream_access_ports_bandwidth_;
 
-            for(auto i=0u; i<cnt; i++){
-                MemAccInfoPtr resp = sparta::allocate_sparta_shared_pointer<MemAccInfo>(mem_acc_info_allocator_);
-                *resp = *req;
-                resp->subindex = i;
-                out_resp_queue.emplace_back(resp);
-            }
-        }
-        ev_out_resp_arbiter.schedule(1);
+        //     for(auto i=0u; i<cnt; i++){
+        //         MemAccInfoPtr resp = sparta::allocate_sparta_shared_pointer<MemAccInfo>(mem_acc_info_allocator_);
+        //         *resp = *req;
+        //         resp->subindex = i;
+        //         out_resp_queue.emplace_back(resp);
+        //     }
+        // }
+        // ev_out_resp_arbiter.schedule(1);
     }
 
     void BaseCache::makeCriticalResp(const MemAccInfoPtr& req){
-        if(upstream_is_core_){
-            out_resp_queue.emplace_back(req);
-            ILOG("upstream_is_core_ is true and send req addr: " << HEX16(req->address));
-        }else{
-            MemAccInfoPtr resp = sparta::allocate_sparta_shared_pointer<MemAccInfo>(mem_acc_info_allocator_);
-            *resp = *req;
-            resp->subindex = 0;
-            out_resp_queue.emplace_back(resp);
-            ILOG("upstream_is_core_ is false and send req addr: " << HEX16(req->address));
-        }
-        ev_out_resp_arbiter.schedule(1);
+        // if(upstream_is_core_){
+        //     out_resp_queue.emplace_back(req);
+        //     ILOG("upstream_is_core_ is true and send req addr: " << HEX16(req->address));
+        // }else{
+        //     MemAccInfoPtr resp = sparta::allocate_sparta_shared_pointer<MemAccInfo>(mem_acc_info_allocator_);
+        //     *resp = *req;
+        //     resp->subindex = 0;
+        //     out_resp_queue.emplace_back(resp);
+        //     ILOG("upstream_is_core_ is false and send req addr: " << HEX16(req->address));
+        // }
+        // ev_out_resp_arbiter.schedule(1);
     }
     void BaseCache::makeNonCriticalResp(const MemAccInfoPtr& req){
-        if(upstream_is_core_){
-            ILOG("upstream_is_core_ is true and send no req");
-            return;
-        }else{
-            uint32_t cnt = cacheline_size_/upstream_access_ports_bandwidth_;
+        // if(upstream_is_core_){
+        //     ILOG("upstream_is_core_ is true and send no req");
+        //     return;
+        // }else{
+        //     uint32_t cnt = cacheline_size_/upstream_access_ports_bandwidth_;
             
-            for(auto i=1u; i<cnt; i++){
-                MemAccInfoPtr resp = sparta::allocate_sparta_shared_pointer<MemAccInfo>(mem_acc_info_allocator_);
-                *resp = *req;
-                resp->subindex = i;
-                out_resp_queue.emplace_back(resp);
-                ILOG("upstream_is_core_ is false and send req addr: " << HEX16(req->address));
-            }
-        }
-        ev_out_resp_arbiter.schedule(1);
+        //     for(auto i=1u; i<cnt; i++){
+        //         MemAccInfoPtr resp = sparta::allocate_sparta_shared_pointer<MemAccInfo>(mem_acc_info_allocator_);
+        //         *resp = *req;
+        //         resp->subindex = i;
+        //         out_resp_queue.emplace_back(resp);
+        //         ILOG("upstream_is_core_ is false and send req addr: " << HEX16(req->address));
+        //     }
+        // }
+        // ev_out_resp_arbiter.schedule(1);
     }
     bool BaseCache::tagCompare(std::vector<TagEntry>& settag, uint64_t access_addr, uint32_t& index){
         sparta_assert((way_num_ == settag.size()));
@@ -240,6 +237,18 @@ namespace TimingModel {
         if (reqs.size() > 0)
             sendRequest(reqs); 
     }
+    MshrStatus BaseCache::getMshrEntryStatus(uint32_t id){
+        return mshr.queue[id].status;
+    }
+
+    void BaseCache::setMshrEntryStatus(uint32_t id, MshrStatus st){
+        mshr.queue[id].status = st;
+    }
+
+    MemAccInfoPtr& BaseCache::getMshrEntryReq(uint32_t id){
+        return mshr.queue[id].req;
+    }
+
     void BaseCache::recvResp(const MemAccInfoGroup& resps){
         sparta_assert((resps.size() <= downstream_access_ports_num_));
         for (auto resp : resps){
@@ -311,21 +320,21 @@ namespace TimingModel {
     }
 
     void BaseCache::mshrRecvResp(uint32_t id, uint32_t subindex){
-        sparta_assert((mshr.queue[id].status == MshrStatus::SEND_REQ)||(mshr.queue[id].status == MshrStatus::RECV_CRITICAL_SEG));
-        if(downstream_is_mem_){
-            mshr.queue[id].status = MshrStatus::RECV_WHOLE_LINE;
-            makeResp(mshr.queue[id].req);
-            ILOG("downstream_is_mem_ true and makeResp all");
-            return;
-        }
-        if(subindex == 0){
-            mshr.queue[id].status = MshrStatus::RECV_CRITICAL_SEG;
-            makeCriticalResp(mshr.queue[id].req);
-        }else if(subindex == cacheline_size_/downstream_access_ports_bandwidth_-1){
-            sparta_assert((mshr.queue[id].status == MshrStatus::RECV_CRITICAL_SEG));
-            mshr.queue[id].status = MshrStatus::RECV_WHOLE_LINE;
-            makeNonCriticalResp(mshr.queue[id].req);
-        }
+        // sparta_assert((mshr.queue[id].status == MshrStatus::SEND_REQ)||(mshr.queue[id].status == MshrStatus::RECV_CRITICAL_SEG));
+        // if(downstream_is_mem_){
+        //     mshr.queue[id].status = MshrStatus::RECV_WHOLE_LINE;
+        //     makeResp(mshr.queue[id].req);
+        //     ILOG("downstream_is_mem_ true and makeResp all");
+        //     return;
+        // }
+        // if(subindex == 0){
+        //     mshr.queue[id].status = MshrStatus::RECV_CRITICAL_SEG;
+        //     makeCriticalResp(mshr.queue[id].req);
+        // }else if(subindex == cacheline_size_/downstream_access_ports_bandwidth_-1){
+        //     sparta_assert((mshr.queue[id].status == MshrStatus::RECV_CRITICAL_SEG));
+        //     mshr.queue[id].status = MshrStatus::RECV_WHOLE_LINE;
+        //     makeNonCriticalResp(mshr.queue[id].req);
+        // }
     }
 
 
@@ -355,9 +364,9 @@ namespace TimingModel {
             sendResp(resps, cache_latency_);
         
         if((queue_size-send_cnt) > 0)
-            ev_out_resp_arbiter.schedule(1);
+            outRespArbiterSchedule(1);
     }
-
+    
     void BaseCache::mshrDeallocate(){
         uint32_t header = mshr.header;
         for(int i=0; i<mshr.used; i++){

@@ -35,16 +35,13 @@ namespace TimingModel {
                 PARAMETER(uint32_t, downstream_access_ports_num, 1, "downstream access ports number")
                 PARAMETER(uint32_t, upstream_access_ports_bandwidth, 16, "upstream access ports number")
                 PARAMETER(uint32_t, downstream_access_ports_bandwidth, 16, "downstream access ports number")
-                PARAMETER(uint32_t, cache_level, 1, "upstream access ports number")
-                PARAMETER(bool, upstream_is_core, true, "upstream is core")
-                PARAMETER(bool, downstream_is_mem, true, "downstream is core")
             };
             static const char name[];
 
             BaseCache(sparta::TreeNode* node, const BaseCacheParameterSet* p);
 
         
-        private:
+        public:
 	        const uint32_t init_credits_;
             //Functional interface
             virtual void access(const MemAccInfoGroup& req){};
@@ -55,7 +52,7 @@ namespace TimingModel {
 
             virtual void sendResp(const MemAccInfoGroup& resp);
 
-            void sendResp(const MemAccInfoGroup& resps, uint32_t latency);
+            virtual void sendResp(const MemAccInfoGroup& resps, uint32_t latency);
 
             virtual void sendRequest(const MemAccInfoGroup& req);
 
@@ -73,11 +70,11 @@ namespace TimingModel {
 
             virtual setData& accessDataRam(const MemAccInfoPtr& req);
 
-            void makeResp(const MemAccInfoPtr& req);
+            virtual void makeResp(const MemAccInfoPtr& req);
 
-            void makeCriticalResp(const MemAccInfoPtr& req);
+            virtual void makeCriticalResp(const MemAccInfoPtr& req);
 
-            void makeNonCriticalResp(const MemAccInfoPtr& req);
+            virtual void makeNonCriticalResp(const MemAccInfoPtr& req);
 
             virtual uint32_t allocMshr(const MemAccInfoPtr& req);
 
@@ -85,7 +82,7 @@ namespace TimingModel {
 
             virtual void deallocMshr(uint32_t id){ return mshr.deallocate(id);};
 
-            void mshrSendRequest();
+            virtual void mshrSendRequest();
 
             virtual void mshrRefill();
 
@@ -114,6 +111,24 @@ namespace TimingModel {
             wayData& DataMux(setData& setdata, uint32_t way);
 
             void SendInitCredit();
+
+        public:
+            uint32_t getCacheLineSize(){ return cacheline_size_;}
+            uint32_t getWayNum(){ return way_num_; }
+            uint32_t getSetNum(){ return set_num_; }
+
+            uint32_t getUpStreamAccPortsNum(){ return upstream_access_ports_num_; }
+            uint32_t getDownStreamAccPortsNum(){ return downstream_access_ports_num_; }
+            uint32_t getUpStreamAccPortsBW(){ return upstream_access_ports_bandwidth_; }
+            uint32_t getDownStreamAccPortsBW(){ return downstream_access_ports_bandwidth_; }
+
+
+            void respQueuePush(const MemAccInfoPtr& resp) { out_resp_queue.emplace_back(resp); }
+            void outRespArbiterSchedule(sparta::Clock::Cycle delay) { ev_out_resp_arbiter.schedule(delay); }
+
+            MshrStatus getMshrEntryStatus(uint32_t id);
+            void setMshrEntryStatus(uint32_t id, MshrStatus);
+            MemAccInfoPtr& getMshrEntryReq(uint32_t id);
 
         private:
             //Timing
@@ -161,16 +176,12 @@ namespace TimingModel {
             uint32_t downstream_access_ports_num_;
             uint32_t upstream_access_ports_bandwidth_;
             uint32_t downstream_access_ports_bandwidth_;
-            uint32_t cache_level_;
-            bool upstream_is_core_;
-            bool downstream_is_mem_;
 
 
             std::vector<setTags> tagram;
             std::vector<setData> dataram;
             MSHR mshr;
 
-            MemAccInfoAllocator& mem_acc_info_allocator_;
             std::vector<MemAccInfoPtr>  out_resp_queue;
             std::vector<MemAccInfoPtr>  in_req_queue;
             std::vector<MemAccInfoPtr>  out_req_queue;
@@ -181,6 +192,8 @@ namespace TimingModel {
 
             sparta::Counter cache_misses_{getStatisticSet(), "cache_misses",
                     "Number of cache misses", sparta::Counter::COUNT_NORMAL};
+        public:
+            MemAccInfoAllocator& mem_acc_info_allocator_;
     };
 
 } // namespace TimingModel
