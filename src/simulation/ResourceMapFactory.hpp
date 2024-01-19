@@ -27,6 +27,7 @@
 #include "Core/FuncUnit/WriteBackStage.hpp"
 #include "uncore/cache/BaseCache.hpp"
 #include "uncore/memory/AbstractMemory.hpp"
+#include "uncore/memory/DRAMsim3.hpp"
 
 namespace TimingModel {
     class ResourceMapFactory {
@@ -98,6 +99,9 @@ namespace TimingModel {
             RegisterResource(TimingModel::AbstractMemroy::name,
                              new sparta::ResourceFactory<TimingModel::AbstractMemroy,
                                      TimingModel::AbstractMemroy::AbstractMemroyParameterSet>);
+            RegisterResource(TimingModel::DRAMsim3::name,
+                            new sparta::ResourceFactory<TimingModel::DRAMsim3,
+                                    TimingModel::DRAMsim3::DRAMsim3ParameterSet>);
         };
 
         ~ResourceMapFactory() {}

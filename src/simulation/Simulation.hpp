@@ -12,12 +12,14 @@
 #include "basic/Instruction.hpp"
 #include "ExtensionsCfg.hpp"
 #include "ResourceMapFactory.hpp"
+#include "variable.hpp"
 
 namespace TimingModel {
     class Simulation : public sparta::app::Simulation {
     public:
         Simulation(sparta::Scheduler& scheduler,
-                   const std::string workload);
+                   const std::string workload,
+                   VAR::DRAMinput DRAMinput);
 
         virtual ~Simulation();
 
@@ -41,6 +43,8 @@ namespace TimingModel {
 
     private:
         std::string workload_;
+
+        VAR::DRAMinput dram_input_;
 
         ResourceMapFactory resource_map_factory_;
     };
