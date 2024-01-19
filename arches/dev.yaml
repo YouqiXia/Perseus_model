@@ -26,11 +26,11 @@ top.extension.topo_extensions:
                      "LSQ.ports.lsu_renaming_stq_credit_out", "renaming_stage.ports.lsu_renaming_stq_credit_in",
                      "LSQ.ports.lsu_renaming_allocate_out", "renaming_stage.ports.lsu_renaming_allocate_in",
                      # agu <-> LSUShell
-                     "AGU.ports.preceding_func_inst_in", "func_LSU.ports.preceding_func_inst_bp_out",
-                     "AGU.ports.func_rs_credit_out", "func_LSU.ports.func_rs_credit_bp_in",
+                     "AGU.ports.preceding_func_inst_in", "func_LSUShell.ports.preceding_func_inst_bp_out",
+                     "AGU.ports.func_rs_credit_out", "func_LSUShell.ports.func_rs_credit_bp_in",
                      # lsu <-> LSUShell
-                     "LSQ.ports.func_following_finish_out", "func_LSU.ports.func_following_finish_bp_in",
-                     "LSQ.ports.write_back_func_credit_in", "func_LSU.ports.write_back_func_credit_bp_out",
+                     "LSQ.ports.func_following_finish_out", "func_LSUShell.ports.func_following_finish_bp_in",
+                     "LSQ.ports.write_back_func_credit_in", "func_LSUShell.ports.write_back_func_credit_bp_out",
                      # agu <-> lsq
                      "AGU.ports.agu_lsq_inst_out", "LSQ.ports.agu_lsq_inst_in",
                      # lsq <-> l1dc
@@ -46,14 +46,14 @@ top.extension.topo_extensions:
                      "l2_cache.ports.in_access_resp", "abstract_memory.ports.mem_resp_out",
                      "l2_cache.ports.out_access_req", "abstract_memory.ports.mem_req_in"]
 
-  fu_credit_map: [  ["LSU", "10"],
+  fu_credit_map: [  ["LSUShell", "10"],
                     ["ALU1", "2"],
                     ["ALU2", "2"],
                     ["ALU3", "2"],
                     ["ALU4", "2"]
                  ]
   fu_map: [
-    ["LSU", "FuncType::STU", "FuncType::LDU"],
+    ["LSUShell", "FuncType::STU", "FuncType::LDU"],
     ["ALU1", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"],
     ["ALU2", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"],
     ["ALU3", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"],

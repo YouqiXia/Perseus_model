@@ -51,21 +51,19 @@ namespace TimingModel {
 
             sparta::ResourceTreeNode * func_units_tmp;
             if (func_pair.first == "LSU") {
-                #ifndef ABSLSU
                 func_units_tmp = new sparta::ResourceTreeNode(getRoot(),
                                                                      "func_"+func_pair.first,
                                                                      sparta::TreeNode::GROUP_NAME_NONE,
                                                                      sparta::TreeNode::GROUP_IDX_NONE,
                                                                      func_pair.first,
                                                                      resource_map_factory_[PerfectLsu::name]);
-                #else
+            } else if (func_pair.first == "LSUShell") {
                 func_units_tmp = new sparta::ResourceTreeNode(getRoot(),
                                                                      "func_"+func_pair.first,
                                                                      sparta::TreeNode::GROUP_NAME_NONE,
                                                                      sparta::TreeNode::GROUP_IDX_NONE,
                                                                      func_pair.first,
                                                                      resource_map_factory_[LSUShell::name]);
-                #endif
             } else {
                 func_units_tmp = new sparta::ResourceTreeNode(getRoot(),
                                                                      "func_"+func_pair.first,
