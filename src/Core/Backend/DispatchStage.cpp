@@ -104,25 +104,23 @@ namespace TimingModel {
             if (inst_ptr->getPhyRd() == 0) {
                 continue;
             }
-            scoreboard_.ClearForwardingEntry(inst_ptr->getPhyRd());
+            scoreboard_.ClearBusyBit(inst_ptr->getPhyRd());
         }
     }
 
     void DispatchStage::CheckRegStatusImp_(InstPtr & inst_ptr) {
         if (inst_ptr->getRs1Type() != RegType_t::NONE) {
-            if (scoreboard_.IsForwarding(inst_ptr->getPhyRs1())) {
+            if (scoreboard_.GetBusyBit(inst_ptr->getPhyRs1())) {
                 inst_ptr->setIsRs1Forward(true);
-                inst_ptr->setRs1ForwardRob(scoreboard_.GetForwardingEntry(inst_ptr->getPhyRs1()));
             }
         }
         if (inst_ptr->getRs2Type() != RegType_t::NONE) {
-            if (scoreboard_.IsForwarding(inst_ptr->getPhyRs2())) {
+            if (scoreboard_.GetBusyBit(inst_ptr->getPhyRs2())) {
                 inst_ptr->setIsRs2Forward(true);
-                inst_ptr->setRs2ForwardRob(scoreboard_.GetForwardingEntry(inst_ptr->getPhyRs2()));
             }
         }
         if (inst_ptr->getRdType() != RegType_t::NONE) {
-            scoreboard_.SetForwardingEntry(inst_ptr->getPhyRd(), inst_ptr->getRobTag());
+            scoreboard_.SetBusyBit(inst_ptr->getPhyRd());
         }
     }
 

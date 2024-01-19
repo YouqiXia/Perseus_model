@@ -173,9 +173,7 @@ struct InstInfo {
     /* Scheduler info */
     RobIdx_t     RobTag;
     bool         IsRs1Forward = false;
-    RobIdx_t     Rs1ForwardRob;
     bool         IsRs2Forward = false;
-    RobIdx_t     Rs2ForwardRob;
 
     uint64_t     LSQTag;
     //bool         LsuIssued  = false;

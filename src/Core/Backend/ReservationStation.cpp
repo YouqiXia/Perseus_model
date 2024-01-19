@@ -76,7 +76,7 @@ namespace TimingModel {
         for (auto &rs_entry_ptr: reservation_station_) {
             for (auto& forwarding_inst_ptr: *forwarding_inst_group_ptr) {
                 if (!rs_entry_ptr->rs1_valid) {
-                    if (rs_entry_ptr->inst_ptr->getRs1ForwardRob() == forwarding_inst_ptr->getRobTag()) {
+                    if (rs_entry_ptr->inst_ptr->getPhyRs1() == forwarding_inst_ptr->getPhyRd()) {
                         ILOG(getName() << " rs1 get forwarding data form rob tag: " << forwarding_inst_ptr->getRobTag());
                         rs_entry_ptr->inst_ptr->setOperand1(forwarding_inst_ptr->getPhyRd());
                         rs_entry_ptr->rs1_valid = true;
@@ -84,7 +84,7 @@ namespace TimingModel {
                     }
                 }
                 if (!rs_entry_ptr->rs2_valid) {
-                    if (rs_entry_ptr->inst_ptr->getRs2ForwardRob() == forwarding_inst_ptr->getRobTag()) {
+                    if (rs_entry_ptr->inst_ptr->getPhyRs2() == forwarding_inst_ptr->getPhyRd()) {
                         ILOG(getName() << " rs2 get forwarding data form rob tag: " << forwarding_inst_ptr->getRobTag());
                         rs_entry_ptr->inst_ptr->setOperand2(forwarding_inst_ptr->getPhyRd());
                         rs_entry_ptr->rs2_valid = true;
