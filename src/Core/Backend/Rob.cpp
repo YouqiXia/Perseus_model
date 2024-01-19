@@ -63,8 +63,7 @@ namespace TimingModel {
     void Rob::AllocateRob_(const TimingModel::InstGroupPtr &inst_group_ptr) {
         ILOG("rob get instructions: " << inst_group_ptr->size());
         for (auto& inst_ptr: *inst_group_ptr) {
-            inst_ptr->setRobTag(rob_.tail());
-            rob_.push({inst_ptr, true, false});
+            inst_ptr->setRobTag(rob_.push({inst_ptr, true, false}).getIndex());
             ILOG("get insn from preceding: " << inst_ptr);
             ILOG("rob allocate instruction tag is: " << inst_ptr->getRobTag());
         }
@@ -92,6 +91,9 @@ namespace TimingModel {
         InstGroupPtr inst_group_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
         uint64_t issue_num = std::min(issue_width_, uint64_t(rob_.size()));
         while(issue_num--) {
+            if (rob_.empty()) {
+                break;
+            }
             if (rob_.front().finish) {
                 inst_group_ptr->emplace_back(rob_.front().inst_ptr);
                 rob_.pop();
