@@ -199,15 +199,17 @@ namespace youqixia::resources {
                 invalid_idx_(depth + 1)
         {
             dataList_ = new DataT[depth];
-        };
+            clear();
+        }
 
-        ~LoopQueue() { delete[] dataList_; };
+        ~LoopQueue() { delete[] dataList_; }
 
         void clear() {
             tail_ = 0;
             head_ = 0;
             usage_ = 0;
-        };
+            is_rolling = false;
+        }
 
         uint32_t capacity() const {
             return depth_;
@@ -215,12 +217,12 @@ namespace youqixia::resources {
 
         size_type size() const {
             assert(is_rolling * depth_ - head_ + tail_ == usage_);
-            return is_rolling * depth_ + head_ - tail_;
-        };
+            return is_rolling * depth_ - head_ + tail_;
+        }
 
         size_type numFree() const {
             return depth_ - size();
-        };
+        }
 
 //        uint32_t head() { return head_; }
 //
@@ -228,11 +230,11 @@ namespace youqixia::resources {
 
         bool full() const {
             return size() == depth_;
-        };
+        }
 
         bool empty() const {
             return size() == 0;
-        };
+        }
 
         bool isValid(uint32_t idx) {
             bool in_scope = idx >= head_ && idx < tail_;
@@ -249,12 +251,12 @@ namespace youqixia::resources {
 
         value_type &front() {
             return dataList_[head_];
-        };
+        }
 
         value_type &back() {
             uint32_t index = decrementIndexValue_(tail_);
             return dataList_[index];
-        };
+        }
 
         iterator push(const value_type &data) {
             assert(!full());
@@ -263,19 +265,19 @@ namespace youqixia::resources {
             usage_++;
             tail_ = incrementPointer_(tail_);
             return iterator(this, allocate_idx);
-        };
+        }
 
         void pop() {
             assert(!empty());
             usage_--;
             head_ = incrementPointer_(head_);
-        };
+        }
 
         void pop_back() {
             assert(!empty());
             usage_--;
             tail_ = decrementPointer_(tail_);
-        };
+        }
 
         iterator begin() {
             if (empty()) {
@@ -373,7 +375,7 @@ namespace youqixia::resources {
         uint32_t depth_;
         uint32_t invalid_idx_;
 
-        bool is_rolling = false;
+        bool is_rolling;
 
     };
 

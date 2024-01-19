@@ -141,10 +141,9 @@ namespace TimingModel {
         if (produce_inst_num == 0) {
             return;
         }
-        renaming_preceding_credit_out.send(produce_inst_num);
 
         while(produce_inst_num--) {
-            if (renaming_stage_queue_.empty()) {
+            if (renaming_stage_queue_.empty() || free_list_.IsEmpty()) {
                 break;
             }
             auto inst_tmp_ptr = renaming_stage_queue_.front();
@@ -175,6 +174,7 @@ namespace TimingModel {
         }
 
         if (!inst_group_tmp_ptr->empty()) {
+            renaming_preceding_credit_out.send(inst_group_tmp_ptr->size());
             renaming_following_inst_out.send(inst_group_tmp_ptr);
         }
 

@@ -114,7 +114,7 @@ namespace TimingModel {
             rob_preceding_credit_out.send(commit_num);
         }
         ILOG(getName() << " commit instructions: " << commit_num << " , remaining: " << rob_.size());
-        if (rob_.front().valid) {
+        if (rob_.front().valid && !rob_.empty()) {
             ILOG(getName() << " rob front id: " << rob_.front().inst_ptr->getUniqueID());
         }
 

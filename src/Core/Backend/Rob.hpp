@@ -37,8 +37,8 @@ namespace TimingModel {
 
         struct RobEntry {
             InstPtr inst_ptr;
-            bool valid;
-            bool finish;
+            bool valid = false;
+            bool finish = false;
         };
 
         static const char* name;
