@@ -31,7 +31,7 @@ namespace TimingModel {
             {}
 
             PARAMETER(uint64_t, issue_num, 4, "the issuing bandwidth in a cycle")
-            PARAMETER(uint64_t, wb_latency, 0, "write back latency")
+            PARAMETER(uint64_t, wb_latency, 1, "write back latency")
         };
 
         static const char* name;
@@ -53,13 +53,13 @@ namespace TimingModel {
                 {&unit_port_set_, "write_back_following_port_out"};
 
         // events
-        sparta::SingleCycleUniqueEvent<> arbitrate_inst_event
+        sparta::UniqueEvent<> arbitrate_inst_event
                 {&unit_event_set_, "arbitrate_inst_event", CREATE_SPARTA_HANDLER(WriteBackStage, ArbitrateInst_)};
 
     private:
         uint64_t issue_num_;
 
-        std::map<FuncUnitType, std::vector<InstPtr>> func_inst_map_;
+        std::map<FuncUnitType, InstPtr> func_inst_map_;
         std::vector<FuncUnitType> func_pop_pending_queue_;
 
         std::map<FuncUnitType, sparta::DataInPort<FuncInstPtr>*> func_unit_write_back_ports_in_;

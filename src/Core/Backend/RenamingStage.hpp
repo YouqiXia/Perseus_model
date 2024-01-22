@@ -47,10 +47,6 @@ private:
 
     void AcceptLsuAllocateIdx(const InstGroupPtr&);
 
-    void CreditDecrease_();
-
-    void CreditWithoutLsuDecrease_();
-
     void InitCredit_();
 
     void AllocateInst_(const InstGroupPtr&);

@@ -19,9 +19,10 @@ namespace TimingModel {
                 sparta::ParameterSet(n)
             {}
 
-            PARAMETER(uint64_t, load_to_use_latency, 4, "load to use latency")
-            PARAMETER(uint64_t, ld_queue_size, 256, "load queue size")
-            PARAMETER(uint64_t, st_queue_size, 256, "store queue size")
+            PARAMETER(uint64_t, load_to_use_latency, 1, "load to use latency")
+            PARAMETER(uint64_t, store_latency, 1, "store latency")
+            PARAMETER(uint64_t, ld_queue_size, 20, "load queue size")
+            PARAMETER(uint64_t, st_queue_size, 20, "store queue size")
             PARAMETER(FuncUnitType, func_type, "", "the type of function unit")
         };
 
@@ -30,18 +31,20 @@ namespace TimingModel {
         PerfectLsu(sparta::TreeNode* node, const PerfectLsuParameter* p);
 
     private:
-        void WriteBack_(const InstPtr&);
-
         void AcceptCredit_(const Credit&);
 
         void RobWakeUp(const InstPtr&);
 
         void AllocateInst_(const InstGroupPtr&);
 
+        void RecieveInst_(const InstPtr&);
+
         void SendInitCredit();
 
-    public:
-    // ports
+        void WriteBack_();
+
+    private:
+    /* ports */
         sparta::DataInPort<InstPtr> preceding_func_inst_in
             {&unit_port_set_, "preceding_func_inst_in", sparta::SchedulingPhase::Tick, 1};
 
@@ -69,11 +72,21 @@ namespace TimingModel {
         sparta::DataOutPort<FuncInstPtr> func_following_finish_out
             {&unit_port_set_, "func_following_finish_out"};
 
+    /* events */
+
+        sparta::SingleCycleUniqueEvent<> write_back_event
+                {&unit_event_set_, "write_back_event", CREATE_SPARTA_HANDLER(PerfectLsu, WriteBack_)};
+
     private:
         const uint64_t load_to_use_latency_;
+        const uint64_t store_latency_;
         const uint32_t ld_queue_size_;
         const uint32_t st_queue_size_;
-        FuncUnitType func_type_;
+        const FuncUnitType func_type_;
+
+        uint32_t credit_ = 0;
+
+        InstQueue lsu_queue_;
     };
 
 }

@@ -81,18 +81,6 @@ namespace TimingModel {
 
     void RenamingStage::AcceptLsuAllocateIdx(const InstGroupPtr &inst_ptr) {}
 
-    void RenamingStage::CreditDecrease_() {
-        --dispatch_credit_;
-        --rob_credit_;
-        --ldq_credit_;
-        --stq_credit_;
-    }
-
-    void RenamingStage::CreditWithoutLsuDecrease_() {
-        --dispatch_credit_;
-        --rob_credit_;
-    }
-
     void RenamingStage::InitCredit_() {
         renaming_preceding_credit_out.send(renaming_stage_queue_depth_);
     }
@@ -155,13 +143,12 @@ namespace TimingModel {
                 inst_lsu_group_tmp_ptr->emplace_back(inst_tmp_ptr);
             }
 
-            CreditWithoutLsuDecrease_();
-            if (!is_perfect_lsu_) {
-                if (inst_tmp_ptr->getFuType() == FuncType::STU) {
-                    stq_credit_--;
-                }else if (inst_tmp_ptr->getFuType() == FuncType::LDU) {
-                    ldq_credit_--;
-                }
+            --dispatch_credit_;
+            --rob_credit_;
+            if (inst_tmp_ptr->getFuType() == FuncType::STU) {
+                stq_credit_--;
+            }else if (inst_tmp_ptr->getFuType() == FuncType::LDU) {
+                ldq_credit_--;
             }
         }
 
