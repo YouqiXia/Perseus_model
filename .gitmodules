@@ -7,3 +7,6 @@
 [submodule "thirdparty/mavis"]
 	path = thirdparty/mavis
 	url = https://github.com/sparcians/mavis.git
+[submodule "thirdparty/ELFIO"]
+	path = thirdparty/ELFIO
+	url = https://github.com/serge1/ELFIO.git
