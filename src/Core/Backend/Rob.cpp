@@ -23,6 +23,7 @@ namespace TimingModel {
                           "total_number_retired",
                           "The total number of instructions retired by this core",
                           sparta::Counter::COUNT_NORMAL),
+             num_insts_to_retire_(p->num_insts_to_retire),
              ipc_(&stat_ipc_)
     {
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Rob, InitCredit_));
@@ -126,6 +127,12 @@ namespace TimingModel {
                       << " instructions in " << getClock()->currentCycle()
                       << " overall IPC: " << ipc_.getValue()
                       << std::endl;
+        }
+
+        // Will be true if the user provides a -i option
+        if (SPARTA_EXPECT_FALSE((num_retired_ >= num_insts_to_retire_) && (num_insts_to_retire_ != 0))) {
+            getScheduler()->stopRunning();
+            return;
         }
 
         if (!rob_.empty()) {

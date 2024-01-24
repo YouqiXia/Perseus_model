@@ -23,6 +23,7 @@ int main(int argc, char **argv) {
     const char * WORKLOAD = "workload";
     std::string DRAMconfig;
     std::string DRAMoutdir;
+    uint64_t ilimit = 0;
 
     sparta::app::DefaultValues DEFAULTS;
     DEFAULTS.auto_summary_default = "off";
@@ -49,7 +50,13 @@ int main(int argc, char **argv) {
              "Specifies the path of DRAM config file")
             ("DRAMoutdir",
              sparta::app::named_value<std::string>("\"\"", &DRAMoutdir),
-             "Specifies the path of DRAM output directory");
+             "Specifies the path of DRAM output directory")
+            ("instruction-limit,i",
+             sparta::app::named_value<uint64_t>("LIMIT", &ilimit)->default_value(ilimit),
+             "Limit the simulation to retiring a specific number of instructions. 0 (default) "
+             "means no limit. If -r is also specified, the first limit reached ends the simulation",
+             "End simulation after a number of instructions. Note that if set to 0, this may be "
+             "overridden by a node parameter within the simulator");
 
         // Add any positional command-line options
         po::positional_options_description& pos_opts = cls.getPositionalOptions();
@@ -77,7 +84,8 @@ int main(int argc, char **argv) {
             sparta::Scheduler scheduler;
             TimingModel::Simulation sim(scheduler,
                                         workload,
-                                        dram_input);
+                                        dram_input,
+                                        ilimit);  // run for ilimit instructions
 
             cls.populateSimulation(&sim);
 

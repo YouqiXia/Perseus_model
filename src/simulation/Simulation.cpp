@@ -1,5 +1,6 @@
 #include "Simulation.hpp"
 #include "sparta/ports/Port.hpp"
+#include "sparta/utils/StringUtils.hpp"
 
 #include <memory>
 #include <cstdint>
@@ -16,10 +17,12 @@ namespace TimingModel {
     // Simulation
     Simulation::Simulation(sparta::Scheduler& Sched,
                            const std::string workload,
-                           VAR::DRAMinput DRAMinput) :
+                           VAR::DRAMinput DRAMinput,
+                           const uint64_t instruction_limit) :
         sparta::app::Simulation("Yihai_test", &Sched),
         workload_(workload),
-        dram_input_(DRAMinput)
+        dram_input_(DRAMinput),
+        instruction_limit_(instruction_limit)
     {
         sparta::StartupEvent(getRoot(), CREATE_SPARTA_HANDLER(Simulation, test));
     }
@@ -80,7 +83,19 @@ namespace TimingModel {
         }
     }
 
-    void Simulation::configureTree_() {
+    void Simulation::configureTree_()
+    {
+        // In TREE_CONFIGURING phase
+        // Configuration from command line is already applied
+
+        sparta::ParameterBase* max_instrs =
+            getRoot()->getChildAs<sparta::ParameterBase>("rob.params.num_insts_to_retire");
+
+        // Safely assign as string for now in case parameter type changes.
+        // Direct integer assignment without knowing parameter type is not yet available through C++ API
+        if(instruction_limit_ != 0){
+            max_instrs->setValueFromString(sparta::utils::uint64_to_str(instruction_limit_));
+        }
     }
 
     void Simulation::bindTree_() {
