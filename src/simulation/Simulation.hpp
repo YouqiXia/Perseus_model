@@ -19,7 +19,8 @@ namespace TimingModel {
     public:
         Simulation(sparta::Scheduler& scheduler,
                    const std::string workload,
-                   VAR::DRAMinput DRAMinput);
+                   VAR::DRAMinput DRAMinput,
+                   const uint64_t instruction_limit=0);
 
         virtual ~Simulation();
 
@@ -45,6 +46,9 @@ namespace TimingModel {
         std::string workload_;
 
         VAR::DRAMinput dram_input_;
+
+        //! Instruction limit (set up -i option on command line)
+        const uint64_t instruction_limit_;
 
         ResourceMapFactory resource_map_factory_;
     };
