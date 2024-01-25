@@ -26,10 +26,10 @@ module oldest2_ready #(
                     second_oldest_age = oldest_age;
                     oldest_temp_index2 = oldest_temp_index1;
                     oldest_age = ages_i[i];
-                    oldest_temp_index1 = i;
+                    oldest_temp_index1 = i[RS_INDEX_WIDTH:0];
                 end else if (ages_i[i] < second_oldest_age) begin
                     second_oldest_age = ages_i[i];
-                    oldest_temp_index2 = i;
+                    oldest_temp_index2 = i[RS_INDEX_WIDTH:0];
                 end
             end
         end

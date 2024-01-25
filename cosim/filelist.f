@@ -1,4 +1,4 @@
-cosim/filelist.f
+cosim/params.vh
 cosim/Backend.v
 cosim/configurable_counter.v
 cosim/f2if2o.v

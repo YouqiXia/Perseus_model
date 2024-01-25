@@ -20,11 +20,11 @@ module select2_unused #(
             if (rs_unused_i[i]) begin
                 if (!rs_first_write_ready) begin
                     rs_first_write_ready = 1;
-                    wr_rs_index_first_o = i;
+                    wr_rs_index_first_o = i[RS_INDEX_WIDTH-1:0];
                 end
                 else if (!rs_second_write_ready) begin
                     rs_second_write_ready = 1;
-                    wr_rs_index_second_o = i;
+                    wr_rs_index_second_o = i[RS_INDEX_WIDTH-1:0];
                     break;
                 end
             end

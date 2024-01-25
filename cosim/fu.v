@@ -106,8 +106,8 @@ wire [PC_WIDTH - 1 : 0] alu2_final_next_pc;
 
 assign alu1_imm_64 = {{XLEN_M_IMMLEN{rcu_fu_alu1_imm_data_i[IMM_LEN-1]}}, rcu_fu_alu1_imm_data_i};
 assign alu2_imm_64 = {{XLEN_M_IMMLEN{rcu_fu_alu2_imm_data_i[IMM_LEN-1]}}, rcu_fu_alu2_imm_data_i};
-assign alu1_pc_64 = {{32'b0}, rcu_fu_alu1_pc_i};
-assign alu2_pc_64 = {{32'b0}, rcu_fu_alu2_pc_i};
+assign alu1_pc_64 = {{25'b0}, rcu_fu_alu1_pc_i};
+assign alu2_pc_64 = {{25'b0}, rcu_fu_alu2_pc_i};
 
 assign fu_rcu_alu1_resp_valid_o = alu1_resp_valid;
 assign fu_rcu_alu2_resp_valid_o = alu2_resp_valid;

@@ -21,7 +21,7 @@ module f2if2o #(
     input wire rd_second_en_i                       ,
     input wire [FIFO_DATA_WIDTH-1:0] wdata_first_i  ,
     input wire [FIFO_DATA_WIDTH-1:0] wdata_second_i ,
-    output reg [FIFO_DATA_WIDTH-1:0] rdata_fisrt_o  ,
+    output reg [FIFO_DATA_WIDTH-1:0] rdata_first_o  ,
     output reg [FIFO_DATA_WIDTH-1:0] rdata_second_o ,
     output reg fifo_full_o                          ,
     output reg fifo_almost_full_o                   ,
