@@ -23,6 +23,8 @@ module Backend(
     input [38:0] pc_second_i                            ,
     input [38:0] next_pc_first_i                        ,
     input [38:0] next_pc_second_i                       ,
+    input [38:0] predict_pc_first_i,
+    input [38:0] predict_pc_second_i,
     input [4:0] rs1_address_first_i                             ,
     input [4:0] rs1_address_second_i                            ,
     input [4:0] rs2_address_first_i                             ,

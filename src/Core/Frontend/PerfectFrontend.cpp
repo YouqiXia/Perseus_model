@@ -43,6 +43,8 @@ namespace TimingModel {
         dut_->pc_second_i = 0;
         dut_->next_pc_first_i = 0;
         dut_->next_pc_second_i = 0;
+        dut_->predict_pc_first_i = 0;
+        dut_->predict_pc_second_i = 0;
         dut_->rs1_address_first_i = 0;
         dut_->rs1_address_second_i = 0;
         dut_->rs2_address_first_i = 0;
@@ -148,6 +150,7 @@ namespace TimingModel {
                 dut_->uses_csr_first_i = inst->getFuType() == CSR;
                 dut_->pc_first_i = inst->getPc();
                 dut_->next_pc_first_i = inst->getPc() + 4;
+                dut_->predict_pc_first_i = inst->getPc() + 4;
                 dut_->rs1_address_first_i = inst->getIsaRs1();
                 dut_->rs2_address_first_i = inst->getIsaRs2();
                 dut_->rd_address_first_i = inst->getIsaRd();
@@ -212,6 +215,7 @@ namespace TimingModel {
                 dut_->uses_csr_second_i = inst->getFuType() == CSR;
                 dut_->pc_second_i = inst->getPc();
                 dut_->next_pc_second_i = inst->getPc() + 4;
+                dut_->predict_pc_second_i = inst->getPc() + 4;
                 dut_->rs1_address_second_i = inst->getIsaRs1();
                 dut_->rs2_address_second_i = inst->getIsaRs2();
                 dut_->rd_address_second_i = inst->getIsaRd();
@@ -293,6 +297,8 @@ namespace TimingModel {
         dut_->pc_second_i = 0;
         dut_->next_pc_first_i = 0;
         dut_->next_pc_second_i = 0;
+        dut_->predict_pc_first_i = 0;
+        dut_->predict_pc_second_i = 0;
         dut_->rs1_address_first_i = 0;
         dut_->rs1_address_second_i = 0;
         dut_->rs2_address_first_i = 0;
