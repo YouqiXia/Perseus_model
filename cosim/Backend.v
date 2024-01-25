@@ -151,7 +151,7 @@ wire deco_rob_req_ready_first                           ;
 wire deco_rob_req_ready_second                          ;
 wire fu2rcu_md_wrb_resp_valid                           ;
 wire func_csru_done_valid_i                             ;
-wire [ROB_INDEX_WIDTH-1:0] fu2rcu_csr_resp_valid        ;
+wire fu2rcu_csr_resp_valid                              ;
 wire [ROB_INDEX_WIDTH-1:0] fu2rcu_alu1_wrb_rob_index    ;
 wire [ROB_INDEX_WIDTH-1:0] fu2rcu_alu2_wrb_rob_index    ;
 wire [ROB_INDEX_WIDTH-1:0] fu2rcu_lsu_comm_rob_index_fix;
@@ -299,6 +299,7 @@ wire [XLEN-1:0] rcu2fu_agu_virt_offset                  ;
 wire rcu2fu_lsu_ls                                      ;
 wire rcu2fu_lsu_fenced_final                            ;
 wire [ROB_INDEX_WIDTH-1:0] lsu2rcu_rob_index            ;
+wire [LSU_DATA_WIDTH-1:0]  rcu2fu_lsu_package           ;
 reg global_wfi                      ;
 reg global_trap                     ;
 reg global_ret                      ;
@@ -587,7 +588,7 @@ freelist #(
     .rd_second_en_i     (free_list_rd_second_en),
     .wdata_first_i      (free_list_wrdata_first),
     .wdata_second_i     (free_list_wrdata_second),
-    .rdata_fisrt_o      (free_list_rdata_first),
+    .rdata_first_o      (free_list_rdata_first),
     .rdata_second_o     (free_list_rdata_second),
     .fifo_full_o        (),
     .fifo_almost_full_o (),
@@ -737,7 +738,7 @@ f2if2o #(
     .rd_second_en_i     (rs_ready_second),
     .wdata_first_i      (iq_wr_pkg_first),
     .wdata_second_i     (iq_wr_pkg_second),
-    .rdata_fisrt_o      (iq_rd_pkg_first),
+    .rdata_first_o      (iq_rd_pkg_first),
     .rdata_second_o     (iq_rd_pkg_second),
     .fifo_full_o        (),
     .fifo_almost_full_o (iq_almost_full),
@@ -967,7 +968,7 @@ rs rs_u(
     .alu2_branch_o(rcu2fu_alu2_is_branch),
     .alu2_half_o(rcu2fu_alu2_half),
     .alu2_func_modifier_o(rcu2fu_alu2_func_modifier),
-    .rcu_lsu_package_o(rcu2fu_lsu_package),
+    .rs_lsu_package_o(rcu2fu_lsu_package)
 ); // end rs
 
 assign {rcu2fu_lsu_rob_index, 
@@ -1057,8 +1058,23 @@ fu fu_u(
     .fu_rcu_lsu_comm_vld_o(fu2rcu_lsu_done_valid),
     .fu_rcu_lsu_comm_rob_index_o(lsu2rcu_rob_index),
     .fu_rcu_lsu_comm_rd_addr_o(fu2rcu_lsu_wrb_addr),
-    .fu_rcu_lsu_comm_data_o(fu2rcu_lsu_comm_data),
+    .fu_rcu_lsu_comm_data_o(fu2rcu_lsu_comm_data)
 ); //end fu
 
+reg [MAX_AGE_WIDTH-1:0] commit_cnt;
+
+always @ (posedge clk) begin
+    if (rst) begin
+        commit_cnt <= 32'b0;
+    end
+    else begin
+        if (do_rob_commit_first_o & do_rob_commit_second_o) begin
+            commit_cnt <= commit_cnt + 32'd2;
+        end
+        else if (do_rob_commit_first_o ^ do_rob_commit_second_o) begin
+            commit_cnt <= commit_cnt + 32'd1;
+        end
+    end
+end
 
 endmodule

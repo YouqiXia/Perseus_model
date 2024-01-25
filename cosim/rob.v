@@ -243,6 +243,7 @@ assign prs2_second = uses_rs2_second_i ? (((rs2_address_second_i == rd_address_f
 assign lprd_second = uses_rd_second_i ? ((rd_address_second_i == rd_address_first_i) & uses_rd_first_i) ? name_prd_first
                                                                                                         : name_lprd_second
                                       : 0;
+wire rs1_wait_first, rs2_wait_first, rs1_wait_second, rs2_wait_second;
 assign rs1_wait_first = uses_rs1_first_i ? prf_or_rob_table[rs1_address_first_i]
                                          : 0;
 assign rs2_wait_first = uses_rs2_first_i ? prf_or_rob_table[rs2_address_first_i]
@@ -542,8 +543,10 @@ always @(posedge clk) begin
         end
     end
 end
-assign rcu_lsu_wakeup_o = rob_wakeup[cmt_rob_index_first] & rob_used[cmt_rob_index_first];
-assign rcu_lsu_wakeup_index_o = cmt_rob_index_first;
+
+
+//assign rcu_lsu_wakeup_o = rob_wakeup[cmt_rob_index_first] & rob_used[cmt_rob_index_first];
+//assign rcu_lsu_wakeup_index_o = cmt_rob_index_first;
 //: rob wake up
 
 //rob skip gen
@@ -587,8 +590,10 @@ assign do_rob_write_second = rob_second_write_ready &
                              ;
 assign do_rob_write = {do_rob_write_second, do_rob_write_first};
 assign wr_rob_index_first = wr_rob_index;
-assign wr_rob_index_second = (wr_rob_index == ROB_SIZE - 1) ? 0
-                                                            : wr_rob_index + 1;
+wire [ROB_INDEX_WIDTH-1:0] max_rob;
+assign max_rob = 4'b1111;
+assign wr_rob_index_second = (wr_rob_index == max_rob) ? {ROB_INDEX_WIDTH{1'b0}}
+                                                            : (wr_rob_index + 1);
 //: rob entry ctrl
 
 
@@ -616,7 +621,7 @@ assign do_rob_commit_second = rob_used[cmt_rob_index_second] &
                               do_rob_commit_first;
 assign do_rob_commit = {do_rob_commit_second, do_rob_commit_first};
 assign cmt_rob_index_first = cmt_rob_index;                                                          
-assign cmt_rob_index_second = (cmt_rob_index == ROB_SIZE - 1) ? 0
+assign cmt_rob_index_second = (cmt_rob_index == 4'b1111) ? 0
                                                               : cmt_rob_index + 1;
 
 //: rob commit ctrl
