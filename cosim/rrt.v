@@ -48,7 +48,7 @@ module rrt #(
     output reg [PHY_REG_ADDR_WIDTH-1:0] name_prd_second        , 
     output reg [RRT_SIZE-1:0] prf_or_rob_table
 );
-
+integer i;
 reg [PHY_REG_ADDR_WIDTH-1:0] rename_table[RRT_SIZE-1:0];
 reg [RRT_SIZE-1:0] prf_or_rob;
 wire do_rrt_write_first, do_rrt_write_second;

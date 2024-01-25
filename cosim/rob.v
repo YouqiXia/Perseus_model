@@ -17,6 +17,7 @@ module rob #(
     parameter PC_WIDTH = 39,
     parameter LDU_OP_WIDTH = 4,
     parameter STU_OP_WIDTH = 5,
+    parameter RRT_SIZE = 32,
 
     parameter IQ_WIDTH = ROB_INDEX_WIDTH+PHY_REG_ADDR_WIDTH*3+PC_WIDTH*3+LDU_OP_WIDTH+STU_OP_WIDTH+73
 ) (
@@ -133,8 +134,8 @@ module rob #(
     output wire free_list_wr_second_en                          ,
     output wire free_list_rd_first_en                           ,
     output wire free_list_rd_second_en                          ,
-    output wire [FRLIST_DATA_WIDTH-1:0] free_list_wrdata_first  ,
-    output wire [FRLIST_DATA_WIDTH-1:0] free_list_wrdata_second ,
+    output wire [PHY_REG_ADDR_WIDTH-1:0] free_list_wrdata_first  ,
+    output wire [PHY_REG_ADDR_WIDTH-1:0] free_list_wrdata_second ,
 
     //to renaming table
     output do_rob_write_first                                   ,
@@ -213,6 +214,14 @@ assign free_list_rd_second_en = do_rob_write_second & uses_rd_second_i & (rd_add
 //assign free_list_rds_first_en = do_rob_commit_first & (rob_prd[cmt_rob_index_first] != 0) & !global_speculate_fault;
 //assign free_list_rds_second_en = do_rob_commit_second & (rob_prd[cmt_rob_index_second] != 0) & !global_speculate_fault;
 
+wire [PHY_REG_ADDR_WIDTH-1:0] prs1_first;
+wire [PHY_REG_ADDR_WIDTH-1:0] prs2_first;
+wire [PHY_REG_ADDR_WIDTH-1:0] prd_first;
+wire [PHY_REG_ADDR_WIDTH-1:0] lprd_first;
+wire [PHY_REG_ADDR_WIDTH-1:0] prs1_second;
+wire [PHY_REG_ADDR_WIDTH-1:0] prs2_second;
+wire [PHY_REG_ADDR_WIDTH-1:0] prd_second;
+wire [PHY_REG_ADDR_WIDTH-1:0] lprd_second;
 
 // renaming signals
 assign prs1_first = uses_rs1_first_i ? name_prs1_first
