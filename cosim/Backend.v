@@ -1,21 +1,89 @@
-`timescale 0.5ns/1ps
-
 module Backend(
-    input clk_i,
-    input [31:0] pc_first_i,
-    input [31:0] pc_second_i,
-    output clk_o,
-    output [31:0] pc_first_o,
-    output [31:0] pc_second_o
+    input clk                                                   ,
+    input rst                                                   ,
+    //global ctrl
+    input global_wfi_i                                          ,
+    input global_trap_i                                         ,
+    input global_ret_i                                          ,
+    //hand shake with decode
+    input deco_rob_req_valid_first_i                            ,
+    input deco_rob_req_valid_second_i                           ,
+    output deco_rob_req_ready_first_o                           ,
+    output deco_rob_req_ready_second_o                          ,
+    //from decode
+    input uses_rs1_first_i                                      ,
+    input uses_rs1_second_i                                     ,
+    input uses_rs2_first_i                                      ,
+    input uses_rs2_second_i                                     ,
+    input uses_rd_first_i                                       ,
+    input uses_rd_second_i                                      ,
+    input uses_csr_first_i                                      ,
+    input uses_csr_second_i                                     ,
+    input [38:0] pc_first_i                             ,
+    input [38:0] pc_second_i                            ,
+    input [38:0] next_pc_first_i                        ,
+    input [38:0] next_pc_second_i                       ,
+    input [38:0] predict_pc_first_i,
+    input [38:0] predict_pc_second_i,
+    input [4:0] rs1_address_first_i                             ,
+    input [4:0] rs1_address_second_i                            ,
+    input [4:0] rs2_address_first_i                             ,
+    input [4:0] rs2_address_second_i                            ,
+    input [4:0] rd_address_first_i                              ,
+    input [4:0] rd_address_second_i                             ,
+    input [11:0] csr_address_first_i                            ,
+    input [11:0] csr_address_second_i                           ,
+    input mret_first_i                                          ,
+    input mret_second_i                                         ,
+    input sret_first_i                                          ,
+    input sret_second_i                                         ,
+    input wfi_first_i                                           ,
+    input wfi_second_i                                          ,
+    input half_first_i                                          ,
+    input half_second_i                                         ,
+    input is_fence_first_i                                      ,
+    input is_fence_second_i                                     ,
+    input [1:0] fence_op_first_i                                ,
+    input [1:0] fence_op_second_i                               ,
+    input is_aext_first_i                                       ,
+    input is_aext_second_i                                      ,
+    input is_mext_first_i                                       ,
+    input is_mext_second_i                                      ,
+    input csr_read_first_i                                      ,
+    input csr_read_second_i                                     ,
+    input csr_write_first_i                                     ,
+    input csr_write_second_i                                    ,
+    input [31:0] imm_data_first_i                               ,
+    input [31:0] imm_data_second_i                              ,
+    input [2:0] fu_function_first_i                             ,
+    input [2:0] fu_function_second_i                            ,
+    input alu_function_modifier_first_i                         ,
+    input alu_function_modifier_second_i                        ,
+    input [1:0] fu_select_a_first_i                             ,
+    input [1:0] fu_select_a_second_i                            ,
+    input [1:0] fu_select_b_first_i                             ,
+    input [1:0] fu_select_b_second_i                            ,
+    input jump_first_i                                          ,
+    input jump_second_i                                         ,
+    input branch_first_i                                        ,
+    input branch_second_i                                       ,
+    input is_alu_first_i                                        ,
+    input is_alu_second_i                                       ,
+    input load_first_i                                          ,
+    input load_second_i                                         ,
+    input store_first_i                                         ,
+    input store_second_i                                        ,
+    input [3:0] ldu_op_first_i                     ,
+    input [3:0] ldu_op_second_i                    ,
+    input [4:0] stu_op_first_i                     ,
+    input [4:0] stu_op_second_i                    ,
+    input aq_first_i                                            ,
+    input aq_second_i                                           ,
+    input rl_first_i                                            ,
+    input rl_second_i
+
 );
 
-//frequency_multiplier fm_u (
-//    .clk(clk),
-//    .clk_out(clk_o)
-//);
 
-assign clk_o = clk_i;
-assign pc_first_o = pc_first_i;
-assign pc_second_o = pc_second_i;
 
 endmodule
