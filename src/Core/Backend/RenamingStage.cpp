@@ -28,8 +28,12 @@ namespace TimingModel {
             (CREATE_SPARTA_HANDLER_WITH_DATA(RenamingStage, AcceptDispatchCredit_, Credit));
         rob_renaming_credit_in.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(RenamingStage, AcceptRobCredit_, Credit));
-//        lsu_renaming_credit_in.registerConsumerHandler
-//            (CREATE_SPARTA_HANDLER_WITH_DATA(RenamingStage, AcceptLsuCredit_, Credit));
+//        lsu_renaming_ldq_credit_in.registerConsumerHandler
+//            (CREATE_SPARTA_HANDLER_WITH_DATA(RenamingStage, AcceptLoadQueueCredit_, Credit));
+//        lsu_renaming_stq_credit_in.registerConsumerHandler
+//            (CREATE_SPARTA_HANDLER_WITH_DATA(RenamingStage, AcceptStoreQueueCredit_, Credit));
+//        lsu_renaming_allocate_in.registerConsumerHandler
+//            (CREATE_SPARTA_HANDLER_WITH_DATA(RenamingStage, AcceptLsuAllocateIdx, Credit));
         Rob_cmt_inst_in.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(RenamingStage, RobCommit_, InstGroupPtr));
 
@@ -59,18 +63,29 @@ namespace TimingModel {
         rename_event.schedule(sparta::Clock::Cycle(0));
     }
 
-    void RenamingStage::AcceptLsuCredit_(const Credit& credit) {
-        lsu_credit_ += credit;
+    void RenamingStage::AcceptLoadQueueCredit_(const Credit& credit) {
+        ldq_credit_ += credit;
 
-        ILOG("RenamingStage get Lsu credits: " << credit);
+        ILOG("RenamingStage get Ldq credits: " << credit);
 
         rename_event.schedule(sparta::Clock::Cycle(0));
     }
 
+    void RenamingStage::AcceptStoreQueueCredit_(const Credit& credit) {
+        stq_credit_ += credit;
+
+        ILOG("RenamingStage get Stq credits: " << credit);
+
+        rename_event.schedule(sparta::Clock::Cycle(0));
+    }
+
+    void RenamingStage::AcceptLsuAllocateIdx(const TimingModel::InstGroupPtr &inst_group_ptr) {}
+
     void RenamingStage::CreditDecrease_() {
         --dispatch_credit_;
         --rob_credit_;
-        --lsu_credit_;
+        --ldq_credit_;
+        --stq_credit_;
     }
 
     void RenamingStage::CreditWithoutLsuDecrease_() {
@@ -85,6 +100,7 @@ namespace TimingModel {
     void RenamingStage::AllocateInst_(const InstGroupPtr& inst_group_ptr) {
         ILOG("renaming stage get instructions: " << inst_group_ptr->size());
         for (auto& inst_ptr: *inst_group_ptr) {
+            ILOG("renaming stage get instructions: " << inst_ptr);
             renaming_stage_queue_.push(inst_ptr);
         }
 
@@ -111,7 +127,8 @@ namespace TimingModel {
         }
         ILOG(getName() << " rename instructions");
         uint64_t produce_inst_num = std::min<uint64_t>(dispatch_credit_, rob_credit_);
-        produce_inst_num = std::min<uint64_t>(produce_inst_num, lsu_credit_);
+        produce_inst_num = std::min<uint64_t>(produce_inst_num, ldq_credit_);
+        produce_inst_num = std::min<uint64_t>(produce_inst_num, stq_credit_);
         produce_inst_num = std::min<uint64_t>(produce_inst_num, issue_width_);
         InstGroupPtr inst_group_tmp_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
         InstGroupPtr inst_lsu_group_tmp_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
@@ -128,6 +145,7 @@ namespace TimingModel {
             auto inst_tmp_ptr = renaming_stage_queue_.front();
             RenameInstImp_(inst_tmp_ptr);
             inst_group_tmp_ptr->emplace_back(inst_tmp_ptr);
+            ILOG("send insn to following: " << inst_tmp_ptr);
             renaming_stage_queue_.pop();
             if (inst_tmp_ptr->getFuType() == FuncType::STU && inst_tmp_ptr->getFuType() == FuncType::LDU) {
                 inst_lsu_group_tmp_ptr->emplace_back(inst_tmp_ptr);
@@ -140,7 +158,8 @@ namespace TimingModel {
         }
 
         uint64_t whole_credit_ = std::min(dispatch_credit_, rob_credit_);
-        whole_credit_ = std::min(whole_credit_, lsu_credit_);
+        whole_credit_ = std::min(whole_credit_, ldq_credit_);
+        whole_credit_ = std::min(whole_credit_, stq_credit_);
 
         if (!renaming_stage_queue_.empty() && whole_credit_ > 0) {
             rename_event.schedule(sparta::Clock::Cycle(1));
@@ -187,6 +206,7 @@ namespace TimingModel {
                 rename_event.schedule(1);
             }
             renaming_table_.GetBackup(inst_ptr->getIsaRd()) = inst_ptr->getPhyRd();
+            ILOG("inst release resource: " << inst_ptr);
             ILOG("free list push: " << inst_ptr->getLPhyRd() << " rob tag: " << inst_ptr->getRobTag());
         }
     }

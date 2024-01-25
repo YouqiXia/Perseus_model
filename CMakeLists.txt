@@ -5,6 +5,8 @@ set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(model)
 
+#add_definitions(-DABSLSU)
+
 # set sparta directory
 if(IS_DIRECTORY ${SPARTA_SEARCH_DIR})
   message (STATUS "Using '${SPARTA_SEARCH_DIR}' for sparta install")
@@ -44,6 +46,7 @@ set (DIR_SRCS ${VERILATOR_INCLUDE}/verilated_vcd_c.cpp ${DIR_SRCS})
 # head file
 include_directories(./src)
 include_directories(./src/basic)
+include_directories(./src/uncore)
 include_directories(mavis)
 include_directories(stf_lib)
 include_directories(${SPARTA_INCLUDE_DIRS})
