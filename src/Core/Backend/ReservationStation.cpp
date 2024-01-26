@@ -14,7 +14,6 @@ namespace TimingModel {
                                            const TimingModel::ReservationStation::ReservationStationParameter *p) :
             sparta::Unit(node),
             issue_num_(p->issue_num),
-            rs_func_type_(p->rs_func_type),
             rs_depth_(p->rs_depth),
             reservation_station_()
     {
@@ -27,7 +26,6 @@ namespace TimingModel {
                 (CREATE_SPARTA_HANDLER_WITH_DATA(ReservationStation, AcceptCredit_, Credit));
         forwarding_reservation_inst_in.registerConsumerHandler
                 (CREATE_SPARTA_HANDLER_WITH_DATA(ReservationStation, GetForwardingData, InstGroupPtr));
-        sparta_assert(p->rs_func_type != "", "reservation with no func type assigned");
         preceding_reservation_inst_in >> sparta::GlobalOrderingPoint(node, "rs_allocate_forwarding");
         sparta::GlobalOrderingPoint(node, "rs_allocate_forwarding") >> forwarding_reservation_inst_in;
     }
@@ -44,13 +42,13 @@ namespace TimingModel {
         passing_event.cancel();
         ILOG(getName() << " is flushed.");
 
-        RsCreditPtr rs_credit_ptr_tmp{new RsCredit{rs_func_type_, reservation_station_.size()}};
+        RsCreditPtr rs_credit_ptr_tmp{new RsCredit{getName(), reservation_station_.size()}};
         reservation_preceding_credit_out.send(rs_credit_ptr_tmp);
         reservation_station_.clear();
     }
 
     void ReservationStation::InitCredit_() {
-        RsCreditPtr rs_credit_ptr_tmp {new RsCredit{rs_func_type_, rs_depth_}};
+        RsCreditPtr rs_credit_ptr_tmp {new RsCredit{getName(), rs_depth_}};
         reservation_preceding_credit_out.send(rs_credit_ptr_tmp);
     }
 
@@ -69,7 +67,7 @@ namespace TimingModel {
         reservation_station_.emplace_back(tmp_restation_entry);
 
         passing_event.
-                schedule(sparta::Clock::Cycle(1));
+                schedule(sparta::Clock::Cycle(0));
     }
 
     void ReservationStation::GetForwardingData(const TimingModel::InstGroupPtr &forwarding_inst_group_ptr) {
@@ -120,7 +118,7 @@ namespace TimingModel {
             }
         }
 
-        RsCreditPtr rs_credit_ptr_tmp {new RsCredit{rs_func_type_, 1}};
+        RsCreditPtr rs_credit_ptr_tmp {new RsCredit{getName(), 1}};
         if (inst_ptr_tmp != nullptr) {
             reservation_preceding_credit_out.send(rs_credit_ptr_tmp);
             ILOG("send insn to following: " << inst_ptr_tmp);

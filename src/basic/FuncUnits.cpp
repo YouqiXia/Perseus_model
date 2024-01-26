@@ -2,67 +2,67 @@
 #include "simulation/ExtensionsCfg.hpp"
 
 namespace TimingModel {
-    FuncMap func_map;
+    DispatchMap dispatch_map;
 
-    FuncCreditMap func_credit_map;
+    FuMap fu_map;
 
-    FuncMap& getFuncMap() {
-        return func_map;
+    /* info from yaml configuration */
+
+    DispatchMap& getDispatchMap() {
+        return dispatch_map;
     }
 
-    FuncCreditMap& getFuncCredit() {
-        return func_credit_map;
+    FuMap& getFuMap() {
+        return fu_map;
     }
-    void setFuMap(sparta::TreeNode * rootnode){
-        auto fu_map = TimingModel::getFuMap(rootnode);
-        uint32_t fu_cnt = fu_map.size();
-        if(fu_cnt > 0){
-            func_map.clear();
+
+    void setDispatchMap(sparta::TreeNode * rootnode){
+        auto topo_dispatch_map = TimingModel::getCommonTopology(rootnode, "dispatch_map");
+        uint32_t topo_cnt = topo_dispatch_map.size();
+        if(topo_cnt > 0){
+            dispatch_map.clear();
         }else{
             return;
         }
 
-        for(auto i=0u; i<fu_cnt; i++){
-            uint32_t type_cnt = fu_map[i].size()-1;
+        for(auto i=0u; i<topo_cnt; i++){
+            uint32_t type_cnt = topo_dispatch_map[i].size()-1;
             std::set<FuncType> fu_types;
             for(auto t=0u; t<type_cnt; t++){
-                FuncType type = stringToFuncType(fu_map[i][t+1]);
+                FuncType type = stringToFuncType(topo_dispatch_map[i][t+1]);
                 fu_types.insert(type);
             }
-            func_map[fu_map[i][0]] = fu_types;
+            dispatch_map[topo_dispatch_map[i][0]] = fu_types;
         }
     }
-    void printFuMap(){
+
+    void setFuMap(sparta::TreeNode * rootnode){
+        auto topo_fu_map = TimingModel::getCommonTopology(rootnode, "fu_group");
+        uint32_t topo_cnt = topo_fu_map.size();
+        if(topo_cnt > 0){
+            fu_map.clear();
+        }else{
+            return;
+        }
+
+        for(auto i=0u; i<topo_cnt; i++){
+            fu_map.emplace_back(topo_fu_map[i][0]);
+        }
+    }
+
+    void printDispatchMap(){
         std::cout << "fu map:" << std::endl;
-        for(std::map<FuncUnitType, std::set<FuncType>>::iterator it=func_map.begin(); it!=func_map.end(); ++it){
+        for(std::map<RsType, std::set<FuncType>>::iterator it=dispatch_map.begin(); it!=dispatch_map.end(); ++it){
             std::cout << it->first << ": ";
             for (std::set<FuncType>::iterator its =it->second.begin(); its!=it->second.end(); ++its)
                 std::cout << funcTypeToString(*its) << ", ";
             std::cout << std::endl;
         }
     }
-    void setFuCreditMap(sparta::TreeNode * rootnode){
-        auto fu_credit_map = TimingModel::getFuCreditMap(rootnode);
-        uint32_t fu_credit_cnt = fu_credit_map.size();
-        if(fu_credit_cnt > 0){
-            func_credit_map.clear();
-        }else{
-            return;
-        }
 
-        for(auto i=0u; i<fu_credit_cnt; i++){
-            func_credit_map[fu_credit_map[i][0]] = std::stoull(fu_credit_map[i][1]);
-        }
-    }
-    void printCreditMap(){
-        std::cout << "fu credit map:" << std::endl;
-        for(std::map<FuncUnitType, Credit>::iterator it=func_credit_map.begin(); it!=func_credit_map.end(); ++it){
-            std::cout << it->first << ": " << it->second << std::endl;
-        }
-    }
     void setFuCfgFromExtensions(sparta::TreeNode * rootnode){
+        setDispatchMap(rootnode);
         setFuMap(rootnode);
-        setFuCreditMap(rootnode);
     }
 }
 

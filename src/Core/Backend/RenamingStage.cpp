@@ -92,7 +92,6 @@ namespace TimingModel {
             renaming_stage_queue_.push(inst_ptr);
         }
 
-        // For pipeline, tick = 0. For queue, tick = 1.
         rename_event.schedule(sparta::Clock::Cycle(0));
     }
 

@@ -32,13 +32,13 @@ namespace TimingModel {
             (DispatchStage, ReadFromPhysicalReg_, InstGroupPtr));
 
         // credits initialization
-        FuncMap& fu_map = getFuncMap();
-        for (auto& func_pair: fu_map) {
+        DispatchMap& dispatch_map = getDispatchMap();
+        for (auto& func_pair: dispatch_map) {
             rs_credits_[func_pair.first] = Credit(0);
 
             // credits in ports initialization
             rs_dispatch_credits_in.emplace_back(new sparta::DataInPort<RsCreditPtr>
-                    (&unit_port_set_, func_pair.first+"_rs_dispatch_credit_in", sparta::SchedulingPhase::Tick, 0));
+                    (&unit_port_set_, func_pair.first+"_dispatch_credit_in", sparta::SchedulingPhase::Tick, 0));
             rs_dispatch_credits_in.back()->registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA
                 (DispatchStage, AcceptCredit_, RsCreditPtr));
             *(rs_dispatch_credits_in.back()) >> sparta::GlobalOrderingPoint(node, "dispatch_node");
@@ -46,8 +46,8 @@ namespace TimingModel {
             // construct ports will be connected with Reservation Station
             sparta::SpartaSharedPointer<sparta::DataOutPort<InstPtr>> tmp_out_port_ptr
                 {new sparta::DataOutPort<InstPtr>
-                        (&unit_port_set_, "dispatch_"+func_pair.first+"_rs_out")};
-            std::pair<FuncUnitType, sparta::SpartaSharedPointer<sparta::DataOutPort<InstPtr>>> tmp_pair =
+                        (&unit_port_set_, "dispatch_"+func_pair.first+"_out")};
+            std::pair<RsType, sparta::SpartaSharedPointer<sparta::DataOutPort<InstPtr>>> tmp_pair =
                     {func_pair.first, tmp_out_port_ptr};
             dispatch_rs_out.emplace(tmp_pair);
         }
@@ -76,8 +76,8 @@ namespace TimingModel {
             inst_queue_.push(issue_entry_ptr_tmp);
         }
 
-        dispatch_select_events_.schedule(1);
-        dispatch_pop_events_.schedule(1);
+        dispatch_select_events_.schedule(0);
+        dispatch_pop_events_.schedule(0);
     }
 
     void DispatchStage::ReadPhyReg_() {
@@ -126,8 +126,8 @@ namespace TimingModel {
 
     void DispatchStage::SelectInst_() {
         uint64_t produce_max = issue_num_;
-        FuncMap& fu_map = getFuncMap();
-        for (auto& func_pair: fu_map) {
+        DispatchMap& dispatch_map = getDispatchMap();
+        for (auto& func_pair: dispatch_map) {
             if (!produce_max) {
                 break;
             }
@@ -220,8 +220,8 @@ namespace TimingModel {
     }
 
     void DispatchStage::AcceptCredit_(const TimingModel::RsCreditPtr &rs_credit_ptr) {
-        ILOG("dispatch stage accept credits from " << rs_credit_ptr->func_unit << "_rs , credits is " << rs_credit_ptr->credit);
-        rs_credits_.at(rs_credit_ptr->func_unit) += rs_credit_ptr->credit;
+        ILOG("dispatch stage accept credits from " << rs_credit_ptr->rs_name << "_rs , credits is " << rs_credit_ptr->credit);
+        rs_credits_.at(rs_credit_ptr->rs_name) += rs_credit_ptr->credit;
     }
 
 }

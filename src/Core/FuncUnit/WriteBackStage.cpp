@@ -15,14 +15,14 @@ namespace TimingModel {
             wb_latency_(p->wb_latency)
     {
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(WriteBackStage, SendInitCredit_));
-        FuncMap& fu_map = getFuncMap();
+        FuMap& fu_map = getFuMap();
         for (auto &func_pair: fu_map) {
             auto *func_unit_write_back_in_tmp = new sparta::DataInPort<FuncInstPtr>
-                    {&unit_port_set_, func_pair.first + "_write_back_port_in", sparta::SchedulingPhase::Tick, wb_latency_};
+                    {&unit_port_set_, func_pair + "_write_back_port_in", sparta::SchedulingPhase::Tick, wb_latency_};
             auto *func_unit_credit_out_tmp = new sparta::DataOutPort<Credit>
-                    {&unit_port_set_,  func_pair.first + "_rs_credit_out"};
-            func_unit_write_back_ports_in_[func_pair.first] = func_unit_write_back_in_tmp;
-            func_unit_credit_ports_out_[func_pair.first] = func_unit_credit_out_tmp;
+                    {&unit_port_set_,  func_pair + "_rs_credit_out"};
+            func_unit_write_back_ports_in_[func_pair] = func_unit_write_back_in_tmp;
+            func_unit_credit_ports_out_[func_pair] = func_unit_credit_out_tmp;
             func_unit_write_back_in_tmp->registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA
                                                                  (WriteBackStage, AcceptFuncInst_, FuncInstPtr));
         }
@@ -36,8 +36,8 @@ namespace TimingModel {
     }
 
     void WriteBackStage::SendInitCredit_() {
-        for (auto& func_credit_pair: getFuncCredit()) {
-            func_unit_credit_ports_out_.at(func_credit_pair.first)->send(1);
+        for (auto func_credit_pair: getFuMap()) {
+            func_unit_credit_ports_out_.at(func_credit_pair)->send(1);
         }
     }
 

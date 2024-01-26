@@ -36,9 +36,7 @@ namespace TimingModel {
         //! to bind things together.
         void bindTree_() override;
 
-        void BuildFuncRelatives_();
-
-        void buildModuleTopology_(TopoExtensions::ModuleTopology&, sparta::TreeNode*);
+        void buildHierarchicalTopology_(TopoExtensions::CommonTopoType&, sparta::TreeNode*);
 
         void bindBindingTopology_(TopoExtensions::BindingTopology&);
 

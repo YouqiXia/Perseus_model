@@ -13,14 +13,9 @@
 #include "basic/Inst.hpp"
 #include "basic/InstGroup.hpp"
 #include "FuncUnits.hpp"
+#include "PortInterface.hpp"
 
 namespace TimingModel {
-    struct FuncInst {
-        FuncUnitType func_type;
-        InstPtr inst_ptr;
-    };
-
-    using FuncInstPtr = sparta::SpartaSharedPointer<FuncInst>;
 
     class WriteBackStage : public sparta::Unit {
     public:

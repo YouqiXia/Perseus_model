@@ -7,8 +7,7 @@
 #include "sparta/ports/SignalPort.hpp"
 
 #include "basic/Inst.hpp"
-
-#include "WriteBackStage.hpp"
+#include "PortInterface.hpp"
 
 namespace TimingModel {
     class PerfectAlu : public sparta::Unit {
@@ -19,7 +18,7 @@ namespace TimingModel {
                 sparta::ParameterSet(n)
             {}
 
-            PARAMETER(FuncUnitType, func_type, "", "the type of function unit")
+            PARAMETER(uint32_t, alu_width, 1, "alu queue width")
         };
 
         static const char* name;
@@ -29,13 +28,17 @@ namespace TimingModel {
     private:
         void Process_(const InstPtr&);
 
-        void WriteBack_(const InstPtr&);
+        void Allocate_(const InstPtr&);
+
+        void SendInitCredit_();
+
+        void WriteBack_();
 
         void AcceptCredit_(const Credit&);
 
 
     private:
-    // ports
+    /* ports */
         sparta::DataInPort<InstPtr> preceding_func_inst_in
             {&unit_port_set_, "preceding_func_inst_in", sparta::SchedulingPhase::Tick, 1};
 
@@ -48,9 +51,17 @@ namespace TimingModel {
         sparta::DataOutPort<FuncInstPtr> func_following_finish_out
             {&unit_port_set_, "func_following_finish_out"};
 
+    /* events */
+        sparta::SingleCycleUniqueEvent<> write_back_event
+            {&unit_event_set_, "write_back_event", CREATE_SPARTA_HANDLER(PerfectAlu, WriteBack_)};
+
 
     private:
-        FuncUnitType func_type_;
+        InstQueue alu_queue_;
+
+        const uint32_t alu_width_;
+
+        uint32_t credit_ = 0;
     };
 
 }

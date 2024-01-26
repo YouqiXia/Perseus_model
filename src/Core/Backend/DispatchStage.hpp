@@ -15,8 +15,8 @@
 #include "basic/Inst.hpp"
 #include "basic/InstGroup.hpp"
 #include "FuncUnits.hpp"
+#include "PortInterface.hpp"
 
-#include "ReservationStation.hpp"
 #include "Scoreboard.hpp"
 
 namespace TimingModel {
@@ -91,7 +91,7 @@ namespace TimingModel {
                     {&unit_port_set_, "dispatch_physical_reg_read_in", sparta::SchedulingPhase::Tick, 1};
 
             // with rs -> also should be constructed in dispatch stage constructor
-            std::map<FuncUnitType, sparta::SpartaSharedPointer<sparta::DataOutPort<InstPtr>>> dispatch_rs_out;
+            std::map<RsType, sparta::SpartaSharedPointer<sparta::DataOutPort<InstPtr>>> dispatch_rs_out;
 
             // with rs Credits
             std::vector<sparta::SpartaSharedPointer<sparta::DataInPort<RsCreditPtr>>> rs_dispatch_credits_in;
@@ -120,7 +120,7 @@ namespace TimingModel {
     private:
         uint64_t issue_num_;
 
-        std::map<FuncUnitType, Credit> rs_credits_;
+        std::map<RsType, Credit> rs_credits_;
 
         Scoreboard scoreboard_;
 
@@ -128,7 +128,7 @@ namespace TimingModel {
 
         sparta::Queue<IssueQueueEntryPtr> inst_queue_;
 
-        std::map<FuncUnitType, InstPtr> dispatch_pending_queue_;
+        std::map<RsType, InstPtr> dispatch_pending_queue_;
     };
 
 }

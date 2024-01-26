@@ -14,15 +14,10 @@
 
 #include "basic/Inst.hpp"
 #include "basic/InstGroup.hpp"
+#include "PortInterface.hpp"
 
 namespace TimingModel {
 
-    struct RsCredit {
-        FuncUnitType func_unit;
-        Credit credit;
-    };
-
-    using RsCreditPtr = sparta::SpartaSharedPointer<RsCredit>;
 
     class ReservationStation : public sparta::Unit {
     public:
@@ -34,7 +29,6 @@ namespace TimingModel {
 
             PARAMETER(uint64_t, issue_num, 1, "the issuing bandwidth in a cycle")
             PARAMETER(uint32_t, rs_depth, 4, "the issuing bandwidth in a cycle")
-            PARAMETER(FuncUnitType, rs_func_type, "", "the type of function unit the reservation station connected")
         };
 
         struct ReStationEntry {
@@ -91,7 +85,6 @@ namespace TimingModel {
                 {&unit_event_set_, "passing_event", CREATE_SPARTA_HANDLER(ReservationStation, PassingInst)};
 
     private:
-        FuncUnitType rs_func_type_;
         uint64_t issue_num_;
         uint64_t rs_depth_;
         std::vector<ReStationEntryPtr> reservation_station_;

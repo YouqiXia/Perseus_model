@@ -7,8 +7,7 @@
 #include "sparta/ports/SignalPort.hpp"
 
 #include "basic/Inst.hpp"
-
-#include "WriteBackStage.hpp"
+#include "PortInterface.hpp"
 
 namespace TimingModel {
     class PerfectLsu : public sparta::Unit {
@@ -23,7 +22,6 @@ namespace TimingModel {
             PARAMETER(uint64_t, store_latency, 1, "store latency")
             PARAMETER(uint64_t, ld_queue_size, 20, "load queue size")
             PARAMETER(uint64_t, st_queue_size, 20, "store queue size")
-            PARAMETER(FuncUnitType, func_type, "", "the type of function unit")
         };
 
         static const char* name;
@@ -82,7 +80,6 @@ namespace TimingModel {
         const uint64_t store_latency_;
         const uint32_t ld_queue_size_;
         const uint32_t st_queue_size_;
-        const FuncUnitType func_type_;
 
         uint32_t credit_ = 0;
 
