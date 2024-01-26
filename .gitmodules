@@ -10,3 +10,7 @@
 [submodule "thirdparty/ELFIO"]
 	path = thirdparty/ELFIO
 	url = https://github.com/serge1/ELFIO.git
+[submodule "thirdparty/riscv-isa-sim"]
+	path = thirdparty/riscv-isa-sim
+	url = git@github.com:imarkwang/riscv-isa-sim.git
+	branch = dev-mark

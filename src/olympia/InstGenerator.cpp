@@ -27,6 +27,15 @@ namespace TimingModel
         return nullptr;
     }
 
+    std::unique_ptr<InstGenerator> InstGenerator::createGenerator(MavisType * mavis_facade,
+                                                                  const std::string & filename)
+    {
+        if(filename.size() > 0) {
+            std::cout << "spike elf file input detected" << std::endl;
+            return std::unique_ptr<InstGenerator>(new SpikeInstGenerator(mavis_facade, filename));
+        }
+        return nullptr;
+    }
     void InstGenerator::InsnComplete(InstPtr& inst) const {
         switch(inst->getUnit()){
             case InstArchInfo::TargetUnit::LSU:
@@ -324,4 +333,41 @@ namespace TimingModel
         return nullptr;
     }
 
+    SpikeInstGenerator::SpikeInstGenerator(MavisType * mavis_facade,
+                           const std::string & filename):
+        InstGenerator(mavis_facade)
+    {
+        spike_adpter_.reset(new spikeAdpter());
+
+        std::vector<std::string> commandLineArgs;
+
+        commandLineArgs.push_back("spike");
+        commandLineArgs.push_back("--dtb=default.dtb");
+        commandLineArgs.push_back("--log-commits");
+        commandLineArgs.push_back(filename);
+
+        spike_adpter_->spikeInit(commandLineArgs);
+        spike_adpter_->spikeRunStart();
+
+    }
+
+    InstPtr SpikeInstGenerator::getNextInst(const sparta::Clock * clk){
+
+        if(!isDone()){
+            spike_adpter_->spikeStep(spike_adpter_->spikeTunnelAvailCnt());
+            spikeInsnPtr sinsn = spike_adpter_->spikeGetNextInst();
+            InstPtr mavis_inst = mavis_facade_->makeInst(sinsn->spike_insn_.insn.bits(), clk);
+            mavis_inst->setPC(sinsn->getPc());
+            mavis_inst->setUniqueID(++unique_id_);
+            mavis_inst->setProgramID(unique_id_);
+            mavis_inst->setIsRvcInst(sinsn->spike_insn_.insn.bits());
+            mavis_inst->setCompressedInst(sinsn->spike_insn_.insn.bits());
+            mavis_inst->setUncompressedInst(sinsn->spike_insn_.insn.bits());
+            mavis_inst->setImm(mavis_inst->getImmediate());
+            InsnComplete(mavis_inst);
+            return mavis_inst;
+        }
+        return nullptr;
+    }
+    bool SpikeInstGenerator::isDone() const { return spike_adpter_->is_done; }
 }

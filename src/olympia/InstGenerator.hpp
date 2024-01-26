@@ -15,6 +15,8 @@
 #include "sparta/utils/SpartaAssert.hpp"
 
 #include "stf-inc/stf_inst_reader.hpp"
+#include "spikeAdpterHooks.hpp"
+#include "spikeInterface.hpp"
 
 namespace nlohmann {
     using json = class nlohmann::basic_json<>;
@@ -39,6 +41,8 @@ namespace TimingModel
         static std::unique_ptr<InstGenerator> createGenerator(MavisType * mavis_facade,
                                                               const std::string & filename,
                                                               const bool skip_nonuser_mode);
+        static std::unique_ptr<InstGenerator> createGenerator(MavisType * mavis_facade,
+                                                              const std::string & filename);
         virtual bool isDone() const = 0;
         void InsnComplete(InstPtr& inst) const ;
 
@@ -81,5 +85,23 @@ namespace TimingModel
 
         // Always points to the *next* stf inst
         stf::STFInstReader::iterator next_it_;
+    };
+
+    // Generates instructions from an STF Trace file
+    class SpikeInstGenerator : public InstGenerator
+    {
+    public:
+        // Creates a TraceInstGenerator with the given mavis facade
+        // and filename.  The parameter skip_nonuser_mode allows the
+        // trace generator to skip system instructions if present
+        SpikeInstGenerator(MavisType * mavis_facade,
+                           const std::string & filename);
+
+        InstPtr getNextInst(const sparta::Clock * clk) override final;
+
+        bool isDone() const override final;
+    private:
+        std::unique_ptr<spikeAdpter> spike_adpter_;
+
     };
 }

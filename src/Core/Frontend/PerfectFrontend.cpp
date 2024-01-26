@@ -12,9 +12,15 @@ namespace TimingModel {
         sparta::Unit(node),
         node_(node),
         issue_num_(p->issue_num),
-        mavis_facade_(getMavis(node))
+        mavis_facade_(getMavis(node)),
+        insn_gen_type_(p->insn_gen_type)
     {
-        inst_generator_ = InstGenerator::createGenerator(mavis_facade_, p->input_file, false);
+        if (insn_gen_type_.compare("spike") == 0){
+            inst_generator_ = InstGenerator::createGenerator(mavis_facade_, p->input_file);
+        }else if (insn_gen_type_.compare("trace") == 0){
+            inst_generator_ = InstGenerator::createGenerator(mavis_facade_, p->input_file, false);
+        }
+        
         backend_fetch_credit_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectFrontend, AcceptCredit, Credit));
     }
 

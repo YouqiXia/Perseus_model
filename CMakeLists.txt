@@ -39,12 +39,22 @@ include_directories(thirdparty/stf_lib)
 include_directories(thirdparty/DRAMsim3/src)
 include_directories(thirdparty/DRAMsim3/ext/headers)
 include_directories(${SPARTA_INCLUDE_DIRS})
+include_directories(./src/utils/spikeInterface/src)
+include_directories (./thirdparty/riscv-isa-sim/libs/include)
+include_directories (./thirdparty/riscv-isa-sim/libs/include/riscv)
+include_directories (./thirdparty/riscv-isa-sim/libs/include/fesvr)
+include_directories (./thirdparty/riscv-isa-sim/libs/include/fdt)
+include_directories (./thirdparty/riscv-isa-sim/libs/include/softfloat)
+include_directories (./thirdparty/riscv-isa-sim/riscv)
+include_directories (./thirdparty/riscv-isa-sim/)
+
 
 # Create a few links like reports and arch directories
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/reports    ${CMAKE_CURRENT_BINARY_DIR}/reports         SYMBOLIC)
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/arches     ${CMAKE_CURRENT_BINARY_DIR}/arches          SYMBOLIC)
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/thirdparty/mavis/json ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/traces     ${CMAKE_CURRENT_BINARY_DIR}/traces          SYMBOLIC)
+file(CREATE_LINK ${PROJECT_SOURCE_DIR}//src/utils/spikeInterface/default.dtb     ${CMAKE_CURRENT_BINARY_DIR}/default.dtb          SYMBOLIC)
 
 # thirdparty link lib
 add_subdirectory(thirdparty/mavis)
@@ -52,8 +62,11 @@ add_subdirectory (${STF_LIB_BASE})
 add_subdirectory(thirdparty/DRAMsim3)
 add_subdirectory(thirdparty/ELFIO)
 
+link_directories(./thirdparty/riscv-isa-sim/libs/lib)
+set (SPIKE_INTF_LIBS riscv softfloat fesvr disasm fdt boost_regex)
+
 # add_subdirectory()
 add_executable(model ${DIR_SRCS})
 
 # link lib
-target_link_libraries(model SPARTA::sparta mavis dramsim3 ${STF_LINK_LIBS})
+target_link_libraries(model SPARTA::sparta mavis dramsim3 ${STF_LINK_LIBS} ${SPIKE_INTF_LIBS})
