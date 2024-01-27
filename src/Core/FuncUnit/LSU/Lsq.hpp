@@ -11,7 +11,7 @@
 #include "olympia/OlympiaAllocators.hpp"
 
 #include "basic/Inst.hpp"
-#include "oldresources/LoopQueue.hpp"
+#include "resources/LoopQueue.hpp"
 
 #include "Core/FuncUnit/WriteBackStage.hpp"
 
@@ -25,30 +25,35 @@ namespace TimingModel {
                 sparta::ParameterSet(n)
             {}
 
+            PARAMETER(uint64_t, issue_width, 1, "load store unit bandwidth")
             PARAMETER(uint64_t, load_to_use_latency, 4, "load to use latency")
-            PARAMETER(uint64_t, ld_queue_size, 4, "load queue size")
-            PARAMETER(uint64_t, st_queue_size, 4, "store queue size")
+            PARAMETER(uint64_t, ld_queue_size, 20, "load queue size")
+            PARAMETER(uint64_t, st_queue_size, 20, "store queue size")
             PARAMETER(uint64_t, cache_access_ports_num, 1, "cache access ports number")
         };
 
         enum Status_t{
-            ALLOC, //renaming->lsq allocate, only ROB enter.
-            INSNRDY, //get insn from agu
-            ISSUED, //is visiting DC
-            RESP   //got resp from DC
+            ALLOC,      //renaming->lsq allocate, only ROB enter.
+            INSNRDY,    //get insn from agu
+            ISSUED,     //is visiting DC
+            RESP        //got resp from DC
         };
 
         struct StoreEntry {
             InstPtr inst_ptr;
             Status_t status;
             RobIdx_t RobTag;
-            bool  IsWkup;
+            uint32_t ldq_idx;
+            bool order_ready;
+            bool  IsWkup = false;
         };
 
         struct LoadEntry {
             InstPtr inst_ptr;
             Status_t status;
             RobIdx_t RobTag;
+            uint32_t stq_idx;
+            bool order_ready;
         };
 
         static const char* name;
@@ -61,13 +66,11 @@ namespace TimingModel {
 
         void RobWakeUp(const InstPtr&);
 
-        void handleAgu(const InstPtr&);
+        void handleAgu(const InstGroupPtr&);
 
         void InOrderIssue();
 
         void sendInsts(const InstGroup&);
-
-        bool isReadyToIssueInsts();
 
         void handleCacheResp(const MemAccInfoGroup& resps);
 
@@ -75,7 +78,9 @@ namespace TimingModel {
 
         void AcceptCredit_(const Credit& credit);
 
-        void LSQ_Dealloc();
+        void LSQDealloc();
+
+        void GetRespWithoutCache();
     public:       
         //ports with be
         sparta::DataInPort<InstGroupPtr> renaming_lsu_allocate_in
@@ -87,7 +92,7 @@ namespace TimingModel {
         sparta::DataOutPort<InstGroupPtr> lsu_renaming_allocate_out
             {&unit_port_set_, "lsu_renaming_allocate_out"};
 
-        sparta::DataOutPort<InstPtr> func_following_finish_out
+        sparta::DataOutPort<InstGroupPtr> func_following_finish_out
             {&unit_port_set_, "func_following_finish_out"}; 
 
         sparta::DataOutPort<Credit> lsu_renaming_ldq_credit_out
@@ -96,47 +101,38 @@ namespace TimingModel {
         sparta::DataOutPort<Credit> lsu_renaming_stq_credit_out
             {&unit_port_set_, "lsu_renaming_stq_credit_out"};
 
-        //ports with write back stage
+        //ports with write backstage
         sparta::DataInPort<Credit> write_back_func_credit_in
             {&unit_port_set_, "write_back_func_credit_in", sparta::SchedulingPhase::Tick, 0};
 
         //ports with agu
-        sparta::DataInPort<InstPtr> agu_lsq_inst_in
+        sparta::DataInPort<InstGroupPtr> agu_lsq_inst_in
             {&unit_port_set_, "agu_lsq_inst_in", sparta::SchedulingPhase::Tick, 1};
 
-        //ports with cache
-        sparta::DataOutPort<MemAccInfoGroup> lsu_l1d_cache_out
-            {&unit_port_set_, "lsu_l1d_cache_out"};
-        sparta::DataInPort<MemAccInfoGroup> l1d_cache_lsu_in
-            {&unit_port_set_, "l1d_cache_lsu_in"};
-        sparta::DataInPort<Credit> l1d_cache_lsu_credit_in
-            {&unit_port_set_, "l1d_cache_lsu_credit_in", 1};
-
-        //ports with store buffer
-        sparta::DataOutPort<MemAccInfoGroup> lsq_stb_lookup_req_out
-            {&unit_port_set_, "lsq_stb_lookup_req_out"};
-        sparta::DataInPort<MemAccInfoGroup> stb_lsq_lookup_resp_in
-            {&unit_port_set_, "stb_lsq_lookup_resp_in"};
-
-        // Event      
+        // Event
         // To issue instruction
-        sparta::SingleCycleUniqueEvent<> uev_issue_inst_{&unit_event_set_, "issue_inst",
-                CREATE_SPARTA_HANDLER(LSQ, InOrderIssue)};
+        sparta::SingleCycleUniqueEvent<> uev_issue_inst_
+            {&unit_event_set_, "issue_inst", CREATE_SPARTA_HANDLER(LSQ, InOrderIssue)};
 
         // To dealloc instruction
-        sparta::SingleCycleUniqueEvent<> uev_dealloc_inst_{&unit_event_set_, "dealloc_inst",
-                CREATE_SPARTA_HANDLER(LSQ, LSQ_Dealloc)};
+        sparta::SingleCycleUniqueEvent<> uev_dealloc_inst_
+            {&unit_event_set_, "dealloc_inst", CREATE_SPARTA_HANDLER(LSQ, LSQDealloc)};
+
+        // to get resp without cache
+        sparta::SingleCycleUniqueEvent<> uev_resp_event
+            {&unit_event_set_, "uev_resp_event", CREATE_SPARTA_HANDLER(LSQ, GetRespWithoutCache)};
 
         MemAccInfoAllocator& abstract_lsu_mem_acc_info_allocator_;
     private:
         const uint64_t load_to_use_latency_;
+        const uint64_t issue_width_;
         uint64_t cache_access_ports_num_;
 
         // ld and st queue
-        LoopQueue<LoadEntry> ld_queue_;
+        youqixia::resources::LoopQueue<LoadEntry> ld_queue_;
         const uint32_t ld_queue_size_;
 
-        LoopQueue<StoreEntry> st_queue_;
+        youqixia::resources::LoopQueue<StoreEntry> st_queue_;
         const uint32_t st_queue_size_;
         
         // cache credit

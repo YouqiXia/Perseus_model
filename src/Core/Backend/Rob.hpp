@@ -42,6 +42,7 @@ namespace TimingModel {
             InstPtr inst_ptr;
             bool valid = false;
             bool finish = false;
+            bool waked_up = false;
         };
 
         static const char* name;

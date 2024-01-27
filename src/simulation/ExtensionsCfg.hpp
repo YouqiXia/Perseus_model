@@ -40,6 +40,7 @@ namespace TimingModel {
             InitParam(ps, CommonTopoType, abstract_backend);
             InitParam(ps, CommonTopoType, rs_group);
             InitParam(ps, CommonTopoType, fu_group);
+            InitParam(ps, CommonTopoType, abstract_lsu);
             InitParam(ps, CommonTopoType, dispatch_map);
             InitParam(ps, CommonTopoType, all_component);
             InitParam(ps, BindingTopology, binding_topology);
@@ -51,6 +52,7 @@ namespace TimingModel {
         std::unique_ptr<CommonTopoTypeParam> abstract_backend;
         std::unique_ptr<CommonTopoTypeParam> rs_group;
         std::unique_ptr<CommonTopoTypeParam> fu_group;
+        std::unique_ptr<CommonTopoTypeParam> abstract_lsu;
         std::unique_ptr<CommonTopoTypeParam> dispatch_map;
         std::unique_ptr<CommonTopoTypeParam> all_component;
         std::unique_ptr<BindingTopologyParam> binding_topology;

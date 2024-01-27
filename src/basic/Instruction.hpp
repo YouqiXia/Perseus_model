@@ -143,10 +143,6 @@ struct InstInfo {
     bool         IsRs2Forward = false;
 
     uint64_t     LSQTag;
-    //bool         LsuIssued  = false;
-    bool         IsStoreWkup = false;
-    //bool         IsGetResp   = false;
-    //bool         IsAddrReady = false;
 
     PhyRegId_t   PhyRs1;
     PhyRegId_t   PhyRs2;

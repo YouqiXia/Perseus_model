@@ -258,6 +258,15 @@ namespace youqixia::resources {
             return dataList_[index];
         }
 
+        iterator getFrontIterator() {
+            return begin();
+        }
+
+        iterator getBackIterator() {
+            uint32_t index = decrementIndexValue_(tail_);
+            return iterator(this, index);
+        }
+
         iterator push(const value_type &data) {
             assert(!full());
             dataList_[tail_] = data;

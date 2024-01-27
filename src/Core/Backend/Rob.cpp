@@ -64,7 +64,9 @@ namespace TimingModel {
     void Rob::AllocateRob_(const TimingModel::InstGroupPtr &inst_group_ptr) {
         ILOG("rob get instructions: " << inst_group_ptr->size());
         for (auto& inst_ptr: *inst_group_ptr) {
-            inst_ptr->setRobTag(rob_.push({inst_ptr, true, false}).getIndex());
+            RobEntry rob_entry;
+            rob_entry.inst_ptr = inst_ptr;
+            inst_ptr->setRobTag(rob_.push(rob_entry).getIndex());
             ILOG("get insn from preceding: " << inst_ptr);
             ILOG("rob allocate instruction tag is: " << inst_ptr->getRobTag());
         }
@@ -83,7 +85,9 @@ namespace TimingModel {
         if(rob_.empty()) {
             return;
         }
-        if (rob_.front().inst_ptr->getFuType() == FuncType::STU && !rob_.front().inst_ptr->getStoreWkup()) {
+        if (rob_.front().inst_ptr->getFuType() == FuncType::STU && !rob_.front().waked_up) {
+            rob_.front().waked_up = true;
+            ILOG("rob wakeup: " << rob_.front().inst_ptr->getLSQTag());
             Rob_lsu_wakeup_out.send(rob_.front().inst_ptr);
         }
     }

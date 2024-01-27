@@ -29,12 +29,17 @@ top.extension.topo_extensions:
              ["alu4_rs", "reservation_station"]
             ]
 
-  fu_group: [["lsu", "perfect_lsu"],
+  fu_group: [["lsu", "abstract_lsu"],
              ["alu1", "perfect_alu"],
              ["alu2", "perfect_alu"],
              ["alu3", "perfect_alu"],
              ["alu4", "perfect_alu"]
             ]
+
+  abstract_lsu: [["lsu", "LSUShell"],
+                 ["lsq", "LSQ"],
+                 ["agu", "AGU"]
+                ]
 
   dispatch_map: [
     ["lsu_rs", "FuncType::STU", "FuncType::LDU"],
@@ -114,5 +119,20 @@ top.extension.topo_extensions:
                      "alu1.ports.func_rs_credit_out", "alu1_rs.ports.following_reservation_credit_in",
                      "alu2.ports.func_rs_credit_out", "alu2_rs.ports.following_reservation_credit_in",
                      "alu3.ports.func_rs_credit_out", "alu3_rs.ports.following_reservation_credit_in",
-                     "alu4.ports.func_rs_credit_out", "alu4_rs.ports.following_reservation_credit_in"
+                     "alu4.ports.func_rs_credit_out", "alu4_rs.ports.following_reservation_credit_in",
+      # abstract lsu
+          # agu <-> LSUShell
+                     "agu.ports.preceding_func_inst_in", "lsu.ports.preceding_func_inst_bp_out",
+                     "agu.ports.func_rs_credit_out", "lsu.ports.func_rs_credit_bp_in",
+          # agu <-> lsq
+                     "agu.ports.agu_lsq_inst_out", "lsq.ports.agu_lsq_inst_in",
+          # lsu <-> LSUShell
+                     "lsq.ports.write_back_func_credit_in", "lsu.ports.write_back_func_credit_bp_out",
+                     "lsq.ports.renaming_lsu_allocate_in", "lsu.ports.renaming_lsu_allocate_bp_out",
+                     "lsq.ports.Rob_lsu_wakeup_in", "lsu.ports.Rob_lsu_wakeup_bp_out",
+                     "lsq.ports.lsu_renaming_allocate_out", "lsu.ports.lsu_renaming_allocate_bp_in",
+                     "lsq.ports.lsu_renaming_ldq_credit_out", "lsu.ports.lsu_renaming_ldq_credit_bp_in",
+                     "lsq.ports.lsu_renaming_stq_credit_out", "lsu.ports.lsu_renaming_stq_credit_bp_in",
+                     "lsq.ports.func_following_finish_out", "lsu.ports.func_following_finish_bp_in",
                      ]
+
