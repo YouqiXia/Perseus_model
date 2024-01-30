@@ -78,7 +78,7 @@ namespace TimingModel {
                         ILOG(getName() << " rs1 get forwarding data form rob tag: " << forwarding_inst_ptr->getRobTag());
                         rs_entry_ptr->inst_ptr->setOperand1(forwarding_inst_ptr->getPhyRd());
                         rs_entry_ptr->rs1_valid = true;
-                        passing_event.schedule(sparta::Clock::Cycle(1));
+                        passing_event.schedule(sparta::Clock::Cycle(0));
                     }
                 }
                 if (!rs_entry_ptr->rs2_valid) {
@@ -86,7 +86,7 @@ namespace TimingModel {
                         ILOG(getName() << " rs2 get forwarding data form rob tag: " << forwarding_inst_ptr->getRobTag());
                         rs_entry_ptr->inst_ptr->setOperand2(forwarding_inst_ptr->getPhyRd());
                         rs_entry_ptr->rs2_valid = true;
-                        passing_event.schedule(sparta::Clock::Cycle(1));
+                        passing_event.schedule(sparta::Clock::Cycle(0));
                     }
                 }
             }

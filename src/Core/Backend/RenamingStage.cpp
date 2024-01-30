@@ -50,7 +50,7 @@ namespace TimingModel {
     void RenamingStage::AcceptRobCredit_(const Credit& credit) {
         rob_credit_ += credit;
 
-        ILOG("RenamingStage get rob credits: " << credit);
+        ILOG("RenamingStage get rob credits: " << credit << "total rob credit is: " << rob_credit_);
 
         rename_event.schedule(sparta::Clock::Cycle(0));
     }

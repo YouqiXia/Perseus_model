@@ -30,7 +30,7 @@ namespace TimingModel {
 
         std::cout << "create LSQ" << std::endl;
 
-        uev_dealloc_inst_ >> uev_issue_inst_; 
+        sparta::GlobalOrderingPoint(node, "lsu_shell_wb_credit_lsq_dealloc") >> uev_dealloc_inst_ >> uev_issue_inst_;
     }
 
     void LSQ::SendInitCredit() {
@@ -44,6 +44,7 @@ namespace TimingModel {
     void LSQ::AcceptCredit_(const Credit& credit) {
         ILOG("LSQ get credits from write back stage: " << credit);
         wb_credit_++;
+        uev_dealloc_inst_.schedule(0);
         uev_issue_inst_.schedule(0);
     }
 
@@ -56,7 +57,6 @@ namespace TimingModel {
                 LoadEntry entry;
                 entry.RobTag = inst_ptr->getRobTag();
                 entry.status = Status_t::ALLOC;
-                ILOG("alloc ldq entry: " << inst_ptr->getLSQTag() << ", " << inst_ptr);
                 if (!st_queue_.empty() &&
                     st_queue_.back().status != Status_t::ISSUED &&
                     st_queue_.back().status != Status_t::RESP) {
@@ -67,11 +67,11 @@ namespace TimingModel {
                     entry.stq_idx = 0;
                 }
                 inst_ptr->setLSQTag(ld_queue_.push(entry).getIndex());
+                ILOG("alloc ldq entry: " << inst_ptr->getLSQTag() << ", " << inst_ptr);
             } else if (inst_ptr->getFuType() == FuncType::STU) {
                 StoreEntry entry;
                 entry.RobTag = inst_ptr->getRobTag();
                 entry.status = Status_t::ALLOC;
-                ILOG("alloc stq entry: " << inst_ptr->getLSQTag() << ", " << inst_ptr);
                 if (!ld_queue_.empty() &&
                     ld_queue_.back().status != Status_t::ISSUED &&
                     ld_queue_.back().status != Status_t::RESP) {
@@ -82,6 +82,7 @@ namespace TimingModel {
                     entry.ldq_idx = 0;
                 }
                 inst_ptr->setLSQTag(st_queue_.push(entry).getIndex());
+                ILOG("alloc stq entry: " << inst_ptr->getLSQTag() << ", " << inst_ptr);
             }
             inst_group_tmp_ptr->emplace_back(inst_ptr);
         }
@@ -113,6 +114,7 @@ namespace TimingModel {
             }
         }
 
+        uev_dealloc_inst_.schedule(sparta::Clock::Cycle(0));
         uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
     }
 
@@ -139,7 +141,7 @@ namespace TimingModel {
                     }
                 }
                 --cnt;
-                uev_resp_event.schedule(1);
+                uev_resp_event.preparePayload(ldq_entry_itr->inst_ptr)->schedule(1);
             }
         }
 
@@ -159,7 +161,7 @@ namespace TimingModel {
                     }
                 }
                 --cnt;
-                uev_resp_event.schedule(1);
+                uev_resp_event.preparePayload(stq_entry_itr->inst_ptr)->schedule(1);
             }
         }
 
@@ -172,7 +174,6 @@ namespace TimingModel {
 
         if(!ld_queue_.empty() || !st_queue_.empty()) {
             uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
-            uev_dealloc_inst_.schedule(1);
         }
     }
 
@@ -198,23 +199,18 @@ namespace TimingModel {
 
         // Schedule another instruction issue event if possible
         if (!ld_queue_.empty() || !st_queue_.empty()) {
-            uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
+            uev_issue_inst_.schedule(sparta::Clock::Cycle(0));
         }
     }
 
-    void LSQ::GetRespWithoutCache() {
-        for (auto& ld_entry: ld_queue_) {
-            if (ld_entry.status == Status_t::ISSUED) {
-                ld_entry.status = Status_t::RESP;
-            }
+    void LSQ::GetRespWithoutCache(const InstPtr& inst_ptr) {
+        if (inst_ptr->getFuType() == FuncType::LDU) {
+            ld_queue_.access(inst_ptr->getLSQTag()).status = Status_t::RESP;
+            ILOG("load respond");
+        } else if (inst_ptr->getFuType() == FuncType::STU) {
+            st_queue_.access(inst_ptr->getLSQTag()).status = Status_t::RESP;
+            ILOG("store respond");
         }
-
-        for (auto& st_entry: st_queue_) {
-            if (st_entry.status == Status_t::ISSUED) {
-                st_entry.status = Status_t::RESP;
-            }
-        }
-
     }
 
     void LSQ::LSQDealloc() {
@@ -223,6 +219,8 @@ namespace TimingModel {
         uint32_t ld_dealloc_num = 0, st_dealloc_num = 0;
         InstGroupPtr inst_group_tmp_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
 
+        ILOG("lsq deallocate, wb_credit: " << wb_credit_ << " , ldq size: " <<
+             ld_queue_.size() << " , stq size: " << st_queue_.size());
         for (auto& ld_entry: ld_queue_) {
             if (!dealloc_num) {
                 break;
@@ -255,13 +253,19 @@ namespace TimingModel {
 
         if (inst_group_tmp_ptr->size() != 0) {
             func_following_finish_out.send(inst_group_tmp_ptr);
+            ILOG("lsq send inst to write back " << inst_group_tmp_ptr);
+        }
+
+        if (ld_dealloc_num) {
             lsu_renaming_ldq_credit_out.send(ld_dealloc_num);
+        }
+
+        if (st_dealloc_num) {
             lsu_renaming_stq_credit_out.send(st_dealloc_num);
         }
 
         if ((!ld_queue_.empty() || !st_queue_.empty()) && wb_credit_ != 0) {
             uev_dealloc_inst_.schedule(sparta::Clock::Cycle(1));
-            uev_issue_inst_.schedule(sparta::Clock::Cycle(1));
         }
     }
 }

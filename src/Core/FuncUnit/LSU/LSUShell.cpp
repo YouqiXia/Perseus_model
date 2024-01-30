@@ -55,6 +55,9 @@ namespace TimingModel {
                 func_following_finish_out_ports.emplace_back(func_following_finish_out_tmp);
             }
         }
+
+        // precedence
+        write_back_func_credit_in >> sparta::GlobalOrderingPoint(node, "lsu_shell_wb_credit_lsq_dealloc");
     }
 
     void LSUShell::preceding_func_inst_in_(const InstPtr& inst) {

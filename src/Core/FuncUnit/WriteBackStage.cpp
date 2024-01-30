@@ -32,7 +32,7 @@ namespace TimingModel {
     void WriteBackStage::AcceptFuncInst_(const TimingModel::FuncInstPtr &func_inst_ptr) {
         ILOG(func_inst_ptr->func_type << " get instruction");
         func_inst_map_[func_inst_ptr->func_type] = func_inst_ptr->inst_ptr;
-        arbitrate_inst_event.schedule();
+        arbitrate_inst_event.schedule(0);
     }
 
     void WriteBackStage::SendInitCredit_() {

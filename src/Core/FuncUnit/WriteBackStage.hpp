@@ -48,7 +48,7 @@ namespace TimingModel {
                 {&unit_port_set_, "write_back_following_port_out"};
 
         // events
-        sparta::UniqueEvent<> arbitrate_inst_event
+        sparta::SingleCycleUniqueEvent<> arbitrate_inst_event
                 {&unit_event_set_, "arbitrate_inst_event", CREATE_SPARTA_HANDLER(WriteBackStage, ArbitrateInst_)};
 
     private:

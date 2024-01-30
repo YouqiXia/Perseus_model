@@ -6,8 +6,6 @@ namespace TimingModel {
 
     PerfectLsu::PerfectLsu(sparta::TreeNode* node, const PerfectLsuParameter* p) :
         sparta::Unit(node),
-        load_to_use_latency_(p->load_to_use_latency),
-        store_latency_(p->store_latency),
         ld_queue_size_(p->ld_queue_size),
         st_queue_size_(p->st_queue_size),
         lsu_queue_("lsu_queue", p->ld_queue_size + p->st_queue_size, node->getClock(), &unit_stat_set_)
@@ -41,6 +39,7 @@ namespace TimingModel {
         for (auto& inst_ptr : *inst_group_ptr) {
             ILOG("lsq allocation: " << *inst_ptr);
         }
+        write_back_event.schedule(0);
     }
 
     void PerfectLsu::RecieveInst_(const InstPtr& inst_ptr) {
@@ -69,11 +68,11 @@ namespace TimingModel {
             FuncInstPtr func_inst_ptr {new FuncInst{getName(), inst_ptr}};
             if (inst_ptr->getFuType() == FuncType::LDU) {
                 ILOG(getName() << " get load inst: " << inst_ptr->getRobTag());
-                func_following_finish_out.send(func_inst_ptr, load_to_use_latency_);
+                func_following_finish_out.send(func_inst_ptr);
                 lsu_renaming_ldq_credit_out.send(1);
             } else if (inst_ptr->getFuType() == FuncType::STU) {
                 ILOG(getName() << " get store inst: " << inst_ptr->getRobTag());
-                func_following_finish_out.send(func_inst_ptr, store_latency_);
+                func_following_finish_out.send(func_inst_ptr);
                 lsu_renaming_stq_credit_out.send(1);
             }
             lsu_queue_.pop();

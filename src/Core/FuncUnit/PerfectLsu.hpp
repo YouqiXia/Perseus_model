@@ -18,8 +18,6 @@ namespace TimingModel {
                 sparta::ParameterSet(n)
             {}
 
-            PARAMETER(uint64_t, load_to_use_latency, 1, "load to use latency")
-            PARAMETER(uint64_t, store_latency, 1, "store latency")
             PARAMETER(uint64_t, ld_queue_size, 20, "load queue size")
             PARAMETER(uint64_t, st_queue_size, 20, "store queue size")
         };
@@ -76,8 +74,6 @@ namespace TimingModel {
                 {&unit_event_set_, "write_back_event", CREATE_SPARTA_HANDLER(PerfectLsu, WriteBack_)};
 
     private:
-        const uint64_t load_to_use_latency_;
-        const uint64_t store_latency_;
         const uint32_t ld_queue_size_;
         const uint32_t st_queue_size_;
 

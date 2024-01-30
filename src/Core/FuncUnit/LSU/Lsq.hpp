@@ -80,7 +80,7 @@ namespace TimingModel {
 
         void LSQDealloc();
 
-        void GetRespWithoutCache();
+        void GetRespWithoutCache(const InstPtr&);
     public:       
         //ports with be
         sparta::DataInPort<InstGroupPtr> renaming_lsu_allocate_in
@@ -119,8 +119,8 @@ namespace TimingModel {
             {&unit_event_set_, "dealloc_inst", CREATE_SPARTA_HANDLER(LSQ, LSQDealloc)};
 
         // to get resp without cache
-        sparta::SingleCycleUniqueEvent<> uev_resp_event
-            {&unit_event_set_, "uev_resp_event", CREATE_SPARTA_HANDLER(LSQ, GetRespWithoutCache)};
+        sparta::PayloadEvent<InstPtr> uev_resp_event
+            {&unit_event_set_, "uev_resp_event", CREATE_SPARTA_HANDLER_WITH_DATA(LSQ, GetRespWithoutCache, InstPtr)};
 
         MemAccInfoAllocator& abstract_lsu_mem_acc_info_allocator_;
     private:
