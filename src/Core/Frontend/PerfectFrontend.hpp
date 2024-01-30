@@ -25,7 +25,7 @@ namespace TimingModel {
 
             PARAMETER(uint64_t, issue_num, 4, "the issuing bandwidth in a cycle")
             PARAMETER(std::string, input_file, "", "the stf entry")
-            PARAMETER(std::string, insn_gen_type, "spike", "the type of insnGen: trace or spike")
+            PARAMETER(std::string, insn_gen_type, "trace", "the type of insnGen: trace or spike")
         };
 
         static const char* name;

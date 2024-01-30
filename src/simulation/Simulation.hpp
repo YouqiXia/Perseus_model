@@ -14,13 +14,19 @@
 #include "ResourceMapFactory.hpp"
 #include "variable.hpp"
 
+struct CommandLineData {
+    bool is_elf_workload = false;
+    std::string workload = "";
+    uint64_t instruction_limit = 0;
+};
+
 namespace TimingModel {
+
     class Simulation : public sparta::app::Simulation {
     public:
         Simulation(sparta::Scheduler& scheduler,
-                   const std::string workload,
-                   VAR::DRAMinput DRAMinput,
-                   const uint64_t instruction_limit=0);
+                   const CommandLineData cmd_data,
+                   VAR::DRAMinput DRAMinput);
 
         virtual ~Simulation();
 
@@ -41,6 +47,8 @@ namespace TimingModel {
         void bindBindingTopology_(TopoExtensions::BindingTopology&);
 
     private:
+        bool is_elf_workload_;
+
         std::string workload_;
 
         VAR::DRAMinput dram_input_;

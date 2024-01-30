@@ -14,12 +14,12 @@ const char USAGE[] =
     "    [-i insts] [-r RUNTIME] [--show-tree] [--show-dag]\n"
     "    [-p PATTERN VAL] [-c FILENAME]\n"
     "    [-l PATTERN CATEGORY DEST]\n"
-    "    [-h,--help] <workload [stf trace or JSON]>\n"
+    "    [-h,--help] <workload [stf trace or JSON], elf [elf]>\n"
     "    <--DRAMconfig configfile> <--DRAMoutdir DRAM_output_diretory>"
     "\n";
 
 int main(int argc, char **argv) {
-    std::string workload;
+    CommandLineData cmd_data;
     const char * WORKLOAD = "workload";
     std::string DRAMconfig;
     std::string DRAMoutdir;
@@ -42,8 +42,11 @@ int main(int argc, char **argv) {
         app_opts.add_options()
             ("run",
              "run the simulation")
+            ("elf",
+             sparta::app::named_value<std::string>("elf", &cmd_data.workload),
+             "Specifies the instruction workload (elf)")
             (WORKLOAD,
-             sparta::app::named_value<std::string>(WORKLOAD, &workload),
+             sparta::app::named_value<std::string>(WORKLOAD, &cmd_data.workload),
              "Specifies the instruction workload (trace, JSON)")
             ("DRAMconfig",
              sparta::app::named_value<std::string>("\"\"", &DRAMconfig),
@@ -52,7 +55,7 @@ int main(int argc, char **argv) {
              sparta::app::named_value<std::string>("\"\"", &DRAMoutdir),
              "Specifies the path of DRAM output directory")
             ("instruction-limit,i",
-             sparta::app::named_value<uint64_t>("LIMIT", &ilimit)->default_value(ilimit),
+             sparta::app::named_value<uint64_t>("LIMIT", &cmd_data.instruction_limit)->default_value(ilimit),
              "Limit the simulation to retiring a specific number of instructions. 0 (default) "
              "means no limit. If -r is also specified, the first limit reached ends the simulation",
              "End simulation after a number of instructions. Note that if set to 0, this may be "
@@ -80,12 +83,16 @@ int main(int argc, char **argv) {
         }
 
         if (vm.count("run") != 0) {
+
+            if (vm.count("elf") != 0) {
+                cmd_data.is_elf_workload = true;
+            }
+
             // Create the simulator
             sparta::Scheduler scheduler;
             TimingModel::Simulation sim(scheduler,
-                                        workload,
-                                        dram_input,
-                                        ilimit);  // run for ilimit instructions
+                                        cmd_data,
+                                        dram_input);  // run for ilimit instructions
 
             cls.populateSimulation(&sim);
 

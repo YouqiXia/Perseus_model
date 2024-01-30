@@ -16,13 +16,13 @@ namespace TimingModel {
 
     // Simulation
     Simulation::Simulation(sparta::Scheduler& Sched,
-                           const std::string workload,
-                           VAR::DRAMinput DRAMinput,
-                           const uint64_t instruction_limit) :
+                           const CommandLineData cmd_data,
+                           VAR::DRAMinput DRAMinput) :
         sparta::app::Simulation("Yihai_test", &Sched),
-        workload_(workload),
+        is_elf_workload_(cmd_data.is_elf_workload),
+        workload_(cmd_data.workload),
         dram_input_(DRAMinput),
-        instruction_limit_(instruction_limit)
+        instruction_limit_(cmd_data.instruction_limit)
     {
         sparta::StartupEvent(getRoot(), CREATE_SPARTA_HANDLER(Simulation, test));
     }
@@ -84,6 +84,9 @@ namespace TimingModel {
                 to_delete_.emplace_back(node_tmp);
                 if(node_name[1].compare("perfect_frontend") == 0){
                     node_tmp->getParameterSet()->getParameter("input_file")->setValueFromString(workload_);
+                    if (is_elf_workload_) {
+                        node_tmp->getParameterSet()->getParameter("insn_gen_type")->setValueFromString("spike");
+                    }
                 }
             }
         }
