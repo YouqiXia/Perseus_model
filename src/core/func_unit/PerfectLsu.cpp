@@ -6,6 +6,8 @@ namespace TimingModel {
 
     PerfectLsu::PerfectLsu(sparta::TreeNode* node, const PerfectLsuParameter* p) :
         sparta::Unit(node),
+        lsu_width_(p->lsu_width),
+        credit_(p->lsu_width),
         ld_queue_size_(p->ld_queue_size),
         st_queue_size_(p->st_queue_size),
         lsu_queue_("lsu_queue", p->ld_queue_size + p->st_queue_size, node->getClock(), &unit_stat_set_)
@@ -60,10 +62,15 @@ namespace TimingModel {
     }
 
     void PerfectLsu::WriteBack_() {
+        uint32_t produce_num = std::min(lsu_width_, credit_);
+
         if (lsu_queue_.empty()) {
             return;
         }
-        if (credit_) {
+        while(produce_num--) {
+            if (lsu_queue_.empty()) {
+                break;
+            }
             auto inst_ptr = lsu_queue_.front();
             FuncInstPtr func_inst_ptr {new FuncInst{getName(), inst_ptr}};
             if (inst_ptr->getFuType() == FuncType::LDU) {

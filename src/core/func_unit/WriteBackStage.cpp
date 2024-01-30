@@ -14,7 +14,6 @@ namespace TimingModel {
             issue_num_(p->issue_num),
             wb_latency_(p->wb_latency)
     {
-        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(WriteBackStage, SendInitCredit_));
         FuMap& fu_map = getFuMap();
         for (auto &func_pair: fu_map) {
             auto *func_unit_write_back_in_tmp = new sparta::DataInPort<FuncInstPtr>
@@ -31,29 +30,33 @@ namespace TimingModel {
 
     void WriteBackStage::AcceptFuncInst_(const TimingModel::FuncInstPtr &func_inst_ptr) {
         ILOG(func_inst_ptr->func_type << " get instruction");
-        func_inst_map_[func_inst_ptr->func_type] = func_inst_ptr->inst_ptr;
+        func_inst_map_[func_inst_ptr->func_type].emplace_back(func_inst_ptr->inst_ptr);
         arbitrate_inst_event.schedule(0);
-    }
-
-    void WriteBackStage::SendInitCredit_() {
-        for (auto func_credit_pair: getFuMap()) {
-            func_unit_credit_ports_out_.at(func_credit_pair)->send(1);
-        }
     }
 
     void WriteBackStage::ArbitrateInst_() {
         uint64_t produce_num = issue_num_;
         InstGroupPtr inst_group_ptr_tmp = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
-        for (auto& func_inst_pair: func_inst_map_) {
+        for (auto& func_name: getFuMap()) {
             if (!produce_num) {
                 break;
             }
-            inst_group_ptr_tmp->emplace_back(func_inst_pair.second);
-            ILOG(getName() << " arbitrate instructions rob tag: " << func_inst_pair.second->getRobTag());
-            ILOG(getName() << " arbitrate instructions: " << func_inst_pair.second);
-            func_pop_pending_queue_.emplace_back(func_inst_pair.first);
-            func_unit_credit_ports_out_.at(func_inst_pair.first)->send(1);
-            produce_num--;
+            auto inst_group_queue_itr = func_inst_map_.find(func_name);
+            if (func_inst_map_.find(func_name) == func_inst_map_.end()) {
+                continue;
+            }
+            int i = 1;
+            for (const auto& inst_ptr: inst_group_queue_itr->second) {
+                inst_group_ptr_tmp->emplace_back(inst_ptr);
+                ILOG(getName() << " arbitrate instructions rob tag: " << inst_ptr->getRobTag());
+                ILOG(getName() << " arbitrate instructions: " << inst_ptr);
+                if (inst_group_queue_itr->second.size() == i) {
+                    func_pop_pending_queue_.emplace_back(func_name);
+                }
+                func_unit_credit_ports_out_.at(func_name)->send(1);
+                produce_num--;
+                i++;
+            }
         }
 
         for (auto& func_type: func_pop_pending_queue_) {

@@ -40,22 +40,6 @@ namespace TimingModel {
 
         std::cout << "create lsu shell" << std::endl;
 
-        // for multi-port rs input
-        // TODO: multi-port rs input & Credit, multi-port write back output & Credit
-
-        // for multi-port write back
-        if (issue_width_ == 1) {
-            auto *func_following_finish_out_tmp = new sparta::DataOutPort<FuncInstPtr>
-                    {&unit_port_set_,  "func_following_finish_out"};
-            func_following_finish_out_ports.emplace_back(func_following_finish_out_tmp);
-        } else {
-            for (uint32_t i = 0; i < issue_width_; i++) {
-                auto *func_following_finish_out_tmp = new sparta::DataOutPort<FuncInstPtr>
-                        {&unit_port_set_,  "func_following_finish_out_"+std::to_string(i)};
-                func_following_finish_out_ports.emplace_back(func_following_finish_out_tmp);
-            }
-        }
-
         // precedence
         write_back_func_credit_in >> sparta::GlobalOrderingPoint(node, "lsu_shell_wb_credit_lsq_dealloc");
     }
@@ -97,10 +81,10 @@ namespace TimingModel {
     void LSUShell::func_following_finish_bp_in_(const TimingModel::InstGroupPtr &inst_group_ptr) {
         uint32_t i = 0;
         for (auto& inst_ptr: *inst_group_ptr) {
-            sparta_assert(func_following_finish_out_ports.size() > i, "lsu bandwidth error");
+            sparta_assert(issue_width_ > i, "lsu bandwidth error");
             FuncInstPtr func_inst_ptr {new FuncInst{getName(), inst_ptr}};
             sparta_assert(inst_ptr != nullptr, "lsu shell write back a nullptr");
-            func_following_finish_out_ports[i++]->send(func_inst_ptr);
+            func_following_finish_out.send(func_inst_ptr);
         }
     }
 

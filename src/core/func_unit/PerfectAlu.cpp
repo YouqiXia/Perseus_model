@@ -8,6 +8,7 @@ namespace TimingModel {
     PerfectAlu::PerfectAlu(sparta::TreeNode* node, const PerfectAluParameter* p) :
         sparta::Unit(node),
         alu_width_(p->alu_width),
+        credit_(p->alu_width),
         alu_queue_("alu_queue", p->alu_width ,node->getClock(), &unit_stat_set_)
     {
         preceding_func_inst_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectAlu, Allocate_, InstPtr));

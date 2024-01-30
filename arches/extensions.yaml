@@ -23,6 +23,7 @@ top.extension.topo_extensions:
                     ]
 
   rs_group: [["lsu_rs", "reservation_station"],
+             ["lsu2_rs", "reservation_station"],
              ["alu1_rs", "reservation_station"],
              ["alu2_rs", "reservation_station"],
              ["alu3_rs", "reservation_station"],
@@ -43,6 +44,7 @@ top.extension.topo_extensions:
 
   dispatch_map: [
     ["lsu_rs", "FuncType::STU", "FuncType::LDU"],
+    ["lsu2_rs", "FuncType::STU", "FuncType::LDU"],
     ["alu1_rs", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"],
     ["alu2_rs", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"],
     ["alu3_rs", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"],
@@ -134,5 +136,11 @@ top.extension.topo_extensions:
                      "lsq.ports.lsu_renaming_ldq_credit_out", "lsu.ports.lsu_renaming_ldq_credit_bp_in",
                      "lsq.ports.lsu_renaming_stq_credit_out", "lsu.ports.lsu_renaming_stq_credit_bp_in",
                      "lsq.ports.func_following_finish_out", "lsu.ports.func_following_finish_bp_in",
+          # additional lsu2 rs
+                     "dispatch_stage.ports.dispatch_lsu2_rs_out" , "lsu2_rs.ports.preceding_reservation_inst_in",
+                     "lsu2_rs.ports.reservation_following_inst_out" , "lsu.ports.preceding_func_inst_in",
+                     "write_back_stage.ports.write_back_following_port_out", "lsu2_rs.ports.forwarding_reservation_inst_in",
+                     "lsu2_rs.ports.reservation_preceding_credit_out" , "dispatch_stage.ports.lsu_rs_dispatch_credit_in",
+                     "lsu.ports.func_rs_credit_out" , "lsu2_rs.ports.following_reservation_credit_in",
                      ]
 

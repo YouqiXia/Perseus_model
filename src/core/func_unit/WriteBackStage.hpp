@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <deque>
+
 #include "sparta/simulation/Unit.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
 
@@ -40,8 +42,6 @@ namespace TimingModel {
 
         void ArbitrateInst_();
 
-        void SendInitCredit_();
-
     private:
         // ports
         sparta::DataOutPort<InstGroupPtr> write_back_following_port_out
@@ -54,7 +54,7 @@ namespace TimingModel {
     private:
         uint64_t issue_num_;
 
-        std::map<FuncUnitType, InstPtr> func_inst_map_;
+        std::map<FuncUnitType, std::deque<InstPtr>> func_inst_map_;
         std::vector<FuncUnitType> func_pop_pending_queue_;
 
         std::map<FuncUnitType, sparta::DataInPort<FuncInstPtr>*> func_unit_write_back_ports_in_;

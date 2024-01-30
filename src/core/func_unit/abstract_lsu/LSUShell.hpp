@@ -103,7 +103,8 @@ namespace TimingModel {
                 {&unit_port_set_, "lsu_renaming_stq_credit_bp_in", sparta::SchedulingPhase::Tick, 0};
 
 
-        std::vector<sparta::DataOutPort<FuncInstPtr>*> func_following_finish_out_ports;
+        sparta::DataOutPort<FuncInstPtr> func_following_finish_out
+                {&unit_port_set_, "func_following_finish_out"};
 
         sparta::DataInPort<InstGroupPtr> func_following_finish_bp_in
                 {&unit_port_set_, "func_following_finish_bp_in", sparta::SchedulingPhase::Tick, 0};

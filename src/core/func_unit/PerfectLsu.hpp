@@ -18,6 +18,7 @@ namespace TimingModel {
                 sparta::ParameterSet(n)
             {}
 
+            PARAMETER(uint32_t, lsu_width, 1, "lsu issuing width")
             PARAMETER(uint64_t, ld_queue_size, 20, "load queue size")
             PARAMETER(uint64_t, st_queue_size, 20, "store queue size")
         };
@@ -76,6 +77,7 @@ namespace TimingModel {
     private:
         const uint32_t ld_queue_size_;
         const uint32_t st_queue_size_;
+        const uint32_t lsu_width_;
 
         uint32_t credit_ = 0;
 

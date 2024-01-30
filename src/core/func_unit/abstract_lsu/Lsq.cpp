@@ -8,6 +8,7 @@ namespace TimingModel {
     LSQ::LSQ(sparta::TreeNode* node, const LSQParameter* p) :
         sparta::Unit(node),
         issue_width_(p->issue_width),
+        wb_credit_(p->issue_width),
         load_to_use_latency_(p->load_to_use_latency),
         cache_access_ports_num_(p->cache_access_ports_num),
         ld_queue_(p->ld_queue_size),
@@ -122,7 +123,7 @@ namespace TimingModel {
     void LSQ::InOrderIssue() {
         ILOG("enter order control");
 //        uint64_t cnt = std::min(cache_credit_, cache_access_ports_num_);
-        auto cnt = cache_access_ports_num_;
+        auto cnt = issue_width_;
 
         InstGroup inst_group_tmp;
         for (auto ldq_entry_itr = ld_queue_.begin(); ldq_entry_itr != ld_queue_.end(); ldq_entry_itr++) {
