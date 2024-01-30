@@ -11,9 +11,9 @@
 #include "olympia/OlympiaAllocators.hpp"
 
 #include "basic/Inst.hpp"
+#include "basic/InstGroup.hpp"
+#include "basic/PortInterface.hpp"
 #include "resources/LoopQueue.hpp"
-
-#include "Core/FuncUnit/WriteBackStage.hpp"
 
 #include "sparta/utils/SpartaSharedPointer.hpp"
 namespace TimingModel {

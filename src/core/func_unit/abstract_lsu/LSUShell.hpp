@@ -7,8 +7,8 @@
 #include "sparta/ports/SignalPort.hpp"
 
 #include "basic/Inst.hpp"
-
-#include "Core/FuncUnit/WriteBackStage.hpp"
+#include "basic/InstGroup.hpp"
+#include "basic/PortInterface.hpp"
 
 namespace TimingModel {
     class LSUShell : public sparta::Unit {

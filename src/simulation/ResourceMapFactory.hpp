@@ -11,20 +11,20 @@
 
 #include "olympia/MavisUnit.hpp"
 
-#include "Core/Frontend/PerfectFrontend.hpp"
+#include "core/perfect_frontend/PerfectFrontend.hpp"
 
-#include "Core/Backend/RenamingStage.hpp"
-#include "Core/Backend/Rob.hpp"
-#include "Core/Backend/DispatchStage.hpp"
-#include "Core/Backend/PhysicalRegfile.hpp"
-#include "Core/Backend/ReservationStation.hpp"
+#include "core/abstract_backend/RenamingStage.hpp"
+#include "core/abstract_backend/Rob.hpp"
+#include "core/abstract_backend/DispatchStage.hpp"
+#include "core/abstract_backend/PhysicalRegfile.hpp"
+#include "core/abstract_backend/ReservationStation.hpp"
 
-#include "Core/FuncUnit/PerfectAlu.hpp"
-#include "Core/FuncUnit/PerfectLsu.hpp"
-#include "Core/FuncUnit/LSU/LSUShell.hpp"
-#include "Core/FuncUnit/LSU/Agu.hpp"
-#include "Core/FuncUnit/LSU/Lsq.hpp"
-#include "Core/FuncUnit/WriteBackStage.hpp"
+#include "core/func_unit/PerfectAlu.hpp"
+#include "core/func_unit/PerfectLsu.hpp"
+#include "core/func_unit/abstract_lsu/LSUShell.hpp"
+#include "core/func_unit/abstract_lsu/Agu.hpp"
+#include "core/func_unit/abstract_lsu/Lsq.hpp"
+#include "core/func_unit/WriteBackStage.hpp"
 #include "uncore/cache/BaseCache.hpp"
 #include "uncore/memory/AbstractMemory.hpp"
 #include "uncore/memory/DRAMsim3.hpp"
@@ -45,7 +45,7 @@ namespace TimingModel {
             RegisterResource(TimingModel::PerfectFrontend::name ,
                              new sparta::ResourceFactory<TimingModel::PerfectFrontend,
                                      TimingModel::PerfectFrontend::PerfectFrontendParameter>);
-            // Backend
+            // abstract_backend
             RegisterResource(TimingModel::RenamingStage::name ,
                              new sparta::ResourceFactory<TimingModel::RenamingStage,
                                      TimingModel::RenamingStage::RenamingParameter>);

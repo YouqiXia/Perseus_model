@@ -1,14 +1,5 @@
 #pragma once
-#include "Core/Frontend/PerfectFrontend.hpp"
-
-#include "Core/Backend/RenamingStage.hpp"
-#include "Core/Backend/Rob.hpp"
-#include "Core/Backend/DispatchStage.hpp"
-#include "Core/Backend/ReservationStation.hpp"
-
-#include "Core/FuncUnit/PerfectAlu.hpp"
-#include "Core/FuncUnit/PerfectLsu.hpp"
-#include "Core/FuncUnit/WriteBackStage.hpp"
+#include "sparta/simulation/ResourceFactory.hpp"
 #include "sparta/simulation/TreeNodeExtensions.hpp"
 
 #define InitParam(param_set, type, member) \
