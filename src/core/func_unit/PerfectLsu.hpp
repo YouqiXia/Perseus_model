@@ -19,6 +19,7 @@ namespace TimingModel {
             {}
 
             PARAMETER(uint32_t, lsu_width, 1, "lsu issuing width")
+            PARAMETER(uint32_t, load_to_use_latency, 1, "lsu load to use latency")
             PARAMETER(uint64_t, ld_queue_size, 20, "load queue size")
             PARAMETER(uint64_t, st_queue_size, 20, "store queue size")
         };
@@ -78,6 +79,7 @@ namespace TimingModel {
         const uint32_t ld_queue_size_;
         const uint32_t st_queue_size_;
         const uint32_t lsu_width_;
+        const uint32_t load_to_use_latency_;
 
         uint32_t credit_ = 0;
 
