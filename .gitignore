@@ -2,4 +2,5 @@
 .idea/
 cmake-build-debug/
 build/
-traces/elf_test/test/
+traces/elf_test/test/*
+!traces/elf_test/test/*.elf
