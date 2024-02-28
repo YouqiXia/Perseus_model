@@ -101,7 +101,7 @@ namespace TimingModel
 
         bool isDone() const override final;
     private:
-        std::unique_ptr<spikeAdpter> spike_adpter_;
+        spikeAdapter* spike_adapter_;
 
     };
 }

@@ -3,6 +3,7 @@
 
 
 #include "spikeInterface.hpp"
+#include "byteorder.h"
 
 static void help(int exit_code = 1)
 {
@@ -305,25 +306,17 @@ static std::vector<size_t> parse_hartids(const char *s)
   return hartids;
 }
 
-sim_t * spikeAdpter::spike_sim = nullptr;
-uint32_t spikeAdpter::spike_tunnel_size = 32;
-std::vector<spikeInsnPtr> spikeAdpter::spike_tunnel;
-uint32_t spikeAdpter::spike_tunnel_tail = 0;
-uint32_t spikeAdpter::spike_tunnel_head = 0;
-uint32_t spikeAdpter::spike_tunnel_used = 0;
-uint32_t spikeAdpter::spike_tunnel_tocommit = 0;
-
-int spikeAdpter::spikeInit(std::vector<std::string>& commandLineArgs){
+int spikeAdapter::spikeInit(std::vector<std::string>& commandLineArgs){
     int argc = static_cast<int>(commandLineArgs.size());
     char** argv = new char*[argc];
     for (int i = 0; i < argc; ++i) {
         argv[i] = strdup(commandLineArgs[i].c_str());
     }
 
-    return spikeInit(argc, argv);
+    return spikeInit_(argc, argv);
     
 }
-int spikeAdpter::spikeInit(int argc, char** argv)
+int spikeAdapter::spikeInit_(int argc, char** argv)
 {
   bool debug = false;
   bool halted = false;
@@ -556,8 +549,17 @@ int spikeAdpter::spikeInit(int argc, char** argv)
 }
 
 
+spikeAdapter* spikeAdapter::spike_adapter_ = nullptr;
+
+spikeAdapter* spikeAdapter::getSpikeAdapter() {
+    if (spike_adapter_ == nullptr) {
+        spike_adapter_ = new spikeAdapter();
+    }
+    return spike_adapter_;
+}
+
 //get from g_spike_tunnel
-spikeInsnPtr spikeAdpter::spikeGetNextInst(){
+spikeInsnPtr spikeAdapter::spikeGetNextInst(){
   if(spike_tunnel_used == 0)
     return nullptr;
   spikeInsnPtr insn = spike_tunnel[spike_tunnel_head];
@@ -568,9 +570,9 @@ spikeInsnPtr spikeAdpter::spikeGetNextInst(){
   return insn;
 }
 
-void spikeAdpter::decodeHook(void * in, uint64_t pc, uint64_t npc){
+void spikeAdapter::decodeHook(void * in, uint64_t pc, uint64_t npc){
     //npc != PC_SERIALIZE_BEFORE
-    if (unlikely(npc == 3)){
+    if (unlikely(npc == 3) || unlikely(npc == 5)){
       return;
     }
     // std::cout << "spike pc: 0x" << std::hex << pc << " next pc: 0x" << npc << std::dec <<std::endl;
@@ -584,7 +586,7 @@ void spikeAdpter::decodeHook(void * in, uint64_t pc, uint64_t npc){
 
 
 
-bool spikeAdpter::commitHook(){
+bool spikeAdapter::commitHook(){
     //same cycle same insn with tail
     spike_tunnel[spike_tunnel_tocommit]->spike_log_reg_write.clear();
     spike_tunnel[spike_tunnel_tocommit]->spike_log_reg_write = spike_sim->procs[0]->get_state()->log_reg_write;
@@ -601,25 +603,27 @@ bool spikeAdpter::commitHook(){
     return true;
 }
 
-void spikeAdpter::excptionHook(){
-
-
+reg_t spikeAdapter::getNpcHook(reg_t spike_npc) {
+    return spike_npc;
 }
 
-uint32_t spikeAdpter::spikeTunnelAvailCnt() { 
+void spikeAdapter::excptionHook(){}
+
+void spikeAdapter::catchDataBeforeWriteHook(addr_t addr, reg_t data, size_t len) {
+    (void)data;
+}
+
+uint32_t spikeAdapter::spikeTunnelAvailCnt() { 
   return (spike_tunnel_size-spike_tunnel_used); 
 }
 
-void spikeAdpter::spikeRunStart(){
+void spikeAdapter::spikeRunStart(){
     spike_sim->start();
 
-    auto enq_func = [](std::queue<reg_t>* q, uint64_t x) { q->push(x); };
-    std::queue<reg_t> fromhost_queue;
-    fromhost_callback =
-      std::bind(enq_func, &fromhost_queue, std::placeholders::_1);
-
+    fromhost_callback = [this](uint64_t x) { fromhost_queue.push(x); };
 }
-int spikeAdpter::spikeRunEnd(){
+
+int spikeAdapter::spikeRunEnd_(){
     spike_sim->stop();
     is_done = true;
     return spike_sim->exit_code();
@@ -631,7 +635,8 @@ static void bad_address(const std::string& situation, reg_t addr)
   std::cerr << "Memory address 0x" << std::hex << addr << " is invalid\n";
   exit(-1);
 }
-void spikeAdpter::spikeStep(uint32_t n){
+
+void spikeAdapter::spikeStep(uint32_t n){
     // sim_t::INTERLEAVE = n;
     uint64_t tohost;
     for (int i=0; i<n; i++){
@@ -671,9 +676,52 @@ void spikeAdpter::spikeStep(uint32_t n){
       }
       
       if (spike_sim->exitcode != 0){
-        spikeRunEnd();
+        spikeRunEnd_();
       }
     }
 
+}
+
+void spikeAdapter::spikeSingleStepFromNpc(reg_t npc){
+    // sim_t::INTERLEAVE = n;
+    uint64_t tohost;
+    if (spike_sim->get_tohost_addr() == 0) {
+        spike_sim->idle();
+    }else{
+        try {
+            if ((tohost = spike_sim->from_target(spike_sim->mem.read_uint64(spike_sim->get_tohost_addr()))) != 0)
+                spike_sim->mem.write_uint64(spike_sim->get_tohost_addr(), target_endian<uint64_t>::zero);
+        } catch (mem_trap_t& t) {
+            bad_address("accessing tohost", t.get_tval());
+        }
+
+        try {
+            if (tohost != 0) {
+                command_t cmd(spike_sim->mem, tohost, fromhost_callback);
+                spike_sim->device_list.handle_command(cmd);
+            } else {
+                spike_sim->idle();
+            }
+
+            spike_sim->device_list.tick();
+        } catch (mem_trap_t& t) {
+            std::stringstream tohost_hex;
+            tohost_hex << std::hex << tohost;
+            bad_address("host was accessing memory on behalf of target (tohost = 0x" + tohost_hex.str() + ")", t.get_tval());
+        }
+
+        try {
+            if (!fromhost_queue.empty() && !spike_sim->mem.read_uint64(spike_sim->get_fromhost_addr())) {
+                spike_sim->mem.write_uint64(spike_sim->get_fromhost_addr(), spike_sim->to_target(fromhost_queue.front()));
+                fromhost_queue.pop();
+            }
+        } catch (mem_trap_t& t) {
+            bad_address("accessing fromhost", t.get_tval());
+        }
+    }
+
+    if (spike_sim->exitcode != 0){
+        spikeRunEnd_();
+    }
 }
 

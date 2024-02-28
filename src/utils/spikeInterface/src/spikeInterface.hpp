@@ -10,7 +10,6 @@
 #include "sparta/simulation/ResourceFactory.hpp"
 #include "mmu.h"
 
-
 #include "config.h"
 #include "cfg.h"
 #include "sim.h"
@@ -67,51 +66,68 @@ class spike_insn{
 
 using spikeInsnPtr = std::shared_ptr<spike_insn>;
 
-class spikeAdpter{
+class spikeAdapter{
 
 public:
-    spikeAdpter(){
-        spike_tunnel.resize(32);
-    }
-    ~spikeAdpter(){ delete spike_sim; }
-    int spikeInit(int argc, char** argv);
+    static spikeAdapter* getSpikeAdapter();
+
+    ~spikeAdapter(){ delete spike_adapter_; }
 
     int spikeInit(std::vector<std::string>& commandLineArgs);
 
     spikeInsnPtr spikeGetNextInst();
 
-    static void decodeHook(void*, uint64_t , uint64_t);
+    void decodeHook(void*, uint64_t , uint64_t);
 
-    static bool commitHook();
+    bool commitHook();
 
-    static void excptionHook();
+    reg_t getNpcHook(reg_t spike_npc);
 
-    void setElfName(std::string name) { elf_name = name; }
+    void excptionHook();
+
+    void catchDataBeforeWriteHook(addr_t addr, reg_t data, size_t len);
 
     uint32_t spikeTunnelAvailCnt();
 
     void spikeStep(uint32_t n);
 
+    void spikeSingleStepFromNpc(reg_t npc);
+
     void spikeRunStart();
 
-    int spikeRunEnd();
+    void setNpc(reg_t npc) { npc_ = npc; };
 
-    void spikeStep();
+private:
+    static spikeAdapter* spike_adapter_;
+
+    spikeAdapter(){
+        spike_tunnel.resize(32);
+        spike_tunnel_size = 32;
+    }
+
+    int spikeInit_(int argc, char** argv);
+
+    void setElfName_(std::string name) { elf_name = name; }
+
+    int spikeRunEnd_();
+
 public:
     std::string elf_name;
-    static sim_t * spike_sim;
-    
-    static std::vector<spikeInsnPtr> spike_tunnel;
-    static uint32_t spike_tunnel_size;
-    static uint32_t spike_tunnel_tail;
-    static uint32_t spike_tunnel_head;
-    static uint32_t spike_tunnel_used;
-    static uint32_t spike_tunnel_tocommit;
-    bool is_done;
+    sim_t * spike_sim = nullptr;
+
+    std::vector<spikeInsnPtr> spike_tunnel;
+    uint32_t spike_tunnel_size = 0;
+    uint32_t spike_tunnel_tail = 0;
+    uint32_t spike_tunnel_head = 0;
+    uint32_t spike_tunnel_used = 0;
+    uint32_t spike_tunnel_tocommit = 0;
+    bool is_done = false;
 
     std::queue<reg_t> fromhost_queue;
     std::function<void(reg_t)> fromhost_callback;
 
+private:
+    reg_t npc_;
 
     //main variables
     cfg_t cfg;

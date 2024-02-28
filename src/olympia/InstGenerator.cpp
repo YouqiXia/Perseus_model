@@ -335,10 +335,9 @@ namespace TimingModel
 
     SpikeInstGenerator::SpikeInstGenerator(MavisType * mavis_facade,
                            const std::string & filename):
-        InstGenerator(mavis_facade)
+        InstGenerator(mavis_facade),
+        spike_adapter_(spikeAdapter::getSpikeAdapter())
     {
-        spike_adpter_.reset(new spikeAdpter());
-
         std::vector<std::string> commandLineArgs;
 
         commandLineArgs.push_back("spike");
@@ -346,16 +345,16 @@ namespace TimingModel
         commandLineArgs.push_back("--log-commits");
         commandLineArgs.push_back(filename);
 
-        spike_adpter_->spikeInit(commandLineArgs);
-        spike_adpter_->spikeRunStart();
+        spike_adapter_->spikeInit(commandLineArgs);
+        spike_adapter_->spikeRunStart();
 
     }
 
     InstPtr SpikeInstGenerator::getNextInst(const sparta::Clock * clk){
 
         if(!isDone()){
-            spike_adpter_->spikeStep(spike_adpter_->spikeTunnelAvailCnt());
-            spikeInsnPtr sinsn = spike_adpter_->spikeGetNextInst();
+            spike_adapter_->spikeStep(spike_adapter_->spikeTunnelAvailCnt());
+            spikeInsnPtr sinsn = spike_adapter_->spikeGetNextInst();
             InstPtr mavis_inst = mavis_facade_->makeInst(sinsn->spike_insn_.insn.bits(), clk);
             mavis_inst->setPC(sinsn->getPc());
             mavis_inst->setUniqueID(++unique_id_);
@@ -369,5 +368,5 @@ namespace TimingModel
         }
         return nullptr;
     }
-    bool SpikeInstGenerator::isDone() const { return spike_adpter_->is_done; }
+    bool SpikeInstGenerator::isDone() const { return spike_adapter_->is_done; }
 }
