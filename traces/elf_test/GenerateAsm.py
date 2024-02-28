@@ -9,6 +9,8 @@ file = arg.file
 
 asm_file = open(file, "w")
 
+inner_loop_num = 20
+
 header = [
     "#include \"riscv_test.h\"\n",
     # "#include \"test_macros_vector.h\"\n",
@@ -29,9 +31,9 @@ loopnop = [
 ]
 
 storeloop = [
-    "sw x0, 0(x29)\n",
-    "sw x0, 0(x29)\n",
-    "sw x0, 0(x29)\n"
+    "sw x30, 0(x29)\n",
+    "sw x30, 0(x29)\n",
+    "sw x30, 0(x29)\n"
 ]
 
 loadloop = [
@@ -44,26 +46,27 @@ tail = [
     "RVTEST_PASS\n", "\n", ".data\n", "RVTEST_DATA_BEGIN\n", '\n'
 ]
 
-data = [
-    "tdat:\n",
-    "tdat1: .word 0x00ff00ff\n",
-    "tdat2: .word 0x00ff00ff\n",
-    "tdat3: .word 0x00ff00ff\n",
-    "tdat4: .word 0x00ff00ff\n",
-    "tdat5: .word 0x00ff00ff\n",
-    "tdat6: .word 0x00ff00ff\n", "\n"
-]
+data = ["tdat:\n",]
+
+def generate_string_array(n):
+    string_array = [f'tdat{i}: .word 0x00ff00ff\n' for i in range(n)]
+    return data + string_array
+
+def generate_storeloop(n):
+    string_array = [f'sw x30, {4*i}(x29)\n' for i in range(n)]
+    return string_array
+
 
 end = ["RVTEST_DATA_END\n"]
 
 asm_file.writelines(header)
 asm_file.writelines(body)
 
-for i in range(100000):
-    asm_file.writelines(loadloop)
+for i in range(10000):
+    asm_file.writelines(generate_storeloop(inner_loop_num))
 
 asm_file.writelines(tail)
-asm_file.writelines(data)
+asm_file.writelines(generate_string_array(inner_loop_num))
 asm_file.writelines(end)
 
 asm_file.close()
