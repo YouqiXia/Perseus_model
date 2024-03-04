@@ -29,6 +29,8 @@ namespace TimingModel {
         PerfectLsu(sparta::TreeNode* node, const PerfectLsuParameter* p);
 
     private:
+        void HandleFlush_(const FlushingCriteria&);
+
         void AcceptCredit_(const Credit&);
 
         void RobWakeUp(const InstPtr&);
@@ -43,6 +45,9 @@ namespace TimingModel {
 
     private:
     /* ports */
+    sparta::DataInPort<FlushingCriteria> lsu_flush_in
+            {&unit_port_set_, "lsu_flush_in", sparta::SchedulingPhase::Flush, 1};
+
         sparta::DataInPort<InstPtr> preceding_func_inst_in
             {&unit_port_set_, "preceding_func_inst_in", sparta::SchedulingPhase::Tick, 1};
 

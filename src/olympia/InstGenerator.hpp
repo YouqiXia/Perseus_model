@@ -44,7 +44,15 @@ namespace TimingModel
         static std::unique_ptr<InstGenerator> createGenerator(MavisType * mavis_facade,
                                                               const std::string & filename);
         virtual bool isDone() const = 0;
-        void InsnComplete(InstPtr& inst) const ;
+        void InsnComplete(InstPtr& inst) const;
+
+    public:
+        /* for spike instrution generator */
+        virtual void branchResolve(bool is_miss_prediction) {}
+
+        virtual void setNpc(uint64_t npc) {}
+
+        virtual void makeBackup() {}
 
     protected:
         MavisType * mavis_facade_ = nullptr;
@@ -100,6 +108,13 @@ namespace TimingModel
         InstPtr getNextInst(const sparta::Clock * clk) override final;
 
         bool isDone() const override final;
+
+        void branchResolve(bool is_miss_prediction) override final;
+
+        void setNpc(uint64_t npc) override final;
+
+        void makeBackup() override final;
+
     private:
         spikeAdapter* spike_adapter_;
 

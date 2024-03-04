@@ -36,6 +36,10 @@ namespace TimingModel {
 
         void ProduceInst();
 
+        void BranchResolve(const InstGroupPtr&);
+
+        void RedirectPc(const InstPtr&);
+
     public:
     // ports
         sparta::DataOutPort<InstGroupPtr> fetch_backend_inst_out
@@ -43,6 +47,12 @@ namespace TimingModel {
 
         sparta::DataInPort<Credit> backend_fetch_credit_in
             {&unit_port_set_, "backend_fetch_credit_in", sparta::SchedulingPhase::Tick, 0};
+
+        sparta::DataInPort<InstGroupPtr> backend_bpu_inst_in
+            {&unit_port_set_, "backend_bpu_inst_in", sparta::SchedulingPhase::Tick, 0};
+
+        sparta::DataInPort<InstPtr> backend_redirect_pc_inst_in
+                {&unit_port_set_, "backend_redirect_pc_inst_in", sparta::SchedulingPhase::Tick, 0};
     
     private:
     // Events

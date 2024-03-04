@@ -352,21 +352,50 @@ namespace TimingModel
 
     InstPtr SpikeInstGenerator::getNextInst(const sparta::Clock * clk){
 
-        if(!isDone()){
-            spike_adapter_->spikeStep(spike_adapter_->spikeTunnelAvailCnt());
-            spikeInsnPtr sinsn = spike_adapter_->spikeGetNextInst();
-            InstPtr mavis_inst = mavis_facade_->makeInst(sinsn->spike_insn_.insn.bits(), clk);
-            mavis_inst->setPC(sinsn->getPc());
-            mavis_inst->setUniqueID(++unique_id_);
-            mavis_inst->setProgramID(unique_id_);
-            mavis_inst->setIsRvcInst(sinsn->spike_insn_.insn.bits());
-            mavis_inst->setCompressedInst(sinsn->spike_insn_.insn.bits());
-            mavis_inst->setUncompressedInst(sinsn->spike_insn_.insn.bits());
-            mavis_inst->setImm(mavis_inst->getImmediate());
-            InsnComplete(mavis_inst);
-            return mavis_inst;
+        if(isDone()) {
+            return nullptr;
         }
-        return nullptr;
+
+        spikeInsnPtr sinsn = spike_adapter_->spikeGetNextInst();
+
+        // TODO: there must be a returning mechanism, otherwise there is endless loop
+        while(sinsn == nullptr) {
+            if (spike_adapter_->spikeStep(1)) {
+                return nullptr;
+            }
+
+            sinsn = spike_adapter_->spikeGetNextInst();
+        }
+
+        InstPtr mavis_inst = mavis_facade_->makeInst(sinsn->spike_insn_.insn.bits(), clk);
+        mavis_inst->setPC(sinsn->getPc());
+        mavis_inst->setUniqueID(++unique_id_);
+        mavis_inst->setProgramID(unique_id_);
+        mavis_inst->setIsRvcInst(sinsn->isRvc());
+        mavis_inst->setCompressedInst(sinsn->spike_insn_.insn.bits());
+        mavis_inst->setUncompressedInst(sinsn->spike_insn_.insn.bits());
+        mavis_inst->setImm(mavis_inst->getImmediate());
+        mavis_inst->setSpikeNpc(spike_adapter_->getSpikeNpc());
+        InsnComplete(mavis_inst);
+
+        return mavis_inst;
     }
+
+    void SpikeInstGenerator::branchResolve(bool is_miss_prediction) {
+        if (is_miss_prediction) {
+            spike_adapter_->RollBack();
+        } else {
+            spike_adapter_->BranchResolve();
+        }
+    }
+
+    void SpikeInstGenerator::setNpc(uint64_t npc) {
+        spike_adapter_->setNpc(npc);
+    }
+
+    void SpikeInstGenerator::makeBackup() {
+        spike_adapter_->MakeBackup();
+    }
+
     bool SpikeInstGenerator::isDone() const { return spike_adapter_->is_done; }
 }

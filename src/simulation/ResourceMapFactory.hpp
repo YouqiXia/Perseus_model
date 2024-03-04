@@ -18,6 +18,7 @@
 #include "core/abstract_backend/DispatchStage.hpp"
 #include "core/abstract_backend/PhysicalRegfile.hpp"
 #include "core/abstract_backend/ReservationStation.hpp"
+#include "core/abstract_backend/FlushManager.hpp"
 
 #include "core/func_unit/PerfectAlu.hpp"
 #include "core/func_unit/PerfectLsu.hpp"
@@ -25,6 +26,7 @@
 #include "core/func_unit/abstract_lsu/Agu.hpp"
 #include "core/func_unit/abstract_lsu/Lsq.hpp"
 #include "core/func_unit/WriteBackStage.hpp"
+
 #include "uncore/cache/BaseCache.hpp"
 #include "uncore/memory/AbstractMemory.hpp"
 #include "uncore/memory/DRAMsim3.hpp"
@@ -65,6 +67,11 @@ namespace TimingModel {
             RegisterResource(TimingModel::ReservationStation::name ,
                              new sparta::ResourceFactory<TimingModel::ReservationStation,
                                      TimingModel::ReservationStation::ReservationStationParameter>);
+
+            RegisterResource(TimingModel::FlushManager::name ,
+                             new sparta::ResourceFactory<TimingModel::FlushManager,
+                                     TimingModel::FlushManager::FlushManagerParameter>);
+
 
             // Function Unit
             RegisterResource(TimingModel::PerfectAlu::name ,

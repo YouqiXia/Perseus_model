@@ -120,6 +120,12 @@ namespace TimingModel
         void   setUncompressedInst(Inst_t UncompressedInst) { inst_.UncompressedInst = UncompressedInst; }
         Inst_t getUncompressedInst() { return inst_.UncompressedInst; }
 
+        void   setIsMissPrediction(bool IsMissPrediction) { inst_.IsMissPrediction = IsMissPrediction; }
+        bool getIsMissPrediction() { return inst_.IsMissPrediction; }
+
+        void   setSpikeNpc(Addr_t SpikeNpc) { inst_.SpikeNpc = SpikeNpc; }
+        Addr_t getSpikeNpc() { return inst_.SpikeNpc; }
+
         void        setIsaRs1(IsaRegId_t IsaRs1) { inst_.IsaRs1 = IsaRs1; }
         IsaRegId_t  getIsaRs1() { return inst_.IsaRs1; }
 

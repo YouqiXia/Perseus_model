@@ -32,6 +32,7 @@
 #include <sstream>
 #include "../VERSION"
 
+#include "MemoryBackup.hpp"
 //from spike decode_macros.h
 #define invalid_pc(pc) ((pc) & 1)
 
@@ -89,21 +90,26 @@ public:
 
     uint32_t spikeTunnelAvailCnt();
 
-    void spikeStep(uint32_t n);
+    int spikeStep(uint32_t n);
 
     void spikeSingleStepFromNpc(reg_t npc);
 
     void spikeRunStart();
 
-    void setNpc(reg_t npc) { npc_ = npc; };
+    void setNpc(reg_t npc);
+
+    uint64_t getSpikeNpc() { return spike_npc_; }
+
+    void MakeBackup();
+
+    void RollBack();
+
+    void BranchResolve();
 
 private:
     static spikeAdapter* spike_adapter_;
 
-    spikeAdapter(){
-        spike_tunnel.resize(32);
-        spike_tunnel_size = 32;
-    }
+    spikeAdapter() = default;
 
     int spikeInit_(int argc, char** argv);
 
@@ -115,21 +121,23 @@ public:
     std::string elf_name;
     sim_t * spike_sim = nullptr;
 
-    std::vector<spikeInsnPtr> spike_tunnel;
-    uint32_t spike_tunnel_size = 0;
-    uint32_t spike_tunnel_tail = 0;
-    uint32_t spike_tunnel_head = 0;
-    uint32_t spike_tunnel_used = 0;
-    uint32_t spike_tunnel_tocommit = 0;
+    spikeInsnPtr spike_tunnel;
     bool is_done = false;
 
     std::queue<reg_t> fromhost_queue;
     std::function<void(reg_t)> fromhost_callback;
 
 private:
-    reg_t npc_;
+    sparta::utils::ValidValue<reg_t> npc_;
 
     //main variables
     cfg_t cfg;
+
+    uint64_t target_addr_ = -1;
+    MemoryBackup memory_backup_;
+    std::queue<state_t> state_backup_;
+
+    uint64_t spike_npc_;
+
 };
 

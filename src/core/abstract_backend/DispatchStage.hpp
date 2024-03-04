@@ -74,7 +74,7 @@ namespace TimingModel {
         
             //flush
             sparta::DataInPort<FlushingCriteria> dispatch_flush_in
-                {&unit_port_set_, "dispatch_flush_in", sparta::SchedulingPhase::Tick, 1};
+                {&unit_port_set_, "dispatch_flush_in", sparta::SchedulingPhase::Flush, 1};
 
             // with renaming
             sparta::DataInPort<InstGroupPtr> preceding_dispatch_inst_in

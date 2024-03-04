@@ -38,6 +38,8 @@ namespace TimingModel {
         ~WriteBackStage() {}
 
     private:
+        void HandleFlush_(const FlushingCriteria&);
+
         void AcceptFuncInst_(const FuncInstPtr&);
 
         void ArbitrateInst_();
@@ -46,6 +48,9 @@ namespace TimingModel {
         // ports
         sparta::DataOutPort<InstGroupPtr> write_back_following_port_out
                 {&unit_port_set_, "write_back_following_port_out"};
+
+        sparta::DataInPort<FlushingCriteria> writeback_flush_in
+                {&unit_port_set_, "writeback_flush_in", sparta::SchedulingPhase::Flush, 1};
 
         // events
         sparta::SingleCycleUniqueEvent<> arbitrate_inst_event
@@ -59,8 +64,6 @@ namespace TimingModel {
 
         std::map<FuncUnitType, sparta::DataInPort<FuncInstPtr>*> func_unit_write_back_ports_in_;
         std::map<FuncUnitType, sparta::DataOutPort<Credit>*> func_unit_credit_ports_out_;
-
-        std::map<FuncUnitType, Credit> func_credit_map_;
 
         uint64_t wb_latency_;
     };

@@ -14,6 +14,9 @@ namespace TimingModel {
             issue_num_(p->issue_num),
             wb_latency_(p->wb_latency)
     {
+        writeback_flush_in.registerConsumerHandler(
+                CREATE_SPARTA_HANDLER_WITH_DATA(WriteBackStage, HandleFlush_, FlushingCriteria));
+
         FuMap& fu_map = getFuMap();
         for (auto &func_pair: fu_map) {
             auto *func_unit_write_back_in_tmp = new sparta::DataInPort<FuncInstPtr>
@@ -27,6 +30,12 @@ namespace TimingModel {
         }
 
     }
+
+    void WriteBackStage::HandleFlush_(const FlushingCriteria& flush_criteria) {
+        ILOG(getName() << " is flushed");
+        func_inst_map_.clear();
+        func_pop_pending_queue_.clear();
+    };
 
     void WriteBackStage::AcceptFuncInst_(const TimingModel::FuncInstPtr &func_inst_ptr) {
         ILOG(func_inst_ptr->func_type << " get instruction");

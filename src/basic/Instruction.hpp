@@ -124,6 +124,10 @@ struct InstInfo {
     Inst_t       CompressedInst;
     Inst_t       UncompressedInst;
 
+    /* branch prediction info */
+    bool         IsMissPrediction = false;
+    Addr_t       SpikeNpc;
+
     /* decode info */
     IsaRegId_t   IsaRs1 = 0;
     IsaRegId_t   IsaRs2 = 0;

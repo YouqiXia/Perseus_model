@@ -560,14 +560,9 @@ spikeAdapter* spikeAdapter::getSpikeAdapter() {
 
 //get from g_spike_tunnel
 spikeInsnPtr spikeAdapter::spikeGetNextInst(){
-  if(spike_tunnel_used == 0)
-    return nullptr;
-  spikeInsnPtr insn = spike_tunnel[spike_tunnel_head];
-  spike_tunnel_head++;
-  if(spike_tunnel_head == spike_tunnel_size)
-      spike_tunnel_head = 0;
-  spike_tunnel_used--;
-  return insn;
+    spikeInsnPtr insn = spike_tunnel;
+    spike_tunnel = nullptr;
+    return insn;
 }
 
 void spikeAdapter::decodeHook(void * in, uint64_t pc, uint64_t npc){
@@ -576,45 +571,81 @@ void spikeAdapter::decodeHook(void * in, uint64_t pc, uint64_t npc){
       return;
     }
     // std::cout << "spike pc: 0x" << std::hex << pc << " next pc: 0x" << npc << std::dec <<std::endl;
-    spike_tunnel[spike_tunnel_tail] = std::make_shared<spike_insn>((insn_fetch_t*) in, pc);
-    spike_tunnel_tocommit = spike_tunnel_tail;
-    spike_tunnel_tail++;
-    if(spike_tunnel_tail == spike_tunnel_size)
-      spike_tunnel_tail = 0;
-    spike_tunnel_used++;
+    spike_tunnel = std::make_shared<spike_insn>((insn_fetch_t*) in, pc);
 }
 
-
-
 bool spikeAdapter::commitHook(){
+    if(spike_tunnel == nullptr) {
+        return true;
+    }
     //same cycle same insn with tail
-    spike_tunnel[spike_tunnel_tocommit]->spike_log_reg_write.clear();
-    spike_tunnel[spike_tunnel_tocommit]->spike_log_reg_write = spike_sim->procs[0]->get_state()->log_reg_write;
+    spike_tunnel->spike_log_reg_write.clear();
+    spike_tunnel->spike_log_reg_write = spike_sim->procs[0]->get_state()->log_reg_write;
 
-    spike_tunnel[spike_tunnel_tocommit]->spike_log_mem_read.clear();
-    spike_tunnel[spike_tunnel_tocommit]->spike_log_mem_read = spike_sim->procs[0]->get_state()->log_mem_read;
+    spike_tunnel->spike_log_mem_read.clear();
+    spike_tunnel->spike_log_mem_read = spike_sim->procs[0]->get_state()->log_mem_read;
 
-    spike_tunnel[spike_tunnel_tocommit]->spike_log_mem_write.clear();
-    spike_tunnel[spike_tunnel_tocommit]->spike_log_mem_write = spike_sim->procs[0]->get_state()->log_mem_write;
+    spike_tunnel->spike_log_mem_write.clear();
+    spike_tunnel->spike_log_mem_write = spike_sim->procs[0]->get_state()->log_mem_write;
 
-    spike_tunnel[spike_tunnel_tocommit]->spike_last_inst_priv = spike_sim->procs[0]->get_state()->last_inst_priv;
-    spike_tunnel[spike_tunnel_tocommit]->spike_last_inst_xlen = spike_sim->procs[0]->get_state()->last_inst_xlen;
-    spike_tunnel[spike_tunnel_tocommit]->spike_last_inst_flen = spike_sim->procs[0]->get_state()->last_inst_flen;
+    spike_tunnel->spike_last_inst_priv = spike_sim->procs[0]->get_state()->last_inst_priv;
+    spike_tunnel->spike_last_inst_xlen = spike_sim->procs[0]->get_state()->last_inst_xlen;
+    spike_tunnel->spike_last_inst_flen = spike_sim->procs[0]->get_state()->last_inst_flen;
     return true;
 }
 
+void spikeAdapter::setNpc(reg_t npc) {
+    npc_ = npc;
+    spike_sim->procs[0]->get_state()->pc = npc;
+}
+
 reg_t spikeAdapter::getNpcHook(reg_t spike_npc) {
+    spike_npc_ = spike_npc;
     return spike_npc;
 }
 
 void spikeAdapter::excptionHook(){}
 
 void spikeAdapter::catchDataBeforeWriteHook(addr_t addr, reg_t data, size_t len) {
-    (void)data;
+    if (memory_backup_.IsEmpty() || spike_sim->get_tohost_addr() == addr) {
+        return;
+    }
+
+    if (target_addr_ == addr) {
+        target_addr_ = -1;
+        return;
+    }
+
+    uint64_t bytes;
+    spike_sim->mem.read(addr, len, &bytes);
+    memory_backup_.Push(MemoryBackup::MemoryEntry{addr, bytes, len});
 }
 
-uint32_t spikeAdapter::spikeTunnelAvailCnt() { 
-  return (spike_tunnel_size-spike_tunnel_used); 
+void spikeAdapter::MakeBackup() {
+    memory_backup_.MakeMemoryEntry();
+    state_t state_tmp = *spike_sim->procs[0]->get_state();
+    state_backup_.push(state_tmp);
+}
+
+void spikeAdapter::RollBack() {
+    while(!memory_backup_.IsEmpty()) {
+        MemoryBackup::MemoryEntry memory_entry = memory_backup_.GetBackupEntry();
+        if (memory_entry.addr == 0) {
+            continue;
+        }
+        target_addr_ = memory_entry.addr & ~ (spike_sim->chunk_align() - 1);
+        spike_sim->mem.write(memory_entry.addr, memory_entry.len, &memory_entry.data);
+    }
+    *spike_sim->procs[0]->get_state() = state_backup_.front();
+    spike_sim->procs[0]->get_state()->pc = npc_;
+    while (!state_backup_.empty()) {
+        state_backup_.pop();
+    }
+}
+
+void spikeAdapter::BranchResolve() {
+    memory_backup_.Pop();
+    state_backup_.pop();
 }
 
 void spikeAdapter::spikeRunStart(){
@@ -636,7 +667,7 @@ static void bad_address(const std::string& situation, reg_t addr)
   exit(-1);
 }
 
-void spikeAdapter::spikeStep(uint32_t n){
+int spikeAdapter::spikeStep(uint32_t n){
     // sim_t::INTERLEAVE = n;
     uint64_t tohost;
     for (int i=0; i<n; i++){
@@ -651,7 +682,7 @@ void spikeAdapter::spikeStep(uint32_t n){
           }
 
           try {
-            if (tohost != 0) {
+            if (tohost != 0 && memory_backup_.IsEmpty()) {
               command_t cmd(spike_sim->mem, tohost, fromhost_callback);
               spike_sim->device_list.handle_command(cmd);
             } else {
@@ -677,51 +708,9 @@ void spikeAdapter::spikeStep(uint32_t n){
       
       if (spike_sim->exitcode != 0){
         spikeRunEnd_();
+        return -1;
       }
     }
 
+    return 0;
 }
-
-void spikeAdapter::spikeSingleStepFromNpc(reg_t npc){
-    // sim_t::INTERLEAVE = n;
-    uint64_t tohost;
-    if (spike_sim->get_tohost_addr() == 0) {
-        spike_sim->idle();
-    }else{
-        try {
-            if ((tohost = spike_sim->from_target(spike_sim->mem.read_uint64(spike_sim->get_tohost_addr()))) != 0)
-                spike_sim->mem.write_uint64(spike_sim->get_tohost_addr(), target_endian<uint64_t>::zero);
-        } catch (mem_trap_t& t) {
-            bad_address("accessing tohost", t.get_tval());
-        }
-
-        try {
-            if (tohost != 0) {
-                command_t cmd(spike_sim->mem, tohost, fromhost_callback);
-                spike_sim->device_list.handle_command(cmd);
-            } else {
-                spike_sim->idle();
-            }
-
-            spike_sim->device_list.tick();
-        } catch (mem_trap_t& t) {
-            std::stringstream tohost_hex;
-            tohost_hex << std::hex << tohost;
-            bad_address("host was accessing memory on behalf of target (tohost = 0x" + tohost_hex.str() + ")", t.get_tval());
-        }
-
-        try {
-            if (!fromhost_queue.empty() && !spike_sim->mem.read_uint64(spike_sim->get_fromhost_addr())) {
-                spike_sim->mem.write_uint64(spike_sim->get_fromhost_addr(), spike_sim->to_target(fromhost_queue.front()));
-                fromhost_queue.pop();
-            }
-        } catch (mem_trap_t& t) {
-            bad_address("accessing fromhost", t.get_tval());
-        }
-    }
-
-    if (spike_sim->exitcode != 0){
-        spikeRunEnd_();
-    }
-}
-

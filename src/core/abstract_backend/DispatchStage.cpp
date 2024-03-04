@@ -161,10 +161,12 @@ namespace TimingModel {
     }
 
     void DispatchStage::HandleFlush_(const TimingModel::FlushingCriteria &flushing_criteria) {
-        dispatch_select_events_.cancel();
         ILOG(name << "is flushed.");
 
-        dispatch_preceding_credit_out.send(inst_queue_.size());
+        for (auto& credit_pair: rs_credits_) {
+            credit_pair.second = 0;
+        }
+        dispatch_preceding_credit_out.send(inst_queue_depth_);
         inst_queue_.clear();
     }
 

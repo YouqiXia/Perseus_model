@@ -95,14 +95,19 @@ namespace TimingModel {
         rename_event.schedule(sparta::Clock::Cycle(0));
     }
 
+    void RenamingStage::FlushCredit_() {
+        dispatch_credit_ = 0;
+        rob_credit_ = 0;
+        ldq_credit_ = 0;
+        stq_credit_ = 0;
+    }
+
     void RenamingStage::HandleFlush_(const FlushingCriteria& flush_criteria) {
-        rename_event.cancel();
         ILOG("RenamingStage is flushed");
 
-        if (!renaming_stage_queue_.empty()) {
-            renaming_preceding_credit_out.send(renaming_stage_queue_.size());
-            renaming_stage_queue_.clear();
-        }
+        FlushCredit_();
+        renaming_preceding_credit_out.send(renaming_stage_queue_depth_);
+        renaming_stage_queue_.clear();
 
         free_list_.RollBack();
         renaming_table_.RollBack();

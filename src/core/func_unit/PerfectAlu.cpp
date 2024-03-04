@@ -13,6 +13,8 @@ namespace TimingModel {
     {
         preceding_func_inst_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectAlu, Allocate_, InstPtr));
         preceding_func_inst_in >> sparta::GlobalOrderingPoint(node, "backend_alu_multiport_order");
+        func_flush_in.registerConsumerHandler(
+                CREATE_SPARTA_HANDLER_WITH_DATA(PerfectAlu, HandleFlush_, FlushingCriteria));
 
         write_back_func_credit_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA(PerfectAlu, AcceptCredit_, Credit));
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(PerfectAlu, SendInitCredit_));
@@ -20,6 +22,14 @@ namespace TimingModel {
 
     void PerfectAlu::SendInitCredit_() {
         func_rs_credit_out.send(alu_width_);
+    }
+
+    void PerfectAlu::HandleFlush_(const FlushingCriteria& flush_criteria) {
+        ILOG(getName() << " is flushed");
+
+        credit_ = alu_width_;
+        func_rs_credit_out.send(alu_width_);
+        alu_queue_.clear();
     }
 
     void PerfectAlu::AcceptCredit_(const Credit& credit) {

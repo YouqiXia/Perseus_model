@@ -39,10 +39,10 @@ namespace TimingModel {
     }
 
     void ReservationStation::HandleFlush_(const TimingModel::FlushingCriteria &flush_criteria) {
-        passing_event.cancel();
         ILOG(getName() << " is flushed.");
 
-        RsCreditPtr rs_credit_ptr_tmp{new RsCredit{getName(), reservation_station_.size()}};
+        credit_ = 0;
+        RsCreditPtr rs_credit_ptr_tmp{new RsCredit{getName(), rs_depth_}};
         reservation_preceding_credit_out.send(rs_credit_ptr_tmp);
         reservation_station_.clear();
     }

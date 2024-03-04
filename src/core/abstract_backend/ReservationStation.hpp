@@ -60,7 +60,7 @@ namespace TimingModel {
         // ports
         // flush
         sparta::DataInPort<FlushingCriteria> reservation_flush_in
-                {&unit_port_set_, "reservation_flush_in", sparta::SchedulingPhase::Tick, 1};
+                {&unit_port_set_, "reservation_flush_in", sparta::SchedulingPhase::Flush, 1};
 
         // with issue queue
         sparta::DataInPort<InstPtr> preceding_reservation_inst_in

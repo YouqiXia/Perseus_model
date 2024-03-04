@@ -61,11 +61,13 @@ private:
 
     void RobCommit_(const InstGroupPtr&);
 
+    void FlushCredit_();
+
 private:
     // ports
         // flush
         sparta::DataInPort<FlushingCriteria> renaming_flush_in
-            {&unit_port_set_, "renaming_flush_in", sparta::SchedulingPhase::Tick, 1};
+            {&unit_port_set_, "renaming_flush_in", sparta::SchedulingPhase::Flush, 1};
 
         // with frontend
         sparta::DataInPort<InstGroupPtr> preceding_renaming_inst_in

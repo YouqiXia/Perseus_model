@@ -32,6 +32,8 @@ namespace TimingModel {
 
         void SendInitCredit_();
 
+        void HandleFlush_(const FlushingCriteria&);
+
         void WriteBack_();
 
         void AcceptCredit_(const Credit&);
@@ -41,6 +43,9 @@ namespace TimingModel {
     /* ports */
         sparta::DataInPort<InstPtr> preceding_func_inst_in
             {&unit_port_set_, "preceding_func_inst_in", sparta::SchedulingPhase::Tick, 1};
+
+        sparta::DataInPort<FlushingCriteria> func_flush_in
+                {&unit_port_set_, "func_flush_in", sparta::SchedulingPhase::Flush, 1};
 
         sparta::DataInPort<Credit> write_back_func_credit_in
                 {&unit_port_set_, "write_back_func_credit_in", sparta::SchedulingPhase::Tick, 0};

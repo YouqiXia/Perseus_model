@@ -68,7 +68,10 @@ namespace TimingModel {
         /* ports */
         // flush
         sparta::DataInPort<FlushingCriteria> rob_flush_in
-                {&unit_port_set_, "rob_flush_in", sparta::SchedulingPhase::Tick, 1};
+                {&unit_port_set_, "rob_flush_in", sparta::SchedulingPhase::Flush, 1};
+
+        sparta::DataOutPort<FlushingCriteria> rob_flush_out
+                {&unit_port_set_, "rob_flush_out"};
 
         // with frontend
         sparta::DataInPort<InstGroupPtr> preceding_rob_inst_in
@@ -76,6 +79,14 @@ namespace TimingModel {
 
         sparta::DataOutPort<Credit> rob_preceding_credit_out
                 {&unit_port_set_, "rob_preceding_credit_out"};
+
+        // redirect pc
+        sparta::DataOutPort<InstPtr> rob_redirect_pc_inst_out
+                {&unit_port_set_, "rob_redirect_pc_inst_out"};
+
+        // with bpu
+        sparta::DataOutPort<InstGroupPtr> rob_bpu_inst_out
+                {&unit_port_set_, "rob_bpu_inst_out"};
 
         // with function unit
         sparta::DataInPort<InstGroupPtr> write_back_rob_finish_in

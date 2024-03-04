@@ -54,10 +54,9 @@ namespace TimingModel {
     }
 
     void Rob::HandleFlush_(const TimingModel::FlushingCriteria &flush_criteria) {
-        commit_event.cancel();
         ILOG(name << " is flushed.");
 
-        rob_preceding_credit_out.send(rob_.size());
+        rob_preceding_credit_out.send(rob_depth_);
         rob_.clear();
     }
 
@@ -94,17 +93,31 @@ namespace TimingModel {
 
     void Rob::Commit_() {
         InstGroupPtr inst_group_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
+        InstGroupPtr inst_bpu_group_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
         uint64_t issue_num = std::min(issue_width_, uint64_t(rob_.size()));
+        bool do_flush = false;
         while(issue_num--) {
             if (rob_.empty()) {
                 break;
             }
-            if (rob_.front().finish) {
-                inst_group_ptr->emplace_back(rob_.front().inst_ptr);
-                rob_.pop();
-            } else {
+
+            if (!rob_.front().finish) {
                 break;
             }
+
+            inst_group_ptr->emplace_back(rob_.front().inst_ptr);
+
+            if (rob_.front().inst_ptr->getFuType() == FuncType::BRU) {
+                inst_bpu_group_ptr->emplace_back(rob_.front().inst_ptr);
+            }
+
+            if (rob_.front().inst_ptr->getIsMissPrediction()) {
+                do_flush = true;
+                rob_redirect_pc_inst_out.send(rob_.front().inst_ptr);
+                break;
+            }
+
+            rob_.pop();
         }
         ILOG("before rob wakeup store ");
         TryWakeupStore();
@@ -113,6 +126,11 @@ namespace TimingModel {
         if (!inst_group_ptr->empty()) {
             Rob_cmt_inst_out.send(inst_group_ptr);
         }
+
+        if (!inst_bpu_group_ptr->empty()) {
+            rob_bpu_inst_out.send(inst_bpu_group_ptr);
+        }
+
         uint64_t commit_num = inst_group_ptr->size();
 
         if (commit_num) {
@@ -141,6 +159,10 @@ namespace TimingModel {
 
         if (!rob_.empty()) {
             commit_event.schedule(1);
+        }
+
+        if (do_flush) {
+            rob_flush_out.send(1);
         }
     }
 

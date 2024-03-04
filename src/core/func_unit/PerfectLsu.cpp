@@ -13,6 +13,9 @@ namespace TimingModel {
         st_queue_size_(p->st_queue_size),
         lsu_queue_("lsu_queue", p->ld_queue_size + p->st_queue_size, node->getClock(), &unit_stat_set_)
     {
+        lsu_flush_in.registerConsumerHandler(
+                CREATE_SPARTA_HANDLER_WITH_DATA(PerfectLsu, HandleFlush_, FlushingCriteria));
+
         preceding_func_inst_in.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(PerfectLsu, RecieveInst_, InstPtr));
         preceding_func_inst_in >> sparta::GlobalOrderingPoint(node, "backend_lsu_multiport_order");
@@ -36,6 +39,15 @@ namespace TimingModel {
         ILOG("Stq initial credits for BE: " << st_queue_size_);
 
         func_rs_credit_out.send(ld_queue_size_ + st_queue_size_);
+    }
+
+    void PerfectLsu::HandleFlush_(const TimingModel::FlushingCriteria &flush_criteria) {
+        ILOG(getName() << " is flushed.");
+        credit_ = lsu_width_ * load_to_use_latency_;
+        lsu_renaming_ldq_credit_out.send(ld_queue_size_);
+        lsu_renaming_stq_credit_out.send(st_queue_size_);
+        func_rs_credit_out.send(ld_queue_size_ + st_queue_size_);
+        lsu_queue_.clear();
     }
 
     void PerfectLsu::AllocateInst_(const InstGroupPtr& inst_group_ptr) {
