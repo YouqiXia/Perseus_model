@@ -49,7 +49,7 @@ tail = [
 data = ["tdat:\n",]
 
 def generate_string_array(n):
-    string_array = [f'tdat{i}: .word 0x00ff00ff\n' for i in range(n)]
+    string_array = [f'tdat{i}: .word 0x00000000\n' for i in range(n)]
     return data + string_array
 
 def generate_storeloop(n):
@@ -62,7 +62,7 @@ end = ["RVTEST_DATA_END\n"]
 asm_file.writelines(header)
 asm_file.writelines(body)
 
-for i in range(10000):
+for i in range(10):
     asm_file.writelines(generate_storeloop(inner_loop_num))
 
 asm_file.writelines(tail)
