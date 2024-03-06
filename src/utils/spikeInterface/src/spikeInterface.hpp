@@ -32,7 +32,7 @@
 #include <sstream>
 #include "../VERSION"
 
-#include "MemoryBackup.hpp"
+#include "DataBackup.hpp"
 //from spike decode_macros.h
 #define invalid_pc(pc) ((pc) & 1)
 
@@ -88,6 +88,8 @@ public:
 
     void catchDataBeforeWriteHook(addr_t addr, reg_t data, size_t len);
 
+    void getCsrHook(int which, reg_t val);
+
     uint32_t spikeTunnelAvailCnt();
 
     int spikeStep(uint32_t n);
@@ -117,6 +119,10 @@ private:
 
     int spikeRunEnd_();
 
+    void MakeRegBackup_();
+
+    void RegRollBack_();
+
 public:
     std::string elf_name;
     sim_t * spike_sim = nullptr;
@@ -134,8 +140,10 @@ private:
     cfg_t cfg;
 
     uint64_t target_addr_ = -1;
-    MemoryBackup memory_backup_;
-    std::queue<state_t> state_backup_;
+    int target_csr_ = -1;
+    DataBackup<MemoryEntry> memory_backup_;
+    DataBackup<CsrEntry> csr_backup_;
+    std::queue<RegEntry> reg_backup_;
 
     uint64_t spike_npc_;
 

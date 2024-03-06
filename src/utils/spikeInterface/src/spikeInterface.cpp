@@ -618,34 +618,57 @@ void spikeAdapter::catchDataBeforeWriteHook(addr_t addr, reg_t data, size_t len)
 
     uint64_t bytes;
     spike_sim->mem.read(addr, len, &bytes);
-    memory_backup_.Push(MemoryBackup::MemoryEntry{addr, bytes, len});
+    memory_backup_.Push(MemoryEntry{addr, bytes, len});
+}
+
+void spikeAdapter::getCsrHook(int which, reg_t val) {
+    if (csr_backup_.IsEmpty()) {
+        return;
+    }
+
+    if (target_csr_ == which) {
+        target_csr_ = -1;
+        return;
+    }
+
+    auto search = spike_sim->procs[0]->get_state()->csrmap.find(which);
+    if (search != spike_sim->procs[0]->get_state()->csrmap.end()) {
+        csr_backup_.Push(CsrEntry{which, search->second->read()});
+    }
 }
 
 void spikeAdapter::MakeBackup() {
-    memory_backup_.MakeMemoryEntry();
-    state_t state_tmp = *spike_sim->procs[0]->get_state();
-    state_backup_.push(state_tmp);
+    memory_backup_.MakeBackupEntry();
+    csr_backup_.MakeBackupEntry();
+    MakeRegBackup_();
 }
 
 void spikeAdapter::RollBack() {
     while(!memory_backup_.IsEmpty()) {
-        MemoryBackup::MemoryEntry memory_entry = memory_backup_.GetBackupEntry();
+        MemoryEntry memory_entry = memory_backup_.GetBackupEntry();
         if (memory_entry.addr == 0) {
             continue;
         }
         target_addr_ = memory_entry.addr & ~ (spike_sim->chunk_align() - 1);
         spike_sim->mem.write(memory_entry.addr, memory_entry.len, &memory_entry.data);
     }
-    *spike_sim->procs[0]->get_state() = state_backup_.front();
-    spike_sim->procs[0]->get_state()->pc = npc_;
-    while (!state_backup_.empty()) {
-        state_backup_.pop();
+
+    while(!csr_backup_.IsEmpty()) {
+        CsrEntry csr_entry = csr_backup_.GetBackupEntry();
+        if (csr_entry.which == 0) {
+            continue;
+        }
+        target_csr_ = csr_entry.which;
+        spike_sim->procs[0]->put_csr(csr_entry.which, csr_entry.val);
     }
+
+    RegRollBack_();
 }
 
 void spikeAdapter::BranchResolve() {
     memory_backup_.Pop();
-    state_backup_.pop();
+    csr_backup_.Pop();
+    reg_backup_.pop();
 }
 
 void spikeAdapter::spikeRunStart(){
@@ -713,4 +736,51 @@ int spikeAdapter::spikeStep(uint32_t n){
     }
 
     return 0;
+}
+
+void spikeAdapter::MakeRegBackup_() {
+    state_t* state_tmp = spike_sim->procs[0]->get_state();
+    RegEntry reg_entry;
+    reg_entry.XPR               = state_tmp->XPR;
+    reg_entry.FPR               = state_tmp->FPR;
+    reg_entry.prv               = state_tmp->prv;
+    reg_entry.prev_prv          = state_tmp->prev_prv;
+    reg_entry.prv_changed       = state_tmp->prv_changed;
+    reg_entry.v_changed         = state_tmp->v_changed;
+    reg_entry.v                 = state_tmp->v;
+    reg_entry.prev_v            = state_tmp->prev_v;
+    reg_entry.debug_mode        = state_tmp->debug_mode;
+    reg_entry.serialized        = state_tmp->serialized;
+    reg_entry.log_reg_write     = state_tmp->log_reg_write;
+    reg_entry.log_mem_read      = state_tmp->log_mem_read;
+    reg_entry.log_mem_write     = state_tmp->log_mem_write;
+    reg_entry.last_inst_priv    = state_tmp->last_inst_priv;
+    reg_entry.last_inst_xlen    = state_tmp->last_inst_xlen;
+    reg_entry.last_inst_flen    = state_tmp->last_inst_flen;
+    reg_backup_.push(reg_entry);
+}
+
+void spikeAdapter::RegRollBack_() {
+    state_t* state_tmp = spike_sim->procs[0]->get_state();
+    RegEntry reg_entry = reg_backup_.front();
+    state_tmp->pc = npc_;
+    state_tmp->XPR              = reg_entry.XPR           ;
+    state_tmp->FPR              = reg_entry.FPR           ;
+    state_tmp->prv              = reg_entry.prv           ;
+    state_tmp->prev_prv         = reg_entry.prev_prv      ;
+    state_tmp->prv_changed      = reg_entry.prv_changed   ;
+    state_tmp->v_changed        = reg_entry.v_changed     ;
+    state_tmp->v                = reg_entry.v             ;
+    state_tmp->prev_v           = reg_entry.prev_v        ;
+    state_tmp->debug_mode       = reg_entry.debug_mode    ;
+    state_tmp->serialized       = reg_entry.serialized    ;
+    state_tmp->log_reg_write    = reg_entry.log_reg_write ;
+    state_tmp->log_mem_read     = reg_entry.log_mem_read  ;
+    state_tmp->log_mem_write    = reg_entry.log_mem_write ;
+    state_tmp->last_inst_priv   = reg_entry.last_inst_priv;
+    state_tmp->last_inst_xlen   = reg_entry.last_inst_xlen;
+    state_tmp->last_inst_flen   = reg_entry.last_inst_flen;
+    while (!reg_backup_.empty()) {
+        reg_backup_.pop();
+    }
 }

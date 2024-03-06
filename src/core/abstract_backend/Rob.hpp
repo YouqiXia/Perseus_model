@@ -113,7 +113,7 @@ namespace TimingModel {
 
         sparta::StatisticInstance   ipc_;
 
-        const uint64_t retire_heartbeat_ = 100000;
+        const uint64_t retire_heartbeat_ = 100;
 
         const uint32_t num_insts_to_retire_; // parameter from ilimit
 

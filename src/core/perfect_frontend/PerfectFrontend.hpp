@@ -26,6 +26,7 @@ namespace TimingModel {
             PARAMETER(uint64_t, issue_num, 4, "the issuing bandwidth in a cycle")
             PARAMETER(std::string, input_file, "", "the stf entry")
             PARAMETER(std::string, insn_gen_type, "trace", "the type of insnGen: trace or spike")
+            PARAMETER(bool, is_speculation, false, "if model is running in speculative way")
         };
 
         static const char* name;
@@ -61,6 +62,8 @@ namespace TimingModel {
     
     private:
         const uint64_t issue_num_;
+
+        const bool is_speculation_;
 
         Credit credit_ = 0;
 

@@ -10,6 +10,7 @@ namespace TimingModel {
 
     PerfectFrontend::PerfectFrontend(sparta::TreeNode* node, const PerfectFrontendParameter* p) : 
         sparta::Unit(node),
+        is_speculation_(p->is_speculation),
         node_(node),
         issue_num_(p->issue_num),
         mavis_facade_(getMavis(node)),
@@ -38,6 +39,9 @@ namespace TimingModel {
     }
 
     void PerfectFrontend::BranchResolve(const InstGroupPtr& inst_group_ptr) {
+        if (!is_speculation_) {
+            return;
+        }
         for (auto inst_ptr: *inst_group_ptr) {
             inst_generator_->branchResolve(inst_ptr->getIsMissPrediction());
         }
@@ -62,7 +66,7 @@ namespace TimingModel {
             dinst = inst_generator_->getNextInst(getClock());
 
             if(nullptr == dinst) {
-                break;
+                return;
             }
 
             /* simulate bpu */
@@ -73,18 +77,20 @@ namespace TimingModel {
             }
             if (dinst->getFuType() == FuncType::BRU) {
 
-                inst_generator_->makeBackup();
-
                 if (dinst->getIsRvcInst()) {
                     predict_npc = dinst->getPc() + 2;
                 } else {
                     predict_npc = dinst->getPc() + 4;
                 }
 
-                inst_generator_->setNpc(predict_npc);
+                if (is_speculation_) {
+                    inst_generator_->makeBackup();
 
-                if (predict_npc != dinst->getSpikeNpc()) {
-                    dinst->setIsMissPrediction(true);
+                    inst_generator_->setNpc(predict_npc);
+
+                    if (predict_npc != dinst->getSpikeNpc()) {
+                        dinst->setIsMissPrediction(true);
+                    }
                 }
 
             }
