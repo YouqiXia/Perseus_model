@@ -13,7 +13,7 @@
 [submodule "thirdparty/riscv-isa-sim"]
 	path = thirdparty/riscv-isa-sim
 	url = https://github.com/imarkwang/riscv-isa-sim.git
-	branch = dev-mark
+	branch = master
 [submodule "traces/elf_test/riscv-test-env"]
     path = traces/elf_test/riscv-test-env
     url = https://github.com/riscv/riscv-test-env.git

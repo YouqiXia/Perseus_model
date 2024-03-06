@@ -66,7 +66,7 @@ namespace TimingModel {
             dinst = inst_generator_->getNextInst(getClock());
 
             if(nullptr == dinst) {
-                return;
+                break;
             }
 
             /* simulate bpu */
@@ -100,7 +100,7 @@ namespace TimingModel {
             --credit_;
         }
 
-        if (credit_) {
+        if (credit_ && (false == inst_generator_->isDone())) {
             produce_inst_event_.schedule(1);
         }
         ILOG("perfect frontend send " << inst_group_ptr->size() << " instructions to backend");
