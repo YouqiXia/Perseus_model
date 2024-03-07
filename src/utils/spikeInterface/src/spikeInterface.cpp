@@ -567,8 +567,12 @@ spikeInsnPtr spikeAdapter::spikeGetNextInst(){
 
 void spikeAdapter::decodeHook(void * in, uint64_t pc, uint64_t npc){
     //npc != PC_SERIALIZE_BEFORE
-    if (unlikely(npc == 3) || unlikely(npc == 5)){
+    if (unlikely(npc == 3)){
       return;
+    }
+
+    if (unlikely(npc == 5)) {
+        spike_npc_ = spike_sim->procs[0]->get_state()->pc;
     }
     // std::cout << "spike pc: 0x" << std::hex << pc << " next pc: 0x" << npc << std::dec <<std::endl;
     spike_tunnel = std::make_shared<spike_insn>((insn_fetch_t*) in, pc);
