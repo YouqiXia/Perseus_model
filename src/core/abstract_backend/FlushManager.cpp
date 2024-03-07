@@ -21,8 +21,9 @@ namespace TimingModel {
         scheduler_->stopRunning();
         scheduler_->restartAt(tick);
         flush_criteria_ = flush_criteria;
+        nop_event_.schedule(0);
         flush_event_.schedule(1);
-        scheduler_->run();
+        scheduler_->keepRunning();
     }
 
     void FlushManager::DoFlush() {

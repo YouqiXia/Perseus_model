@@ -35,6 +35,8 @@ namespace TimingModel {
 
         void DoFlush();
 
+        void Nop() {}
+
     public:
         // ports
         sparta::DataOutPort<FlushingCriteria> global_flush_signal_out
@@ -47,6 +49,9 @@ namespace TimingModel {
         // events
         sparta::SingleCycleUniqueEvent<> flush_event_
                 {&unit_event_set_, "flush_event", CREATE_SPARTA_HANDLER(FlushManager, DoFlush)};
+
+        sparta::SingleCycleUniqueEvent<> nop_event_
+                {&unit_event_set_, "nop_event", CREATE_SPARTA_HANDLER(FlushManager, Nop)};
 
     private:
         sparta::Scheduler* scheduler_;
