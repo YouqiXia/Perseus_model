@@ -608,7 +608,16 @@ reg_t spikeAdapter::getNpcHook(reg_t spike_npc) {
     return spike_npc;
 }
 
-void spikeAdapter::excptionHook(){}
+reg_t spikeAdapter::excptionHook(void* in, uint64_t pc){
+    if (!memory_backup_.IsEmpty()) {
+        auto fetch = (insn_fetch_t*) in;
+        uint64_t npc = pc + fetch->insn.length();
+        setNpc(npc);
+        return -1;
+    }
+
+    return 0;
+}
 
 void spikeAdapter::catchDataBeforeWriteHook(addr_t addr, reg_t data, size_t len) {
     if (memory_backup_.IsEmpty() || spike_sim->get_tohost_addr() == addr) {

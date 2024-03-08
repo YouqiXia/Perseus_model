@@ -84,7 +84,7 @@ public:
 
     reg_t getNpcHook(reg_t spike_npc);
 
-    void excptionHook();
+    reg_t excptionHook(void*, uint64_t);
 
     void catchDataBeforeWriteHook(addr_t addr, reg_t data, size_t len);
 

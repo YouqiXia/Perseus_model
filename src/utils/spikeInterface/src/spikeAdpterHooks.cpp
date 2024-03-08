@@ -14,8 +14,8 @@ uint64_t getNpcHook(uint64_t spike_npc) {
     return spikeAdapter::getSpikeAdapter()->getNpcHook(spike_npc);
 }
 
-void excptionHook(){
-
+uint64_t excptionHook(void* in, uint64_t pc){
+    return spikeAdapter::getSpikeAdapter()->excptionHook(in, pc);
 }
 
 void getCsrHook(int which, uint64_t val) {
