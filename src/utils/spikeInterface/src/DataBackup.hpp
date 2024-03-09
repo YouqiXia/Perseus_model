@@ -95,11 +95,18 @@ public:
         return data_entry;
     }
 
+    bool getPredictionMiss() { return is_prediction_miss_; }
+
+    void setPredictionMiss() { is_prediction_miss_ = true; }
+
+    void clearPredictionMiss() { is_prediction_miss_ = false; }
+
 private:
     /* when starting to get the backup entry, the whole Memory backup is unstable to push into new entry */
     bool stable_ = true;
     std::vector<T> data_entry_;
     std::deque<std::vector<T>> data_backup_;
+    bool is_prediction_miss_ = false;
 };
 
 

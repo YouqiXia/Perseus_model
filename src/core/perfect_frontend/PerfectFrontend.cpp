@@ -48,7 +48,7 @@ namespace TimingModel {
     }
 
     void PerfectFrontend::RedirectPc(const TimingModel::InstPtr &inst_ptr) {
-        inst_generator_->setNpc(inst_ptr->getSpikeNpc());
+//        inst_generator_->setNpc(inst_ptr->getSpikeNpc());
     }
 
     void PerfectFrontend::ProduceInst() {
@@ -83,13 +83,13 @@ namespace TimingModel {
                     predict_npc = dinst->getPc() + 4;
                 }
 
-                if (is_speculation_) {
+                if (is_speculation_ && !inst_generator_->getPredictionMiss()) {
                     inst_generator_->makeBackup();
-
-                    inst_generator_->setNpc(predict_npc);
+//                    inst_generator_->setNpc(predict_npc);
 
                     if (predict_npc != dinst->getSpikeNpc()) {
                         dinst->setIsMissPrediction(true);
+                        inst_generator_->setPredictionMiss();
                     }
                 }
 

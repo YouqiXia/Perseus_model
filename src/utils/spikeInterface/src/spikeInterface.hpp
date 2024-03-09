@@ -108,6 +108,10 @@ public:
 
     void BranchResolve();
 
+    void setPredictionMiss();
+
+    bool getPredictionMiss();
+
 private:
     static spikeAdapter* spike_adapter_;
 

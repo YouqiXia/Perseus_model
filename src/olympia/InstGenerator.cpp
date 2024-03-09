@@ -356,10 +356,24 @@ namespace TimingModel
             return nullptr;
         }
 
-        spikeInsnPtr sinsn = spike_adapter_->spikeGetNextInst();
+        spikeInsnPtr sinsn = nullptr;
 
         // TODO: there must be a returning mechanism, otherwise there is endless loop
         while(sinsn == nullptr) {
+            if (getPredictionMiss()) {
+                InstPtr mavis_inst = mavis_facade_->makeInst(0x13, clk);
+                mavis_inst->setPC(0);
+                mavis_inst->setUniqueID(0);
+                mavis_inst->setProgramID(0);
+                mavis_inst->setIsRvcInst(false);
+                mavis_inst->setCompressedInst(0x13);
+                mavis_inst->setUncompressedInst(0x13);
+                mavis_inst->setImm(0);
+                mavis_inst->setSpikeNpc(0);
+                InsnComplete(mavis_inst);
+                return mavis_inst;
+            }
+
             if (spike_adapter_->spikeStep(1)) {
                 return nullptr;
             }
@@ -395,6 +409,14 @@ namespace TimingModel
 
     void SpikeInstGenerator::makeBackup() {
         spike_adapter_->MakeBackup();
+    }
+
+    void SpikeInstGenerator::setPredictionMiss() {
+        spike_adapter_->setPredictionMiss();
+    }
+
+    bool SpikeInstGenerator::getPredictionMiss() {
+        return spike_adapter_->getPredictionMiss();
     }
 
     bool SpikeInstGenerator::isDone() const { return spike_adapter_->is_done; }

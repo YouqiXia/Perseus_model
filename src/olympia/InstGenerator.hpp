@@ -54,6 +54,10 @@ namespace TimingModel
 
         virtual void makeBackup() {}
 
+        virtual void setPredictionMiss() {}
+
+        virtual bool getPredictionMiss() { return false; }
+
     protected:
         MavisType * mavis_facade_ = nullptr;
         uint64_t    unique_id_ = 0;
@@ -114,6 +118,10 @@ namespace TimingModel
         void setNpc(uint64_t npc) override final;
 
         void makeBackup() override final;
+
+        void setPredictionMiss() override final;
+
+        bool getPredictionMiss() override final;
 
     private:
         spikeAdapter* spike_adapter_;
