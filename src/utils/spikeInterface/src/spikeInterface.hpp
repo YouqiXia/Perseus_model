@@ -34,6 +34,7 @@
 
 #include "DataBackup.hpp"
 //from spike decode_macros.h
+
 #define invalid_pc(pc) ((pc) & 1)
 
 class spike_insn{
@@ -106,11 +107,11 @@ public:
 
     void RollBack();
 
-    void BranchResolve();
+    void BranchResolve(bool is_miss_prediction);
 
-    void setPredictionMiss();
+    void setPredictionMiss(bool is_prediction_miss) { is_prediction_miss_ = is_prediction_miss; }
 
-    bool getPredictionMiss();
+    bool getPredictionMiss() { return is_prediction_miss_; }
 
 private:
     static spikeAdapter* spike_adapter_;
@@ -142,6 +143,8 @@ private:
 
     //main variables
     cfg_t cfg;
+
+    bool is_prediction_miss_ = false;
 
     uint64_t target_addr_ = -1;
     int target_csr_ = -1;

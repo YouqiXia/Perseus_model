@@ -54,7 +54,7 @@ namespace TimingModel
 
         virtual void makeBackup() {}
 
-        virtual void setPredictionMiss() {}
+        virtual void setPredictionMiss(bool) {}
 
         virtual bool getPredictionMiss() { return false; }
 
@@ -119,9 +119,13 @@ namespace TimingModel
 
         void makeBackup() override final;
 
-        void setPredictionMiss() override final;
+        void setPredictionMiss(bool is_prediction_miss) override final {
+            spike_adapter_->setPredictionMiss(is_prediction_miss);
+        }
 
-        bool getPredictionMiss() override final;
+        bool getPredictionMiss() override final {
+            return spike_adapter_->getPredictionMiss();
+        }
 
     private:
         spikeAdapter* spike_adapter_;

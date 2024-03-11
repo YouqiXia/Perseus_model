@@ -46,9 +46,15 @@ namespace TimingModel {
         if (!credit_ || alu_queue_.empty()) {
             return;
         }
+
         auto inst_ptr = alu_queue_.front();
         ILOG(getName() << " get inst and writeback: " << inst_ptr);
         Process_(inst_ptr);
+
+        if (inst_ptr->getFuType() == FuncType::BRU) {
+            func_branch_resolve_inst_out.send(inst_ptr);
+        }
+
         FuncInstPtr func_inst_ptr {new FuncInst{getName(), inst_ptr}};
         func_following_finish_out.send(func_inst_ptr);
         alu_queue_.pop();

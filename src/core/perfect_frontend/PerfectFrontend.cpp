@@ -24,8 +24,10 @@ namespace TimingModel {
         
         backend_fetch_credit_in.registerConsumerHandler(
                 CREATE_SPARTA_HANDLER_WITH_DATA(PerfectFrontend, AcceptCredit, Credit));
+        backend_branch_resolve_inst_in.registerConsumerHandler(
+                CREATE_SPARTA_HANDLER_WITH_DATA(PerfectFrontend, BranchResolve, InstPtr));
         backend_bpu_inst_in.registerConsumerHandler(
-                CREATE_SPARTA_HANDLER_WITH_DATA(PerfectFrontend, BranchResolve, InstGroupPtr));
+                CREATE_SPARTA_HANDLER_WITH_DATA(PerfectFrontend, BranchCommit, InstGroupPtr));
         backend_redirect_pc_inst_in.registerConsumerHandler(
                 CREATE_SPARTA_HANDLER_WITH_DATA(PerfectFrontend, RedirectPc, InstPtr));
     }
@@ -38,17 +40,28 @@ namespace TimingModel {
         produce_inst_event_.schedule(sparta::Clock::Cycle(0));
     }
 
-    void PerfectFrontend::BranchResolve(const InstGroupPtr& inst_group_ptr) {
+    void PerfectFrontend::BranchResolve(const InstPtr& inst_ptr) {
         if (!is_speculation_) {
             return;
         }
+
+        /* bpu state will be change due to operation here */
+
+    }
+
+    void PerfectFrontend::BranchCommit(const TimingModel::InstGroupPtr &inst_group_ptr) {
+        if (!is_speculation_) {
+            return;
+        }
+
         for (auto inst_ptr: *inst_group_ptr) {
             inst_generator_->branchResolve(inst_ptr->getIsMissPrediction());
         }
     }
 
     void PerfectFrontend::RedirectPc(const TimingModel::InstPtr &inst_ptr) {
-//        inst_generator_->setNpc(inst_ptr->getSpikeNpc());
+        inst_generator_->setNpc(inst_ptr->getSpikeNpc());
+        inst_generator_->setPredictionMiss(false);
     }
 
     void PerfectFrontend::ProduceInst() {
@@ -83,13 +96,13 @@ namespace TimingModel {
                     predict_npc = dinst->getPc() + 4;
                 }
 
-                if (is_speculation_ && !inst_generator_->getPredictionMiss()) {
+                if (is_speculation_) {
                     inst_generator_->makeBackup();
-//                    inst_generator_->setNpc(predict_npc);
+                    inst_generator_->setNpc(predict_npc);
 
                     if (predict_npc != dinst->getSpikeNpc()) {
                         dinst->setIsMissPrediction(true);
-                        inst_generator_->setPredictionMiss();
+                        inst_generator_->setPredictionMiss(true);
                     }
                 }
 

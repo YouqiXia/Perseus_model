@@ -566,9 +566,6 @@ spikeInsnPtr spikeAdapter::spikeGetNextInst(){
 }
 
 void spikeAdapter::decodeHook(void * in, uint64_t pc, uint64_t npc){
-    if (getPredictionMiss()) {
-        return;
-    }
     //npc != PC_SERIALIZE_BEFORE
     if (unlikely(npc == 3)){
       return;
@@ -582,10 +579,6 @@ void spikeAdapter::decodeHook(void * in, uint64_t pc, uint64_t npc){
 }
 
 bool spikeAdapter::commitHook(){
-    if (getPredictionMiss()) {
-        return true;
-    }
-
     if(spike_tunnel == nullptr) {
         return true;
     }
@@ -606,7 +599,6 @@ bool spikeAdapter::commitHook(){
 }
 
 void spikeAdapter::setNpc(reg_t npc) {
-    return;
     npc_ = npc;
     spike_sim->procs[0]->get_state()->pc = npc;
 }
@@ -617,8 +609,7 @@ reg_t spikeAdapter::getNpcHook(reg_t spike_npc) {
 }
 
 reg_t spikeAdapter::excptionHook(void* in, uint64_t pc){
-    return 0;
-    if (!memory_backup_.IsEmpty() && memory_backup_.getPredictionMiss()) {
+    if (getPredictionMiss()) {
         auto fetch = (insn_fetch_t*) in;
         uint64_t npc = pc + fetch->insn.length();
         setNpc(npc);
@@ -629,7 +620,6 @@ reg_t spikeAdapter::excptionHook(void* in, uint64_t pc){
 }
 
 void spikeAdapter::catchDataBeforeWriteHook(addr_t addr, reg_t data, size_t len) {
-    return;
     if (memory_backup_.IsEmpty() || spike_sim->get_tohost_addr() == addr) {
         return;
     }
@@ -645,7 +635,6 @@ void spikeAdapter::catchDataBeforeWriteHook(addr_t addr, reg_t data, size_t len)
 }
 
 void spikeAdapter::getCsrHook(int which, reg_t val) {
-    return;
     if (csr_backup_.IsEmpty()) {
         return;
     }
@@ -664,61 +653,39 @@ void spikeAdapter::getCsrHook(int which, reg_t val) {
 void spikeAdapter::MakeBackup() {
     memory_backup_.MakeBackupEntry();
     csr_backup_.MakeBackupEntry();
-//    MakeRegBackup_();
+    MakeRegBackup_();
 }
 
 void spikeAdapter::RollBack() {
     while(!memory_backup_.IsEmpty()) {
-        memory_backup_.Pop();
+        MemoryEntry memory_entry = memory_backup_.GetBackupEntry();
+        if (memory_entry.addr == 0) {
+            continue;
+        }
+        target_addr_ = memory_entry.addr & ~ (spike_sim->chunk_align() - 1);
+        spike_sim->mem.write(memory_entry.addr, memory_entry.len, &memory_entry.data);
     }
 
     while(!csr_backup_.IsEmpty()) {
-        csr_backup_.Pop();
+        CsrEntry csr_entry = csr_backup_.GetBackupEntry();
+        if (csr_entry.which == 0) {
+            continue;
+        }
+        target_csr_ = csr_entry.which;
+        spike_sim->procs[0]->put_csr(csr_entry.which, csr_entry.val);
     }
 
-    while (!reg_backup_.empty()) {
+    RegRollBack_();
+}
+
+void spikeAdapter::BranchResolve(bool is_miss_prediction) {
+    if (is_miss_prediction) {
+        RollBack();
+    } else {
+        memory_backup_.Pop();
+        csr_backup_.Pop();
         reg_backup_.pop();
     }
-
-    memory_backup_.clearPredictionMiss();
-    csr_backup_.clearPredictionMiss();
-
-//    while(!memory_backup_.IsEmpty()) {
-//        MemoryEntry memory_entry = memory_backup_.GetBackupEntry();
-//        if (memory_entry.addr == 0) {
-//            continue;
-//        }
-//        target_addr_ = memory_entry.addr & ~ (spike_sim->chunk_align() - 1);
-//        spike_sim->mem.write(memory_entry.addr, memory_entry.len, &memory_entry.data);
-//    }
-//
-//    while(!csr_backup_.IsEmpty()) {
-//        CsrEntry csr_entry = csr_backup_.GetBackupEntry();
-//        if (csr_entry.which == 0) {
-//            continue;
-//        }
-//        target_csr_ = csr_entry.which;
-//        spike_sim->procs[0]->put_csr(csr_entry.which, csr_entry.val);
-//    }
-//    memory_backup_.clearPredictionMiss();
-//    csr_backup_.clearPredictionMiss();
-//
-//    RegRollBack_();
-}
-
-void spikeAdapter::BranchResolve() {
-    memory_backup_.Pop();
-    csr_backup_.Pop();
-//    reg_backup_.pop();
-}
-
-void spikeAdapter::setPredictionMiss() {
-    memory_backup_.setPredictionMiss();
-    csr_backup_.setPredictionMiss();
-}
-
-bool spikeAdapter::getPredictionMiss() {
-    return memory_backup_.getPredictionMiss();
 }
 
 void spikeAdapter::spikeRunStart(){
@@ -755,7 +722,7 @@ int spikeAdapter::spikeStep(uint32_t n){
           }
 
           try {
-            if (tohost != 0) {
+            if (tohost != 0 && !getPredictionMiss()) {
               command_t cmd(spike_sim->mem, tohost, fromhost_callback);
               spike_sim->device_list.handle_command(cmd);
             } else {

@@ -54,7 +54,10 @@ namespace TimingModel {
                 {&unit_port_set_, "func_rs_credit_out"};
 
         sparta::DataOutPort<FuncInstPtr> func_following_finish_out
-            {&unit_port_set_, "func_following_finish_out"};
+                {&unit_port_set_, "func_following_finish_out"};
+
+        sparta::DataOutPort<InstPtr> func_branch_resolve_inst_out
+                {&unit_port_set_, "func_branch_resolve_out"};
 
     /* events */
         sparta::SingleCycleUniqueEvent<> write_back_event
