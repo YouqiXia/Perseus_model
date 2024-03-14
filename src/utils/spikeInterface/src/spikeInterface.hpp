@@ -35,6 +35,8 @@
 #include "DataBackup.hpp"
 //from spike decode_macros.h
 
+#include <unordered_map>
+
 #define invalid_pc(pc) ((pc) & 1)
 
 class spike_insn{
@@ -73,9 +75,20 @@ class spikeAdapter{
 public:
     static spikeAdapter* getSpikeAdapter();
 
-    ~spikeAdapter(){ delete spike_adapter_; }
+    ~spikeAdapter(){
+        if (spike_adapter_ != nullptr) {
+            delete spike_sim;
+            delete spike_sim_fast;
+            delete spike_adapter_;
+            spike_sim = nullptr;
+            spike_sim_fast = nullptr;
+            spike_adapter_ = nullptr;
+        }
+    }
 
     int spikeInit(std::vector<std::string>& commandLineArgs);
+
+    int spikeFastInit(std::vector<std::string>& commandLineArgs);
 
     spikeInsnPtr spikeGetNextInst();
 
@@ -94,6 +107,8 @@ public:
     uint32_t spikeTunnelAvailCnt();
 
     int spikeStep(uint32_t n);
+
+    void spikeFastStep(uint32_t n);
 
     void spikeSingleStepFromNpc(reg_t npc);
 
@@ -120,29 +135,42 @@ private:
 
     int spikeInit_(int argc, char** argv);
 
+    int spikeFastInit_(int argc, char** argv);
+
     void setElfName_(std::string name) { elf_name = name; }
 
     int spikeRunEnd_();
 
     void MakeRegBackup_();
 
+    void CsrRollBack_();
+
+    void MemoryRollBack_();
+
     void RegRollBack_();
+
+    bool RegEqual_(state_t*, state_t*);
+
+    std::string getScalarRegStates_(const state_t* state);
 
 public:
     std::string elf_name;
     sim_t * spike_sim = nullptr;
+    sim_t * spike_sim_fast = nullptr;
 
     spikeInsnPtr spike_tunnel;
     bool is_done = false;
 
     std::queue<reg_t> fromhost_queue;
     std::function<void(reg_t)> fromhost_callback;
+    std::function<void(reg_t)> fromhost_callback_fast;
 
 private:
     sparta::utils::ValidValue<reg_t> npc_;
 
     //main variables
     cfg_t cfg;
+    cfg_t cfg_fast;
 
     bool is_prediction_miss_ = false;
 
@@ -152,7 +180,13 @@ private:
     DataBackup<CsrEntry> csr_backup_;
     std::queue<RegEntry> reg_backup_;
 
+    // Use a map to make that there is only one rollback operation for each address
+    std::unordered_map<addr_t, MemoryEntry> memory_clean_backup_map_;
+    std::unordered_map<int, CsrEntry> csr_clean_backup_map_;
+
     uint64_t spike_npc_;
+
+    uint64_t debug_reg_;
 
 };
 

@@ -344,8 +344,14 @@ namespace TimingModel
         commandLineArgs.push_back("--dtb=default.dtb");
         commandLineArgs.push_back("--log-commits");
         commandLineArgs.push_back(filename);
-
         spike_adapter_->spikeInit(commandLineArgs);
+
+        commandLineArgs.clear();
+        commandLineArgs.push_back("spike");
+        commandLineArgs.push_back("--dtb=default.dtb");
+        commandLineArgs.push_back(filename);
+        spike_adapter_->spikeFastInit(commandLineArgs);
+
         spike_adapter_->spikeRunStart();
 
     }
@@ -358,8 +364,25 @@ namespace TimingModel
 
         spikeInsnPtr sinsn = nullptr;
 
-        // TODO: there must be a returning mechanism, otherwise there is endless loop
+        int waterline = 0;
+
         while(sinsn == nullptr) {
+
+            waterline++;
+            if ((waterline > 10 && getPredictionMiss()) || fetch_inst_error_) {
+                fetch_inst_error_ = true;
+                InstPtr mavis_inst = mavis_facade_->makeInst(0x13, clk);
+                mavis_inst->setPC(0);
+                mavis_inst->setUniqueID(0);
+                mavis_inst->setProgramID(0);
+                mavis_inst->setIsRvcInst(false);
+                mavis_inst->setCompressedInst(0x13);
+                mavis_inst->setUncompressedInst(0x13);
+                mavis_inst->setImm(0);
+                mavis_inst->setSpikeNpc(0);
+                InsnComplete(mavis_inst);
+                return mavis_inst;
+            }
 
             if (spike_adapter_->spikeStep(1)) {
                 return nullptr;
@@ -370,7 +393,9 @@ namespace TimingModel
 
         InstPtr mavis_inst = mavis_facade_->makeInst(sinsn->spike_insn_.insn.bits(), clk);
         mavis_inst->setPC(sinsn->getPc());
-        mavis_inst->setUniqueID(++unique_id_);
+        if (!getPredictionMiss()) {
+            mavis_inst->setUniqueID(++unique_id_);
+        }
         mavis_inst->setProgramID(unique_id_);
         mavis_inst->setIsRvcInst(sinsn->isRvc());
         mavis_inst->setCompressedInst(sinsn->spike_insn_.insn.bits());
@@ -388,6 +413,7 @@ namespace TimingModel
 
     void SpikeInstGenerator::setNpc(uint64_t npc) {
         spike_adapter_->setNpc(npc);
+        fetch_inst_error_ = false;
     }
 
     void SpikeInstGenerator::makeBackup() {

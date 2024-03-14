@@ -25,4 +25,3 @@ void getCsrHook(int which, uint64_t val) {
 void catchDataBeforeWriteHook(uint64_t addr, uint64_t data, uint32_t len) {
     spikeAdapter::getSpikeAdapter()->catchDataBeforeWriteHook(addr, data, len);
 }
-

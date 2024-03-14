@@ -314,240 +314,481 @@ int spikeAdapter::spikeInit(std::vector<std::string>& commandLineArgs){
     }
 
     return spikeInit_(argc, argv);
-    
 }
+
+int spikeAdapter::spikeFastInit(std::vector<std::string>& commandLineArgs){
+    int argc = static_cast<int>(commandLineArgs.size());
+    char** argv = new char*[argc];
+    for (int i = 0; i < argc; ++i) {
+        argv[i] = strdup(commandLineArgs[i].c_str());
+    }
+
+    return spikeFastInit_(argc, argv);
+}
+
 int spikeAdapter::spikeInit_(int argc, char** argv)
 {
-  bool debug = false;
-  bool halted = false;
-  bool histogram = false;
-  bool log = false;
-  bool UNUSED socket = false;  // command line option -s
-  bool dump_dts = false;
-  bool dtb_enabled = true;
-  const char* kernel = NULL;
-  reg_t kernel_offset, kernel_size;
-  std::vector<device_factory_t*> plugin_device_factories;
-  std::unique_ptr<icache_sim_t> ic;
-  std::unique_ptr<dcache_sim_t> dc;
-  std::unique_ptr<cache_sim_t> l2;
-  bool log_cache = false;
-  bool log_commits = false;
-  const char *log_path = nullptr;
-  std::vector<std::function<extension_t*()>> extensions;
-  const char* initrd = NULL;
-  const char* dtb_file = NULL;
-  uint16_t rbb_port = 0;
-  bool use_rbb = false;
-  unsigned dmi_rti = 0;
-  reg_t blocksz = 64;
-  debug_module_config_t dm_config;
-  cfg_arg_t<size_t> nprocs(1);
+    bool debug = false;
+    bool halted = false;
+    bool histogram = false;
+    bool log = false;
+    bool UNUSED socket = false;  // command line option -s
+    bool dump_dts = false;
+    bool dtb_enabled = true;
+    const char* kernel = NULL;
+    reg_t kernel_offset, kernel_size;
+    std::vector<device_factory_t*> plugin_device_factories;
+    std::unique_ptr<icache_sim_t> ic;
+    std::unique_ptr<dcache_sim_t> dc;
+    std::unique_ptr<cache_sim_t> l2;
+    bool log_cache = false;
+    bool log_commits = false;
+    const char *log_path = nullptr;
+    std::vector<std::function<extension_t*()>> extensions;
+    const char* initrd = NULL;
+    const char* dtb_file = NULL;
+    uint16_t rbb_port = 0;
+    bool use_rbb = false;
+    unsigned dmi_rti = 0;
+    reg_t blocksz = 64;
+    debug_module_config_t dm_config;
+    cfg_arg_t<size_t> nprocs(1);
 
 
-  auto const device_parser = [&plugin_device_factories](const char *s) {
-    const std::string device_args(s);
-    std::vector<std::string> parsed_args;
-    std::stringstream sstr(device_args);
-    while (sstr.good()) {
-      std::string substr;
-      getline(sstr, substr, ',');
-      parsed_args.push_back(substr);
-    }
-    if (parsed_args.empty()) throw std::runtime_error("Plugin argument is empty.");
+    auto const device_parser = [&plugin_device_factories](const char *s) {
+        const std::string device_args(s);
+        std::vector<std::string> parsed_args;
+        std::stringstream sstr(device_args);
+        while (sstr.good()) {
+            std::string substr;
+            getline(sstr, substr, ',');
+            parsed_args.push_back(substr);
+        }
+        if (parsed_args.empty()) throw std::runtime_error("Plugin argument is empty.");
 
-    const std::string name = parsed_args[0];
-    if (name.empty()) throw std::runtime_error("Plugin name is empty.");
+        const std::string name = parsed_args[0];
+        if (name.empty()) throw std::runtime_error("Plugin name is empty.");
 
-    auto it = mmio_device_map().find(name);
-    if (it == mmio_device_map().end()) throw std::runtime_error("Plugin \"" + name + "\" not found in loaded extlibs.");
+        auto it = mmio_device_map().find(name);
+        if (it == mmio_device_map().end()) throw std::runtime_error("Plugin \"" + name + "\" not found in loaded extlibs.");
 
-    parsed_args.erase(parsed_args.begin());
-    it->second->set_sargs(parsed_args);
-    plugin_device_factories.push_back(it->second);
-  };
+        parsed_args.erase(parsed_args.begin());
+        it->second->set_sargs(parsed_args);
+        plugin_device_factories.push_back(it->second);
+    };
 
-  option_parser_t parser;
-  parser.help(&suggest_help);
-  parser.option('h', "help", 0, [&](const char UNUSED *s){help(0);});
-  parser.option('d', 0, 0, [&](const char UNUSED *s){debug = true;});
-  parser.option('g', 0, 0, [&](const char UNUSED *s){histogram = true;});
-  parser.option('l', 0, 0, [&](const char UNUSED *s){log = true;});
+    option_parser_t parser;
+    parser.help(&suggest_help);
+    parser.option('h', "help", 0, [&](const char UNUSED *s){help(0);});
+    parser.option('d', 0, 0, [&](const char UNUSED *s){debug = true;});
+    parser.option('g', 0, 0, [&](const char UNUSED *s){histogram = true;});
+    parser.option('l', 0, 0, [&](const char UNUSED *s){log = true;});
 #ifdef HAVE_BOOST_ASIO
-  parser.option('s', 0, 0, [&](const char UNUSED *s){socket = true;});
+    parser.option('s', 0, 0, [&](const char UNUSED *s){socket = true;});
 #endif
-  parser.option('p', 0, 1, [&](const char* s){nprocs = atoul_nonzero_safe(s);});
-  parser.option('m', 0, 1, [&](const char* s){cfg.mem_layout = parse_mem_layout(s);});
-  // I wanted to use --halted, but for some reason that doesn't work.
-  parser.option('H', 0, 0, [&](const char UNUSED *s){halted = true;});
-  parser.option(0, "rbb-port", 1, [&](const char* s){use_rbb = true; rbb_port = atoul_safe(s);});
-  parser.option(0, "pc", 1, [&](const char* s){cfg.start_pc = strtoull(s, 0, 0);});
-  parser.option(0, "hartids", 1, [&](const char* s){
-    cfg.hartids = parse_hartids(s);
-    cfg.explicit_hartids = true;
-  });
-  parser.option(0, "ic", 1, [&](const char* s){ic.reset(new icache_sim_t(s));});
-  parser.option(0, "dc", 1, [&](const char* s){dc.reset(new dcache_sim_t(s));});
-  parser.option(0, "l2", 1, [&](const char* s){l2.reset(cache_sim_t::construct(s, "L2$"));});
-  parser.option(0, "big-endian", 0, [&](const char UNUSED *s){cfg.endianness = endianness_big;});
-  parser.option(0, "misaligned", 0, [&](const char UNUSED *s){cfg.misaligned = true;});
-  parser.option(0, "log-cache-miss", 0, [&](const char UNUSED *s){log_cache = true;});
-  parser.option(0, "isa", 1, [&](const char* s){cfg.isa = s;});
-  parser.option(0, "pmpregions", 1, [&](const char* s){cfg.pmpregions = atoul_safe(s);});
-  parser.option(0, "pmpgranularity", 1, [&](const char* s){cfg.pmpgranularity = atoul_safe(s);});
-  parser.option(0, "priv", 1, [&](const char* s){cfg.priv = s;});
-  parser.option(0, "varch", 1, [&](const char* s){cfg.varch = s;});
-  parser.option(0, "device", 1, device_parser);
-  parser.option(0, "extension", 1, [&](const char* s){extensions.push_back(find_extension(s));});
-  parser.option(0, "dump-dts", 0, [&](const char UNUSED *s){dump_dts = true;});
-  parser.option(0, "disable-dtb", 0, [&](const char UNUSED *s){dtb_enabled = false;});
-  parser.option(0, "dtb", 1, [&](const char *s){dtb_file = s;});
-  parser.option(0, "kernel", 1, [&](const char* s){kernel = s;});
-  parser.option(0, "initrd", 1, [&](const char* s){initrd = s;});
-  parser.option(0, "bootargs", 1, [&](const char* s){cfg.bootargs = s;});
-  parser.option(0, "real-time-clint", 0, [&](const char UNUSED *s){cfg.real_time_clint = true;});
-  parser.option(0, "triggers", 1, [&](const char *s){cfg.trigger_count = atoul_safe(s);});
-  parser.option(0, "extlib", 1, [&](const char *s){
-    void *lib = dlopen(s, RTLD_NOW | RTLD_GLOBAL);
-    if (lib == NULL) {
-      fprintf(stderr, "Unable to load extlib '%s': %s\n", s, dlerror());
-      exit(-1);
+    parser.option('p', 0, 1, [&](const char* s){nprocs = atoul_nonzero_safe(s);});
+    parser.option('m', 0, 1, [&](const char* s){cfg.mem_layout = parse_mem_layout(s);});
+    // I wanted to use --halted, but for some reason that doesn't work.
+    parser.option('H', 0, 0, [&](const char UNUSED *s){halted = true;});
+    parser.option(0, "rbb-port", 1, [&](const char* s){use_rbb = true; rbb_port = atoul_safe(s);});
+    parser.option(0, "pc", 1, [&](const char* s){cfg.start_pc = strtoull(s, 0, 0);});
+    parser.option(0, "hartids", 1, [&](const char* s){
+        cfg.hartids = parse_hartids(s);
+        cfg.explicit_hartids = true;
+    });
+    parser.option(0, "ic", 1, [&](const char* s){ic.reset(new icache_sim_t(s));});
+    parser.option(0, "dc", 1, [&](const char* s){dc.reset(new dcache_sim_t(s));});
+    parser.option(0, "l2", 1, [&](const char* s){l2.reset(cache_sim_t::construct(s, "L2$"));});
+    parser.option(0, "big-endian", 0, [&](const char UNUSED *s){cfg.endianness = endianness_big;});
+    parser.option(0, "misaligned", 0, [&](const char UNUSED *s){cfg.misaligned = true;});
+    parser.option(0, "log-cache-miss", 0, [&](const char UNUSED *s){log_cache = true;});
+    parser.option(0, "isa", 1, [&](const char* s){cfg.isa = s;});
+    parser.option(0, "pmpregions", 1, [&](const char* s){cfg.pmpregions = atoul_safe(s);});
+    parser.option(0, "pmpgranularity", 1, [&](const char* s){cfg.pmpgranularity = atoul_safe(s);});
+    parser.option(0, "priv", 1, [&](const char* s){cfg.priv = s;});
+    parser.option(0, "varch", 1, [&](const char* s){cfg.varch = s;});
+    parser.option(0, "device", 1, device_parser);
+    parser.option(0, "extension", 1, [&](const char* s){extensions.push_back(find_extension(s));});
+    parser.option(0, "dump-dts", 0, [&](const char UNUSED *s){dump_dts = true;});
+    parser.option(0, "disable-dtb", 0, [&](const char UNUSED *s){dtb_enabled = false;});
+    parser.option(0, "dtb", 1, [&](const char *s){dtb_file = s;});
+    parser.option(0, "kernel", 1, [&](const char* s){kernel = s;});
+    parser.option(0, "initrd", 1, [&](const char* s){initrd = s;});
+    parser.option(0, "bootargs", 1, [&](const char* s){cfg.bootargs = s;});
+    parser.option(0, "real-time-clint", 0, [&](const char UNUSED *s){cfg.real_time_clint = true;});
+    parser.option(0, "triggers", 1, [&](const char *s){cfg.trigger_count = atoul_safe(s);});
+    parser.option(0, "extlib", 1, [&](const char *s){
+        void *lib = dlopen(s, RTLD_NOW | RTLD_GLOBAL);
+        if (lib == NULL) {
+            fprintf(stderr, "Unable to load extlib '%s': %s\n", s, dlerror());
+            exit(-1);
+        }
+    });
+    parser.option(0, "dm-progsize", 1,
+                  [&](const char* s){dm_config.progbufsize = atoul_safe(s);});
+    parser.option(0, "dm-no-impebreak", 0,
+                  [&](const char UNUSED *s){dm_config.support_impebreak = false;});
+    parser.option(0, "dm-sba", 1,
+                  [&](const char* s){dm_config.max_sba_data_width = atoul_safe(s);});
+    parser.option(0, "dm-auth", 0,
+                  [&](const char UNUSED *s){dm_config.require_authentication = true;});
+    parser.option(0, "dmi-rti", 1,
+                  [&](const char* s){dmi_rti = atoul_safe(s);});
+    parser.option(0, "dm-abstract-rti", 1,
+                  [&](const char* s){dm_config.abstract_rti = atoul_safe(s);});
+    parser.option(0, "dm-no-hasel", 0,
+                  [&](const char UNUSED *s){dm_config.support_hasel = false;});
+    parser.option(0, "dm-no-abstract-csr", 0,
+                  [&](const char UNUSED *s){dm_config.support_abstract_csr_access = false;});
+    parser.option(0, "dm-no-abstract-fpr", 0,
+                  [&](const char UNUSED *s){dm_config.support_abstract_fpr_access = false;});
+    parser.option(0, "dm-no-halt-groups", 0,
+                  [&](const char UNUSED *s){dm_config.support_haltgroups = false;});
+    parser.option(0, "log-commits", 0,
+                  [&](const char UNUSED *s){log_commits = true;});
+    parser.option(0, "log", 1,
+                  [&](const char* s){log_path = s;});
+    FILE *cmd_file = NULL;
+    parser.option(0, "debug-cmd", 1, [&](const char* s){
+        if ((cmd_file = fopen(s, "r"))==NULL) {
+            fprintf(stderr, "Unable to open command file '%s'\n", s);
+            exit(-1);
+        }
+    });
+    parser.option(0, "blocksz", 1, [&](const char* s){
+        blocksz = strtoull(s, 0, 0);
+        const unsigned min_blocksz = 16;
+        const unsigned max_blocksz = PGSIZE;
+        if (blocksz < min_blocksz || blocksz > max_blocksz || ((blocksz & (blocksz - 1))) != 0) {
+            fprintf(stderr, "--blocksz must be a power of 2 between %u and %u\n",
+                    min_blocksz, max_blocksz);
+            exit(-1);
+        }
+    });
+
+    auto argv1 = parser.parse(argv);
+    std::vector<std::string> htif_args(argv1, (const char*const*)argv + argc);
+
+    if (!*argv1)
+        help();
+
+    std::vector<std::pair<reg_t, abstract_mem_t*>> mems =
+            make_mems(cfg.mem_layout);
+
+    if (kernel && check_file_exists(kernel)) {
+        const char *isa = cfg.isa;
+        kernel_size = get_file_size(kernel);
+        if (isa[2] == '6' && isa[3] == '4')
+            kernel_offset = 0x200000;
+        else
+            kernel_offset = 0x400000;
+        for (auto& m : mems) {
+            if (kernel_size && (kernel_offset + kernel_size) < m.second->size()) {
+                read_file_bytes(kernel, 0, m.second, kernel_offset, kernel_size);
+                break;
+            }
+        }
     }
-  });
-  parser.option(0, "dm-progsize", 1,
-      [&](const char* s){dm_config.progbufsize = atoul_safe(s);});
-  parser.option(0, "dm-no-impebreak", 0,
-      [&](const char UNUSED *s){dm_config.support_impebreak = false;});
-  parser.option(0, "dm-sba", 1,
-      [&](const char* s){dm_config.max_sba_data_width = atoul_safe(s);});
-  parser.option(0, "dm-auth", 0,
-      [&](const char UNUSED *s){dm_config.require_authentication = true;});
-  parser.option(0, "dmi-rti", 1,
-      [&](const char* s){dmi_rti = atoul_safe(s);});
-  parser.option(0, "dm-abstract-rti", 1,
-      [&](const char* s){dm_config.abstract_rti = atoul_safe(s);});
-  parser.option(0, "dm-no-hasel", 0,
-      [&](const char UNUSED *s){dm_config.support_hasel = false;});
-  parser.option(0, "dm-no-abstract-csr", 0,
-      [&](const char UNUSED *s){dm_config.support_abstract_csr_access = false;});
-  parser.option(0, "dm-no-abstract-fpr", 0,
-      [&](const char UNUSED *s){dm_config.support_abstract_fpr_access = false;});
-  parser.option(0, "dm-no-halt-groups", 0,
-      [&](const char UNUSED *s){dm_config.support_haltgroups = false;});
-  parser.option(0, "log-commits", 0,
-                [&](const char UNUSED *s){log_commits = true;});
-  parser.option(0, "log", 1,
-                [&](const char* s){log_path = s;});
-  FILE *cmd_file = NULL;
-  parser.option(0, "debug-cmd", 1, [&](const char* s){
-     if ((cmd_file = fopen(s, "r"))==NULL) {
-        fprintf(stderr, "Unable to open command file '%s'\n", s);
-        exit(-1);
-     }
-  });
-  parser.option(0, "blocksz", 1, [&](const char* s){
-    blocksz = strtoull(s, 0, 0);
-    const unsigned min_blocksz = 16;
-    const unsigned max_blocksz = PGSIZE;
-    if (blocksz < min_blocksz || blocksz > max_blocksz || ((blocksz & (blocksz - 1))) != 0) {
-      fprintf(stderr, "--blocksz must be a power of 2 between %u and %u\n",
-        min_blocksz, max_blocksz);
-      exit(-1);
+
+    if (initrd && check_file_exists(initrd)) {
+        size_t initrd_size = get_file_size(initrd);
+        for (auto& m : mems) {
+            if (initrd_size && (initrd_size + 0x1000) < m.second->size()) {
+                reg_t initrd_end = m.first + m.second->size() - 0x1000;
+                reg_t initrd_start = initrd_end - initrd_size;
+                cfg.initrd_bounds = std::make_pair(initrd_start, initrd_end);
+                read_file_bytes(initrd, 0, m.second, initrd_start - m.first, initrd_size);
+                break;
+            }
+        }
     }
-  });
 
-  auto argv1 = parser.parse(argv);
-  std::vector<std::string> htif_args(argv1, (const char*const*)argv + argc);
-
-  if (!*argv1)
-    help();
-
-  std::vector<std::pair<reg_t, abstract_mem_t*>> mems =
-      make_mems(cfg.mem_layout);
-
-  if (kernel && check_file_exists(kernel)) {
-    const char *isa = cfg.isa;
-    kernel_size = get_file_size(kernel);
-    if (isa[2] == '6' && isa[3] == '4')
-      kernel_offset = 0x200000;
-    else
-      kernel_offset = 0x400000;
-    for (auto& m : mems) {
-      if (kernel_size && (kernel_offset + kernel_size) < m.second->size()) {
-         read_file_bytes(kernel, 0, m.second, kernel_offset, kernel_size);
-         break;
-      }
+    if (cfg.explicit_hartids) {
+        if (nprocs.overridden() && (nprocs() != cfg.nprocs())) {
+            std::cerr << "Number of specified hartids ("
+                      << cfg.nprocs()
+                      << ") doesn't match specified number of processors ("
+                      << nprocs() << ").\n";
+            exit(1);
+        }
+    } else {
+        // Set default set of hartids based on nprocs, but don't set the
+        // explicit_hartids flag (which means that downstream code can know that
+        // we've only set the number of harts, not explicitly chosen their IDs).
+        std::vector<size_t> default_hartids;
+        default_hartids.reserve(nprocs());
+        for (size_t i = 0; i < nprocs(); ++i) {
+            default_hartids.push_back(i);
+        }
+        cfg.hartids = default_hartids;
     }
-  }
 
-  if (initrd && check_file_exists(initrd)) {
-    size_t initrd_size = get_file_size(initrd);
-    for (auto& m : mems) {
-      if (initrd_size && (initrd_size + 0x1000) < m.second->size()) {
-         reg_t initrd_end = m.first + m.second->size() - 0x1000;
-         reg_t initrd_start = initrd_end - initrd_size;
-         cfg.initrd_bounds = std::make_pair(initrd_start, initrd_end);
-         read_file_bytes(initrd, 0, m.second, initrd_start - m.first, initrd_size);
-         break;
-      }
+    spike_sim = new sim_t(&cfg, halted,
+                          mems, plugin_device_factories, htif_args, dm_config, log_path, dtb_enabled, dtb_file,
+                          socket,cmd_file);
+    // std::unique_ptr<remote_bitbang_t> remote_bitbang((remote_bitbang_t *) NULL);
+    // std::unique_ptr<jtag_dtm_t> jtag_dtm(
+    //     new jtag_dtm_t(&s.debug_module, dmi_rti));
+    // if (use_rbb) {
+    //   remote_bitbang.reset(new remote_bitbang_t(rbb_port, &(*jtag_dtm)));
+    //   s.set_remote_bitbang(&(*remote_bitbang));
+    // }
+
+    if (dump_dts) {
+        printf("%s", spike_sim->get_dts());
+        return 0;
     }
-  }
 
-  if (cfg.explicit_hartids) {
-    if (nprocs.overridden() && (nprocs() != cfg.nprocs())) {
-      std::cerr << "Number of specified hartids ("
-                << cfg.nprocs()
-                << ") doesn't match specified number of processors ("
-                << nprocs() << ").\n";
-      exit(1);
+    if (ic && l2) ic->set_miss_handler(&*l2);
+    if (dc && l2) dc->set_miss_handler(&*l2);
+    if (ic) ic->set_log(log_cache);
+    if (dc) dc->set_log(log_cache);
+    for (size_t i = 0; i < cfg.nprocs(); i++)
+    {
+        if (ic) spike_sim->get_core(i)->get_mmu()->register_memtracer(&*ic);
+        if (dc) spike_sim->get_core(i)->get_mmu()->register_memtracer(&*dc);
+        for (auto e : extensions)
+            spike_sim->get_core(i)->register_extension(e());
+        spike_sim->get_core(i)->get_mmu()->set_cache_blocksz(blocksz);
     }
-  } else {
-    // Set default set of hartids based on nprocs, but don't set the
-    // explicit_hartids flag (which means that downstream code can know that
-    // we've only set the number of harts, not explicitly chosen their IDs).
-    std::vector<size_t> default_hartids;
-    default_hartids.reserve(nprocs());
-    for (size_t i = 0; i < nprocs(); ++i) {
-      default_hartids.push_back(i);
-    }
-    cfg.hartids = default_hartids;
-  }
 
-  spike_sim = new sim_t(&cfg, halted,
-      mems, plugin_device_factories, htif_args, dm_config, log_path, dtb_enabled, dtb_file,
-      socket,cmd_file);
-  // std::unique_ptr<remote_bitbang_t> remote_bitbang((remote_bitbang_t *) NULL);
-  // std::unique_ptr<jtag_dtm_t> jtag_dtm(
-  //     new jtag_dtm_t(&s.debug_module, dmi_rti));
-  // if (use_rbb) {
-  //   remote_bitbang.reset(new remote_bitbang_t(rbb_port, &(*jtag_dtm)));
-  //   s.set_remote_bitbang(&(*remote_bitbang));
-  // }
-
-  if (dump_dts) {
-    printf("%s", spike_sim->get_dts());
+    spike_sim->set_debug(debug);
+    spike_sim->configure_log(log, log_commits);
+    spike_sim->set_histogram(histogram);
     return 0;
-  }
-
-  if (ic && l2) ic->set_miss_handler(&*l2);
-  if (dc && l2) dc->set_miss_handler(&*l2);
-  if (ic) ic->set_log(log_cache);
-  if (dc) dc->set_log(log_cache);
-  for (size_t i = 0; i < cfg.nprocs(); i++)
-  {
-    if (ic) spike_sim->get_core(i)->get_mmu()->register_memtracer(&*ic);
-    if (dc) spike_sim->get_core(i)->get_mmu()->register_memtracer(&*dc);
-    for (auto e : extensions)
-      spike_sim->get_core(i)->register_extension(e());
-    spike_sim->get_core(i)->get_mmu()->set_cache_blocksz(blocksz);
-  }
-
-  spike_sim->set_debug(debug);
-  spike_sim->configure_log(log, log_commits);
-  spike_sim->set_histogram(histogram);
-  return 0;
 }
 
+int spikeAdapter::spikeFastInit_(int argc, char** argv)
+{
+    bool debug = false;
+    bool halted = false;
+    bool histogram = false;
+    bool log = false;
+    bool UNUSED socket = false;  // command line option -s
+    bool dump_dts = false;
+    bool dtb_enabled = true;
+    const char* kernel = NULL;
+    reg_t kernel_offset, kernel_size;
+    std::vector<device_factory_t*> plugin_device_factories;
+    std::unique_ptr<icache_sim_t> ic;
+    std::unique_ptr<dcache_sim_t> dc;
+    std::unique_ptr<cache_sim_t> l2;
+    bool log_cache = false;
+    bool log_commits = false;
+    const char *log_path = nullptr;
+    std::vector<std::function<extension_t*()>> extensions;
+    const char* initrd = NULL;
+    const char* dtb_file = NULL;
+    uint16_t rbb_port = 0;
+    bool use_rbb = false;
+    unsigned dmi_rti = 0;
+    reg_t blocksz = 64;
+    debug_module_config_t dm_config;
+    cfg_arg_t<size_t> nprocs(1);
+
+
+    auto const device_parser = [&plugin_device_factories](const char *s) {
+        const std::string device_args(s);
+        std::vector<std::string> parsed_args;
+        std::stringstream sstr(device_args);
+        while (sstr.good()) {
+            std::string substr;
+            getline(sstr, substr, ',');
+            parsed_args.push_back(substr);
+        }
+        if (parsed_args.empty()) throw std::runtime_error("Plugin argument is empty.");
+
+        const std::string name = parsed_args[0];
+        if (name.empty()) throw std::runtime_error("Plugin name is empty.");
+
+        auto it = mmio_device_map().find(name);
+        if (it == mmio_device_map().end()) throw std::runtime_error("Plugin \"" + name + "\" not found in loaded extlibs.");
+
+        parsed_args.erase(parsed_args.begin());
+        it->second->set_sargs(parsed_args);
+        plugin_device_factories.push_back(it->second);
+    };
+
+    option_parser_t parser;
+    parser.help(&suggest_help);
+    parser.option('h', "help", 0, [&](const char UNUSED *s){help(0);});
+    parser.option('d', 0, 0, [&](const char UNUSED *s){debug = true;});
+    parser.option('g', 0, 0, [&](const char UNUSED *s){histogram = true;});
+    parser.option('l', 0, 0, [&](const char UNUSED *s){log = true;});
+#ifdef HAVE_BOOST_ASIO
+    parser.option('s', 0, 0, [&](const char UNUSED *s){socket = true;});
+#endif
+    parser.option('p', 0, 1, [&](const char* s){nprocs = atoul_nonzero_safe(s);});
+    parser.option('m', 0, 1, [&](const char* s){cfg_fast.mem_layout = parse_mem_layout(s);});
+    // I wanted to use --halted, but for some reason that doesn't work.
+    parser.option('H', 0, 0, [&](const char UNUSED *s){halted = true;});
+    parser.option(0, "rbb-port", 1, [&](const char* s){use_rbb = true; rbb_port = atoul_safe(s);});
+    parser.option(0, "pc", 1, [&](const char* s){cfg_fast.start_pc = strtoull(s, 0, 0);});
+    parser.option(0, "hartids", 1, [&](const char* s){
+        cfg_fast.hartids = parse_hartids(s);
+        cfg_fast.explicit_hartids = true;
+    });
+    parser.option(0, "ic", 1, [&](const char* s){ic.reset(new icache_sim_t(s));});
+    parser.option(0, "dc", 1, [&](const char* s){dc.reset(new dcache_sim_t(s));});
+    parser.option(0, "l2", 1, [&](const char* s){l2.reset(cache_sim_t::construct(s, "L2$"));});
+    parser.option(0, "big-endian", 0, [&](const char UNUSED *s){cfg_fast.endianness = endianness_big;});
+    parser.option(0, "misaligned", 0, [&](const char UNUSED *s){cfg_fast.misaligned = true;});
+    parser.option(0, "log-cache-miss", 0, [&](const char UNUSED *s){log_cache = true;});
+    parser.option(0, "isa", 1, [&](const char* s){cfg_fast.isa = s;});
+    parser.option(0, "pmpregions", 1, [&](const char* s){cfg_fast.pmpregions = atoul_safe(s);});
+    parser.option(0, "pmpgranularity", 1, [&](const char* s){cfg_fast.pmpgranularity = atoul_safe(s);});
+    parser.option(0, "priv", 1, [&](const char* s){cfg_fast.priv = s;});
+    parser.option(0, "varch", 1, [&](const char* s){cfg_fast.varch = s;});
+    parser.option(0, "device", 1, device_parser);
+    parser.option(0, "extension", 1, [&](const char* s){extensions.push_back(find_extension(s));});
+    parser.option(0, "dump-dts", 0, [&](const char UNUSED *s){dump_dts = true;});
+    parser.option(0, "disable-dtb", 0, [&](const char UNUSED *s){dtb_enabled = false;});
+    parser.option(0, "dtb", 1, [&](const char *s){dtb_file = s;});
+    parser.option(0, "kernel", 1, [&](const char* s){kernel = s;});
+    parser.option(0, "initrd", 1, [&](const char* s){initrd = s;});
+    parser.option(0, "bootargs", 1, [&](const char* s){cfg_fast.bootargs = s;});
+    parser.option(0, "real-time-clint", 0, [&](const char UNUSED *s){cfg_fast.real_time_clint = true;});
+    parser.option(0, "triggers", 1, [&](const char *s){cfg_fast.trigger_count = atoul_safe(s);});
+    parser.option(0, "extlib", 1, [&](const char *s){
+        void *lib = dlopen(s, RTLD_NOW | RTLD_GLOBAL);
+        if (lib == NULL) {
+            fprintf(stderr, "Unable to load extlib '%s': %s\n", s, dlerror());
+            exit(-1);
+        }
+    });
+    parser.option(0, "dm-progsize", 1,
+                  [&](const char* s){dm_config.progbufsize = atoul_safe(s);});
+    parser.option(0, "dm-no-impebreak", 0,
+                  [&](const char UNUSED *s){dm_config.support_impebreak = false;});
+    parser.option(0, "dm-sba", 1,
+                  [&](const char* s){dm_config.max_sba_data_width = atoul_safe(s);});
+    parser.option(0, "dm-auth", 0,
+                  [&](const char UNUSED *s){dm_config.require_authentication = true;});
+    parser.option(0, "dmi-rti", 1,
+                  [&](const char* s){dmi_rti = atoul_safe(s);});
+    parser.option(0, "dm-abstract-rti", 1,
+                  [&](const char* s){dm_config.abstract_rti = atoul_safe(s);});
+    parser.option(0, "dm-no-hasel", 0,
+                  [&](const char UNUSED *s){dm_config.support_hasel = false;});
+    parser.option(0, "dm-no-abstract-csr", 0,
+                  [&](const char UNUSED *s){dm_config.support_abstract_csr_access = false;});
+    parser.option(0, "dm-no-abstract-fpr", 0,
+                  [&](const char UNUSED *s){dm_config.support_abstract_fpr_access = false;});
+    parser.option(0, "dm-no-halt-groups", 0,
+                  [&](const char UNUSED *s){dm_config.support_haltgroups = false;});
+    parser.option(0, "log-commits", 0,
+                  [&](const char UNUSED *s){log_commits = true;});
+    parser.option(0, "log", 1,
+                  [&](const char* s){log_path = s;});
+    FILE *cmd_file = NULL;
+    parser.option(0, "debug-cmd", 1, [&](const char* s){
+        if ((cmd_file = fopen(s, "r"))==NULL) {
+            fprintf(stderr, "Unable to open command file '%s'\n", s);
+            exit(-1);
+        }
+    });
+    parser.option(0, "blocksz", 1, [&](const char* s){
+        blocksz = strtoull(s, 0, 0);
+        const unsigned min_blocksz = 16;
+        const unsigned max_blocksz = PGSIZE;
+        if (blocksz < min_blocksz || blocksz > max_blocksz || ((blocksz & (blocksz - 1))) != 0) {
+            fprintf(stderr, "--blocksz must be a power of 2 between %u and %u\n",
+                    min_blocksz, max_blocksz);
+            exit(-1);
+        }
+    });
+
+    auto argv1 = parser.parse(argv);
+    std::vector<std::string> htif_args(argv1, (const char*const*)argv + argc);
+
+    if (!*argv1)
+        help();
+
+    std::vector<std::pair<reg_t, abstract_mem_t*>> mems =
+            make_mems(cfg_fast.mem_layout);
+
+    if (kernel && check_file_exists(kernel)) {
+        const char *isa = cfg_fast.isa;
+        kernel_size = get_file_size(kernel);
+        if (isa[2] == '6' && isa[3] == '4')
+            kernel_offset = 0x200000;
+        else
+            kernel_offset = 0x400000;
+        for (auto& m : mems) {
+            if (kernel_size && (kernel_offset + kernel_size) < m.second->size()) {
+                read_file_bytes(kernel, 0, m.second, kernel_offset, kernel_size);
+                break;
+            }
+        }
+    }
+
+    if (initrd && check_file_exists(initrd)) {
+        size_t initrd_size = get_file_size(initrd);
+        for (auto& m : mems) {
+            if (initrd_size && (initrd_size + 0x1000) < m.second->size()) {
+                reg_t initrd_end = m.first + m.second->size() - 0x1000;
+                reg_t initrd_start = initrd_end - initrd_size;
+                cfg_fast.initrd_bounds = std::make_pair(initrd_start, initrd_end);
+                read_file_bytes(initrd, 0, m.second, initrd_start - m.first, initrd_size);
+                break;
+            }
+        }
+    }
+
+    if (cfg_fast.explicit_hartids) {
+        if (nprocs.overridden() && (nprocs() != cfg_fast.nprocs())) {
+            std::cerr << "Number of specified hartids ("
+                      << cfg_fast.nprocs()
+                      << ") doesn't match specified number of processors ("
+                      << nprocs() << ").\n";
+            exit(1);
+        }
+    } else {
+        // Set default set of hartids based on nprocs, but don't set the
+        // explicit_hartids flag (which means that downstream code can know that
+        // we've only set the number of harts, not explicitly chosen their IDs).
+        std::vector<size_t> default_hartids;
+        default_hartids.reserve(nprocs());
+        for (size_t i = 0; i < nprocs(); ++i) {
+            default_hartids.push_back(i);
+        }
+        cfg_fast.hartids = default_hartids;
+    }
+
+    spike_sim_fast = new sim_t(&cfg_fast, halted,
+                          mems, plugin_device_factories, htif_args, dm_config, log_path, dtb_enabled, dtb_file,
+                          socket,cmd_file);
+    // std::unique_ptr<remote_bitbang_t> remote_bitbang((remote_bitbang_t *) NULL);
+    // std::unique_ptr<jtag_dtm_t> jtag_dtm(
+    //     new jtag_dtm_t(&s.debug_module, dmi_rti));
+    // if (use_rbb) {
+    //   remote_bitbang.reset(new remote_bitbang_t(rbb_port, &(*jtag_dtm)));
+    //   s.set_remote_bitbang(&(*remote_bitbang));
+    // }
+
+    if (dump_dts) {
+        printf("%s", spike_sim_fast->get_dts());
+        return 0;
+    }
+
+    if (ic && l2) ic->set_miss_handler(&*l2);
+    if (dc && l2) dc->set_miss_handler(&*l2);
+    if (ic) ic->set_log(log_cache);
+    if (dc) dc->set_log(log_cache);
+    for (size_t i = 0; i < cfg_fast.nprocs(); i++)
+    {
+        if (ic) spike_sim_fast->get_core(i)->get_mmu()->register_memtracer(&*ic);
+        if (dc) spike_sim_fast->get_core(i)->get_mmu()->register_memtracer(&*dc);
+        for (auto e : extensions)
+            spike_sim_fast->get_core(i)->register_extension(e());
+        spike_sim_fast->get_core(i)->get_mmu()->set_cache_blocksz(blocksz);
+    }
+
+    spike_sim_fast->set_debug(debug);
+    spike_sim_fast->configure_log(log, log_commits);
+    spike_sim_fast->set_histogram(histogram);
+    return 0;
+}
 
 spikeAdapter* spikeAdapter::spike_adapter_ = nullptr;
 
@@ -620,18 +861,65 @@ reg_t spikeAdapter::excptionHook(void* in, uint64_t pc){
 }
 
 void spikeAdapter::catchDataBeforeWriteHook(addr_t addr, reg_t data, size_t len) {
-    if (memory_backup_.IsEmpty() || spike_sim->get_tohost_addr() == addr) {
+    if (spike_sim->get_tohost_addr() == addr ||
+        spike_sim->get_tohost_addr() + 0x4 == addr ||
+        spike_sim->get_fromhost_addr() == addr) {
         return;
     }
 
-    if (target_addr_ == addr) {
-        target_addr_ = -1;
-        return;
-    }
+    uint64_t asset_cmp_data = 0;
 
-    uint64_t bytes;
-    spike_sim->mem.read(addr, len, &bytes);
-    memory_backup_.Push(MemoryEntry{addr, bytes, len});
+    if (!getPredictionMiss()) {
+        switch (len) {
+            case (1):
+                asset_cmp_data = spike_sim_fast->procs[0]->get_mmu()->load<uint8_t>(addr);
+                break;
+            case (2):
+                asset_cmp_data = spike_sim_fast->procs[0]->get_mmu()->load<uint16_t>(addr);
+                break;
+            case (4):
+                asset_cmp_data = spike_sim_fast->procs[0]->get_mmu()->load<uint32_t>(addr);
+                break;
+            case (8):
+                asset_cmp_data = spike_sim_fast->procs[0]->get_mmu()->load<uint64_t>(addr);
+                break;
+            default:
+                assert(false);
+        }
+        sparta_assert(asset_cmp_data == data, "pc is:  " << spike_sim->procs[0]->get_state()->pc <<
+                                              ", addr is: " << addr <<
+                                              ", data is: " << data <<
+                                              ", len is: " << len << "\n" <<
+                                              "real data is: " << asset_cmp_data
+                                              );
+    } else {
+        if (memory_backup_.IsEmpty()) {
+            return;
+        }
+
+        try {
+            uint64_t bytes = 0;
+            switch (len) {
+                case (1):
+                    bytes = spike_sim->procs[0]->get_mmu()->load<uint8_t>(addr);
+                    break;
+                case (2):
+                    bytes = spike_sim->procs[0]->get_mmu()->load<uint16_t>(addr);
+                    break;
+                case (4):
+                    bytes = spike_sim->procs[0]->get_mmu()->load<uint32_t>(addr);
+                    break;
+                case (8):
+                    bytes = spike_sim->procs[0]->get_mmu()->load<uint64_t>(addr);
+                    break;
+                default:
+                    assert(false);
+            }
+            memory_backup_.Push(MemoryEntry{addr, bytes, len});
+        } catch(...) {
+            return;
+        }
+    }
 }
 
 void spikeAdapter::getCsrHook(int which, reg_t val) {
@@ -657,23 +945,9 @@ void spikeAdapter::MakeBackup() {
 }
 
 void spikeAdapter::RollBack() {
-    while(!memory_backup_.IsEmpty()) {
-        MemoryEntry memory_entry = memory_backup_.GetBackupEntry();
-        if (memory_entry.addr == 0) {
-            continue;
-        }
-        target_addr_ = memory_entry.addr & ~ (spike_sim->chunk_align() - 1);
-        spike_sim->mem.write(memory_entry.addr, memory_entry.len, &memory_entry.data);
-    }
+    MemoryRollBack_();
 
-    while(!csr_backup_.IsEmpty()) {
-        CsrEntry csr_entry = csr_backup_.GetBackupEntry();
-        if (csr_entry.which == 0) {
-            continue;
-        }
-        target_csr_ = csr_entry.which;
-        spike_sim->procs[0]->put_csr(csr_entry.which, csr_entry.val);
-    }
+    CsrRollBack_();
 
     RegRollBack_();
 }
@@ -690,12 +964,15 @@ void spikeAdapter::BranchResolve(bool is_miss_prediction) {
 
 void spikeAdapter::spikeRunStart(){
     spike_sim->start();
+    spike_sim_fast->start();
 
     fromhost_callback = [this](uint64_t x) { fromhost_queue.push(x); };
+    fromhost_callback_fast = [this](uint64_t x) {};
 }
 
 int spikeAdapter::spikeRunEnd_(){
     spike_sim->stop();
+    spike_sim_fast->stop();
     is_done = true;
     return spike_sim->exit_code();
 }
@@ -723,10 +1000,24 @@ int spikeAdapter::spikeStep(uint32_t n){
 
           try {
             if (tohost != 0 && !getPredictionMiss()) {
-              command_t cmd(spike_sim->mem, tohost, fromhost_callback);
-              spike_sim->device_list.handle_command(cmd);
+                command_t cmd(spike_sim->mem, tohost, fromhost_callback);
+                command_t cmd_fast(spike_sim_fast->mem, tohost, fromhost_callback_fast);
+                spike_sim->device_list.handle_command(cmd);
+                spike_sim_fast->device_list.handle_command(cmd_fast);
             } else {
-              spike_sim->idle();
+                if (!getPredictionMiss()) {
+                    spike_sim_fast->idle();
+                }
+                spike_sim->idle();
+                if (!getPredictionMiss()) {
+                    assert(spike_sim->procs[0]->get_state()->pc ==
+                           spike_sim_fast->procs[0]->get_state()->pc);
+
+                    sparta_assert(RegEqual_(spike_sim->procs[0]->get_state(), spike_sim_fast->procs[0]->get_state()),
+                                  "pc is: " << spike_sim->procs[0]->get_state()->pc << "\n" <<
+                                  getScalarRegStates_(spike_sim->procs[0]->get_state()) <<
+                                  getScalarRegStates_(spike_sim_fast->procs[0]->get_state()));
+                }
             }
 
             spike_sim->device_list.tick();
@@ -738,14 +1029,15 @@ int spikeAdapter::spikeStep(uint32_t n){
 
           try {
             if (!fromhost_queue.empty() && !spike_sim->mem.read_uint64(spike_sim->get_fromhost_addr())) {
-              spike_sim->mem.write_uint64(spike_sim->get_fromhost_addr(), spike_sim->to_target(fromhost_queue.front()));
-              fromhost_queue.pop();
+                spike_sim->mem.write_uint64(spike_sim->get_fromhost_addr(), spike_sim->to_target(fromhost_queue.front()));
+                spike_sim_fast->mem.write_uint64(spike_sim_fast->get_fromhost_addr(), spike_sim_fast->to_target(fromhost_queue.front()));
+                fromhost_queue.pop();
             }
           } catch (mem_trap_t& t) {
             bad_address("accessing fromhost", t.get_tval());
           }
       }
-      
+
       if (spike_sim->exitcode != 0){
         spikeRunEnd_();
         return -1;
@@ -777,8 +1069,17 @@ void spikeAdapter::MakeRegBackup_() {
     reg_backup_.push(reg_entry);
 }
 
+std::string spikeAdapter::getScalarRegStates_(const state_t* state) {
+    std::string reg_states = "";
+    for (int i = 0; i < 32; i++) {
+        reg_states += "x" + std::to_string(i) + " = " + std::to_string(state->XPR[i]) + "\n";
+    }
+    return reg_states;
+}
+
 void spikeAdapter::RegRollBack_() {
     state_t* state_tmp = spike_sim->procs[0]->get_state();
+    state_t* state_fast_tmp = spike_sim_fast->procs[0]->get_state();
     RegEntry reg_entry = reg_backup_.front();
     state_tmp->pc = npc_;
     state_tmp->XPR              = reg_entry.XPR           ;
@@ -797,7 +1098,102 @@ void spikeAdapter::RegRollBack_() {
     state_tmp->last_inst_priv   = reg_entry.last_inst_priv;
     state_tmp->last_inst_xlen   = reg_entry.last_inst_xlen;
     state_tmp->last_inst_flen   = reg_entry.last_inst_flen;
+    assert(RegEqual_(state_tmp, state_fast_tmp));
     while (!reg_backup_.empty()) {
         reg_backup_.pop();
     }
+}
+
+bool spikeAdapter::RegEqual_(state_t* state_1, state_t* state_2) {
+    bool reg_equal = true;
+    for (int i = 0; i < 32; i++) { // TODO: ERROR when register is not equal to 32
+        if (state_1->XPR[i] != state_2->XPR[i] ||
+            state_1->FPR[i].v[0] != state_2->FPR[i].v[0] ||
+            state_1->FPR[i].v[1] != state_2->FPR[i].v[1]) {
+            reg_equal = false;
+            break;
+        }
+    }
+
+    bool prv_equal          =       state_1->prv              == state_2->prv           ;
+    bool prev_prv_equal     =       state_1->prev_prv         == state_2->prev_prv      ;
+    bool prv_changed_equal  =       state_1->prv_changed      == state_2->prv_changed   ;
+    bool v_changed_equal    =       state_1->v_changed        == state_2->v_changed     ;
+    bool v_equal            =       state_1->v                == state_2->v             ;
+    bool prev_v_equal       =       state_1->prev_v           == state_2->prev_v        ;
+    bool debug_mode_equal   =       state_1->debug_mode       == state_2->debug_mode    ;
+    bool serialized_equal   =       state_1->serialized       == state_2->serialized    ;
+
+    return  prv_equal && prev_prv_equal && prv_changed_equal && v_changed_equal && v_equal &&
+            prev_v_equal && debug_mode_equal && serialized_equal && reg_equal;
+}
+
+void spikeAdapter::MemoryRollBack_() {
+    while(!memory_backup_.IsEmpty()) {
+        MemoryEntry memory_entry = memory_backup_.GetBackupEntry();
+        if (memory_entry.addr == 0) {
+            continue;
+        }
+        uint64_t addr_offset = memory_entry.addr % 8;
+        memory_entry.data = memory_entry.data << addr_offset * 8;
+        uint64_t addr_align  = memory_entry.addr - addr_offset;
+        auto memory_old_entry_itr = memory_clean_backup_map_.find(addr_align);
+        if (memory_old_entry_itr != memory_clean_backup_map_.end()) {
+            uint64_t bit_mask_new_entry = (UINT64_MAX >> (64 - 8 * memory_entry.len)) << addr_offset * 8;
+            uint64_t bit_mask_overlap = bit_mask_new_entry & memory_old_entry_itr->second.bit_mask;
+            uint64_t bit_mask_new_entry_exclusive = ~bit_mask_overlap & bit_mask_new_entry;
+            uint64_t bit_mask_old_entry_exclusive = ~bit_mask_overlap & memory_old_entry_itr->second.bit_mask;
+            uint64_t bit_mask_final = bit_mask_new_entry | memory_old_entry_itr->second.bit_mask;
+            memory_old_entry_itr->second.data =
+                    (bit_mask_old_entry_exclusive & memory_old_entry_itr->second.data) |
+                    (bit_mask_new_entry_exclusive & memory_entry.data) |
+                    (bit_mask_overlap & memory_entry.data);
+            memory_old_entry_itr->second.bit_mask = bit_mask_final;
+            assert(memory_old_entry_itr->second.len == 8);
+        } else {
+            memory_entry.bit_mask = (UINT64_MAX >> (64 - 8 * memory_entry.len)) << addr_offset * 8;
+            memory_entry.len = 8;
+            memory_entry.addr = addr_align;
+            memory_clean_backup_map_[addr_align] = memory_entry;
+        }
+    }
+
+    for (auto memory_entry_pair: memory_clean_backup_map_) {
+        auto memory_entry = memory_entry_pair.second;
+        target_addr_ = memory_entry.addr & ~(spike_sim->chunk_align() - 1);
+        uint64_t mem_data = 0;
+        mem_data = spike_sim_fast->procs[0]->get_mmu()->load<uint64_t>(memory_entry.addr);
+        assert((mem_data & memory_entry.bit_mask) ==
+               memory_entry.data);
+        for (int i = 0; i < 8; i++) {
+            uint64_t data = memory_entry.data >> i * 8 & 0xFF;
+            if ((memory_entry.bit_mask >> i * 8 & 0xFF) == 0xFF) {
+                spike_sim->procs[0]->get_mmu()->store<uint8_t>(memory_entry.addr + i, data);
+            }
+        }
+    }
+    memory_clean_backup_map_.clear();
+}
+
+void spikeAdapter::CsrRollBack_() {
+    while(!csr_backup_.IsEmpty()) {
+        CsrEntry csr_entry = csr_backup_.GetBackupEntry();
+        if (csr_entry.which == 0) {
+            continue;
+        }
+        csr_clean_backup_map_[csr_entry.which] = csr_entry;
+    }
+
+    for (auto csr_entry_pair: csr_clean_backup_map_) {
+        auto csr_entry = csr_entry_pair.second;
+        target_csr_ = csr_entry.which;
+        uint64_t csr_val = spike_sim_fast->procs[0]->get_csr(csr_entry.which);
+        assert(csr_val == csr_entry.val);
+        spike_sim->procs[0]->put_csr(csr_entry.which, csr_entry.val);
+    }
+
+    spike_sim->procs[0]->put_csr(0xb00, spike_sim_fast->procs[0]->get_csr(0xb00) + 1);
+    spike_sim->procs[0]->put_csr(0xb02, spike_sim_fast->procs[0]->get_csr(0xb02) + 1);
+
+    csr_clean_backup_map_.clear();
 }
