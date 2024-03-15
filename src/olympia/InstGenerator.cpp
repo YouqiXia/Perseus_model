@@ -57,6 +57,12 @@ namespace TimingModel
             default:
                 inst->setFuType(FuncType::ALU);
         }
+        if (!inst->getIsRvcInst()) {
+            if ((inst->getUncompressedInst() & 0x7F) == 0x73) {
+                inst->setFuType(FuncType::CSR);
+            }
+        }
+
         uint32_t intSourceNum = inst->numIntSourceRegs();
         uint32_t fpSourceNum  = inst->numFloatSourceRegs();
         uint32_t intDestNum   = inst->numIntDestRegs();
@@ -369,8 +375,9 @@ namespace TimingModel
         while(sinsn == nullptr) {
 
             waterline++;
-            if ((waterline > 10 && getPredictionMiss()) || fetch_inst_error_) {
-                fetch_inst_error_ = true;
+            if ((waterline > 10 && getPredictionMiss()) ||
+                fetch_nop_inst_) {
+                fetch_nop_inst_ = true;
                 InstPtr mavis_inst = mavis_facade_->makeInst(0x13, clk);
                 mavis_inst->setPC(0);
                 mavis_inst->setUniqueID(0);
@@ -404,6 +411,11 @@ namespace TimingModel
         mavis_inst->setSpikeNpc(spike_adapter_->getSpikeNpc());
         InsnComplete(mavis_inst);
 
+        // If there is a csr instruction running in a miss prediction way, nop inst will be sent to pipeline
+        if (mavis_inst->getFuType() == FuncType::CSR && getPredictionMiss()) {
+            fetch_nop_inst_ = true;
+        }
+
         return mavis_inst;
     }
 
@@ -413,7 +425,7 @@ namespace TimingModel
 
     void SpikeInstGenerator::setNpc(uint64_t npc) {
         spike_adapter_->setNpc(npc);
-        fetch_inst_error_ = false;
+        fetch_nop_inst_ = false;
     }
 
     void SpikeInstGenerator::makeBackup() {

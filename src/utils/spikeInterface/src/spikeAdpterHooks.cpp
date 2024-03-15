@@ -18,8 +18,8 @@ uint64_t excptionHook(void* in, uint64_t pc){
     return spikeAdapter::getSpikeAdapter()->excptionHook(in, pc);
 }
 
-void getCsrHook(int which, uint64_t val) {
-    spikeAdapter::getSpikeAdapter()->getCsrHook(which, val);
+bool getCsrHook(int which, uint64_t val) {
+    return spikeAdapter::getSpikeAdapter()->getCsrHook(which, val);
 }
 
 void catchDataBeforeWriteHook(uint64_t addr, uint64_t data, uint32_t len) {

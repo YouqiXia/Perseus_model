@@ -861,15 +861,16 @@ reg_t spikeAdapter::excptionHook(void* in, uint64_t pc){
 }
 
 void spikeAdapter::catchDataBeforeWriteHook(addr_t addr, reg_t data, size_t len) {
-    if (spike_sim->get_tohost_addr() == addr ||
-        spike_sim->get_tohost_addr() + 0x4 == addr ||
-        spike_sim->get_fromhost_addr() == addr) {
-        return;
-    }
+//    if (spike_sim->get_tohost_addr() == addr ||
+//        spike_sim->get_tohost_addr() + 0x4 == addr ||
+//        spike_sim->get_fromhost_addr() == addr) {
+//        return;
+//    }
 
     uint64_t asset_cmp_data = 0;
 
     if (!getPredictionMiss()) {
+        try {
         switch (len) {
             case (1):
                 asset_cmp_data = spike_sim_fast->procs[0]->get_mmu()->load<uint8_t>(addr);
@@ -885,6 +886,9 @@ void spikeAdapter::catchDataBeforeWriteHook(addr_t addr, reg_t data, size_t len)
                 break;
             default:
                 assert(false);
+        }
+        } catch(...) {
+            asset_cmp_data = data;
         }
         sparta_assert(asset_cmp_data == data, "pc is:  " << spike_sim->procs[0]->get_state()->pc <<
                                               ", addr is: " << addr <<
@@ -922,25 +926,15 @@ void spikeAdapter::catchDataBeforeWriteHook(addr_t addr, reg_t data, size_t len)
     }
 }
 
-void spikeAdapter::getCsrHook(int which, reg_t val) {
-    if (csr_backup_.IsEmpty()) {
-        return;
+bool spikeAdapter::getCsrHook(int which, reg_t val) {
+    if (getPredictionMiss()) {
+        return false;
     }
-
-    if (target_csr_ == which) {
-        target_csr_ = -1;
-        return;
-    }
-
-    auto search = spike_sim->procs[0]->get_state()->csrmap.find(which);
-    if (search != spike_sim->procs[0]->get_state()->csrmap.end()) {
-        csr_backup_.Push(CsrEntry{which, search->second->read()});
-    }
+    return true;
 }
 
 void spikeAdapter::MakeBackup() {
     memory_backup_.MakeBackupEntry();
-    csr_backup_.MakeBackupEntry();
     MakeRegBackup_();
 }
 
@@ -957,7 +951,6 @@ void spikeAdapter::BranchResolve(bool is_miss_prediction) {
         RollBack();
     } else {
         memory_backup_.Pop();
-        csr_backup_.Pop();
         reg_backup_.pop();
     }
 }
@@ -992,10 +985,13 @@ int spikeAdapter::spikeStep(uint32_t n){
             spike_sim->idle();
       }else{
           try {
-            if ((tohost = spike_sim->from_target(spike_sim->mem.read_uint64(spike_sim->get_tohost_addr()))) != 0)
-              spike_sim->mem.write_uint64(spike_sim->get_tohost_addr(), target_endian<uint64_t>::zero);
+                if ((tohost = spike_sim->from_target(spike_sim->mem.read_uint64(spike_sim->get_tohost_addr()))) != 0 &&
+                    !getPredictionMiss()) {
+                    spike_sim->mem.write_uint64(spike_sim->get_tohost_addr(), target_endian<uint64_t>::zero);
+                    spike_sim_fast->mem.write_uint64(spike_sim->get_tohost_addr(), target_endian<uint64_t>::zero);
+                }
           } catch (mem_trap_t& t) {
-            bad_address("accessing tohost", t.get_tval());
+                bad_address("accessing tohost", t.get_tval());
           }
 
           try {
@@ -1030,7 +1026,7 @@ int spikeAdapter::spikeStep(uint32_t n){
           try {
             if (!fromhost_queue.empty() && !spike_sim->mem.read_uint64(spike_sim->get_fromhost_addr())) {
                 spike_sim->mem.write_uint64(spike_sim->get_fromhost_addr(), spike_sim->to_target(fromhost_queue.front()));
-                spike_sim_fast->mem.write_uint64(spike_sim_fast->get_fromhost_addr(), spike_sim_fast->to_target(fromhost_queue.front()));
+                spike_sim_fast->mem.write_uint64(spike_sim->get_fromhost_addr(), spike_sim->to_target(fromhost_queue.front()));
                 fromhost_queue.pop();
             }
           } catch (mem_trap_t& t) {
@@ -1176,24 +1172,6 @@ void spikeAdapter::MemoryRollBack_() {
 }
 
 void spikeAdapter::CsrRollBack_() {
-    while(!csr_backup_.IsEmpty()) {
-        CsrEntry csr_entry = csr_backup_.GetBackupEntry();
-        if (csr_entry.which == 0) {
-            continue;
-        }
-        csr_clean_backup_map_[csr_entry.which] = csr_entry;
-    }
-
-    for (auto csr_entry_pair: csr_clean_backup_map_) {
-        auto csr_entry = csr_entry_pair.second;
-        target_csr_ = csr_entry.which;
-        uint64_t csr_val = spike_sim_fast->procs[0]->get_csr(csr_entry.which);
-        assert(csr_val == csr_entry.val);
-        spike_sim->procs[0]->put_csr(csr_entry.which, csr_entry.val);
-    }
-
     spike_sim->procs[0]->put_csr(0xb00, spike_sim_fast->procs[0]->get_csr(0xb00) + 1);
     spike_sim->procs[0]->put_csr(0xb02, spike_sim_fast->procs[0]->get_csr(0xb02) + 1);
-
-    csr_clean_backup_map_.clear();
 }

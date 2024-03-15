@@ -102,7 +102,7 @@ public:
 
     void catchDataBeforeWriteHook(addr_t addr, reg_t data, size_t len);
 
-    void getCsrHook(int which, reg_t val);
+    bool getCsrHook(int which, reg_t val);
 
     uint32_t spikeTunnelAvailCnt();
 
@@ -177,7 +177,6 @@ private:
     uint64_t target_addr_ = -1;
     int target_csr_ = -1;
     DataBackup<MemoryEntry> memory_backup_;
-    DataBackup<CsrEntry> csr_backup_;
     std::queue<RegEntry> reg_backup_;
 
     // Use a map to make that there is only one rollback operation for each address
