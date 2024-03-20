@@ -58,6 +58,11 @@ class spike_insn{
         commit_log_reg_t spike_log_reg_write;
         commit_log_mem_t spike_log_mem_read;
         commit_log_mem_t spike_log_mem_write;
+
+        std::vector<std::tuple<std::string, int, size_t*>> reg_write;
+        std::vector<std::tuple<size_t, int>> mem_read;
+        std::vector<std::tuple<size_t, int, size_t*>> mem_write;
+
         reg_t spike_last_inst_priv;
         int spike_last_inst_xlen;
         int spike_last_inst_flen;

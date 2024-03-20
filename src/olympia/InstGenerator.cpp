@@ -377,6 +377,9 @@ namespace TimingModel
         mavis_inst->setUncompressedInst(sinsn->spike_insn_.insn.bits());
         mavis_inst->setImm(mavis_inst->getImmediate());
         mavis_inst->setSpikeNpc(spike_adapter_->getSpikeNpc());
+        mavis_inst->setRegWrite(sinsn->reg_write);
+        mavis_inst->setMemRead(sinsn->mem_read);
+        mavis_inst->setMemWrite(sinsn->mem_write);
         InsnComplete(mavis_inst);
 
         return mavis_inst;

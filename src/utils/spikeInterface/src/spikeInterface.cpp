@@ -582,15 +582,111 @@ bool spikeAdapter::commitHook(){
     if(spike_tunnel == nullptr) {
         return true;
     }
+
     //same cycle same insn with tail
+    processor_t *p = spike_sim->procs[0];
+
+    auto& reg = p->get_state()->log_reg_write;
+    auto& load = p->get_state()->log_mem_read;
+    auto& store = p->get_state()->log_mem_write;
+    int priv = p->get_state()->last_inst_priv;
+    int xlen = p->get_state()->last_inst_xlen;
+    int flen = p->get_state()->last_inst_flen;
+    bool show_vec = false;
+
     spike_tunnel->spike_log_reg_write.clear();
     spike_tunnel->spike_log_reg_write = spike_sim->procs[0]->get_state()->log_reg_write;
+    spike_tunnel->reg_write.clear();
+    // parse log_reg_write
+    for (auto item : spike_tunnel->spike_log_reg_write)
+    {
+        if (item.first == 0)
+            continue;
+
+        char prefix = ' ';
+        int size;
+        int rd = item.first >> 4;
+        bool is_vec = false;
+        bool is_vreg = false;
+        switch (item.first & 0xf)
+        {
+            case 0:
+                size = xlen;
+                prefix = 'x';
+                break;
+            case 1:
+                size = flen;
+                prefix = 'f';
+                break;
+            case 2:
+                size = p->VU.VLEN;
+                prefix = 'v';
+                is_vreg = true;
+                break;
+            case 3:
+                is_vec = true;
+                break;
+            case 4:
+                size = xlen;
+                prefix = 'c';
+                break;
+            default:
+                assert("can't been here" && 0);
+                break;
+        }
+
+        // if (!show_vec && (is_vreg || is_vec))
+        // {
+        //     fprintf(log_file, " e%ld %s%ld l%ld",
+        //             (long)p->VU.vsew,
+        //             p->VU.vflmul < 1 ? "mf" : "m",
+        //             p->VU.vflmul < 1 ? (long)(1 / p->VU.vflmul) : (long)p->VU.vflmul,
+        //             (long)p->VU.vl->read());
+        //     show_vec = true;
+        // }
+
+        if (!is_vec)
+        {
+            std::string reg_name;
+
+            // malloc mem for reg value
+            size_t bytes = size / 8;
+            size_t *v = (size_t *)malloc(bytes);
+
+            if (prefix == 'c')
+                reg_name = csr_name(rd);
+            else
+                reg_name = std::string(1, prefix) + std::to_string(rd);
+
+            spike_tunnel->reg_write.push_back(std::make_tuple(reg_name, bytes, v));
+
+            if (is_vreg)
+                memcpy(v, &p->VU.elt<uint8_t>(rd, 0), bytes);
+            else
+                memcpy(v, &item.second.v, bytes);
+        }
+    }
 
     spike_tunnel->spike_log_mem_read.clear();
     spike_tunnel->spike_log_mem_read = spike_sim->procs[0]->get_state()->log_mem_read;
+    spike_tunnel->mem_read.clear();
+    // parse log_mem_read
+    for (auto item : spike_tunnel->spike_log_mem_read) {
+        size_t bytes = std::get<2>(item) << 3;
+
+        spike_tunnel->mem_read.push_back(std::make_tuple((std::get<0>(item)), bytes));
+    }
 
     spike_tunnel->spike_log_mem_write.clear();
     spike_tunnel->spike_log_mem_write = spike_sim->procs[0]->get_state()->log_mem_write;
+    spike_tunnel->mem_write.clear();
+    for (auto item : spike_tunnel->spike_log_mem_write) {
+        size_t bytes = std::get<2>(item) << 3;
+        size_t *v = (size_t *)malloc(bytes);
+        memcpy(v, &std::get<1>(item), bytes);
+
+        spike_tunnel->mem_write.push_back(std::make_tuple((std::get<0>(item)), bytes, v));
+    }
 
     spike_tunnel->spike_last_inst_priv = spike_sim->procs[0]->get_state()->last_inst_priv;
     spike_tunnel->spike_last_inst_xlen = spike_sim->procs[0]->get_state()->last_inst_xlen;

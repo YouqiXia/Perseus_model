@@ -31,6 +31,12 @@ typedef uint64_t RobIdx_t;
 
 typedef std::vector<xReg_t> PhysicalReg;
 
+typedef std::vector<std::tuple<std::string, int, size_t*>> RegWrite_t;
+
+typedef std::vector<std::tuple<size_t, int>> MemRead_t;
+
+typedef std::vector<std::tuple<size_t, int, size_t*>> MemWrite_t;
+
 enum FuncType {
     NO_TYPE=0, ALU, MUL, DIV, BRU, CSR, LDU, STU, FPU
 };
@@ -163,6 +169,10 @@ struct InstInfo {
     /* exception info */
     Exception    Excp;
 
+    /* commit info */
+    RegWrite_t reg_write;
+    MemRead_t  mem_read;
+    MemWrite_t mem_write;
 };
 
 }

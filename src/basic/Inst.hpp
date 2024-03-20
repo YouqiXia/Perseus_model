@@ -126,6 +126,29 @@ namespace TimingModel
         void   setSpikeNpc(Addr_t SpikeNpc) { inst_.SpikeNpc = SpikeNpc; }
         Addr_t getSpikeNpc() { return inst_.SpikeNpc; }
 
+        void   setRegWrite(RegWrite_t reg_write) { inst_.reg_write = reg_write; }
+        RegWrite_t getRegWrite() { return inst_.reg_write; }
+
+        void   setMemRead(MemRead_t mem_read) { inst_.mem_read = mem_read; }
+        MemRead_t getMemRead() { return inst_.mem_read; }
+
+        void   setMemWrite(MemWrite_t mem_write) { inst_.mem_write = mem_write; }
+        MemWrite_t getMemWrite() { return inst_.mem_write; }
+
+        void  clearCommitInfo() {
+            for(auto entry : inst_.reg_write) {
+                free(std::get<2>(entry));
+            }
+
+            for(auto entry : inst_.mem_write) {
+                free(std::get<2>(entry));
+            }
+
+            inst_.reg_write.clear(); 
+            inst_.mem_read.clear();
+            inst_.mem_write.clear();
+        }
+
         void        setIsaRs1(IsaRegId_t IsaRs1) { inst_.IsaRs1 = IsaRs1; }
         IsaRegId_t  getIsaRs1() { return inst_.IsaRs1; }
 

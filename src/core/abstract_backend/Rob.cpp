@@ -106,6 +106,7 @@ namespace TimingModel {
             }
 
             inst_group_ptr->emplace_back(rob_.front().inst_ptr);
+            rob_.front().inst_ptr->clearCommitInfo();
 
             if (rob_.front().inst_ptr->getFuType() == FuncType::BRU) {
                 inst_bpu_group_ptr->emplace_back(rob_.front().inst_ptr);
