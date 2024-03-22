@@ -14,6 +14,7 @@ struct MemoryEntry{
     uint64_t addr = 0;
     uint64_t data = 0;
     uint64_t len = 0;
+    uint64_t bit_mask = 0;
 };
 
 struct CsrEntry{

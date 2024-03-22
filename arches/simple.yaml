@@ -47,9 +47,9 @@ top.extension.topo_extensions:
     ["lsu_rs", "FuncType::STU", "FuncType::LDU"],
     ["lsu2_rs", "FuncType::STU", "FuncType::LDU"],
     ["alu1_rs", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"],
-    ["alu2_rs", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"],
-    ["alu3_rs", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"],
-    ["alu4_rs", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::CSR"]
+    ["alu2_rs", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::CSR"],
+    ["alu3_rs", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::CSR"],
+    ["alu4_rs", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::CSR"]
     ]
 
   all_component: []
@@ -73,7 +73,7 @@ top.extension.topo_extensions:
                      "write_back_stage.ports.write_back_following_port_out", "dispatch_stage.ports.write_back_dispatch_port_in",
     # rob ->lsu
                      "rob.ports.Rob_lsu_wakeup_out", "lsu.ports.Rob_lsu_wakeup_in",
-    # rob -> bpu
+    # rob -> branch commit
                      "rob.ports.rob_bpu_inst_out", "frontend.ports.backend_bpu_inst_in",
     # rob -> pc
                      "rob.ports.rob_redirect_pc_inst_out", "frontend.ports.backend_redirect_pc_inst_in",
@@ -129,6 +129,11 @@ top.extension.topo_extensions:
                      "alu2.ports.func_rs_credit_out", "alu2_rs.ports.following_reservation_credit_in",
                      "alu3.ports.func_rs_credit_out", "alu3_rs.ports.following_reservation_credit_in",
                      "alu4.ports.func_rs_credit_out", "alu4_rs.ports.following_reservation_credit_in",
+      # resolve branch func -> bpu
+                     "alu1.ports.func_branch_resolve_out", "frontend.ports.backend_branch_resolve_inst_in",
+                     "alu2.ports.func_branch_resolve_out", "frontend.ports.backend_branch_resolve_inst_in",
+                     "alu3.ports.func_branch_resolve_out", "frontend.ports.backend_branch_resolve_inst_in",
+                     "alu4.ports.func_branch_resolve_out", "frontend.ports.backend_branch_resolve_inst_in",
                      # additional lsu2 rs
                      "dispatch_stage.ports.dispatch_lsu2_rs_out" , "lsu2_rs.ports.preceding_reservation_inst_in",
                      "lsu2_rs.ports.reservation_following_inst_out" , "lsu.ports.preceding_func_inst_in",

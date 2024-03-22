@@ -130,5 +130,6 @@ namespace TimingModel
     private:
         spikeAdapter* spike_adapter_;
 
+        bool fetch_nop_inst_ = false;
     };
 }
