@@ -4,6 +4,8 @@
 #include "sparta/app/FeatureConfiguration.hpp"
 #include "sparta/app/CommandLineSimulator.hpp"
 
+#include "sparta/kernel/SleeperThread.hpp"
+
 #include "basic/Inst.hpp"
 #include "simulation/variable.hpp"
 
@@ -94,6 +96,7 @@ int main(int argc, char **argv) {
                                         cmd_data,
                                         dram_input);  // run for ilimit instructions
 
+            sparta::SleeperThread::disableForever();
             cls.populateSimulation(&sim);
 
             cls.runSimulator(&sim);

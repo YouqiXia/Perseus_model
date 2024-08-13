@@ -29,6 +29,7 @@ namespace TimingModel {
 
             PARAMETER(uint64_t, issue_num, 4, "the issuing bandwidth in a cycle")
             PARAMETER(uint64_t, wb_latency, 1, "write back latency")
+            PARAMETER(bool, is_wb_perfect, false, "write back latency")
         };
 
         static const char* name;
@@ -42,6 +43,8 @@ namespace TimingModel {
 
         void AcceptFuncInst_(const FuncInstPtr&);
 
+        void AcceptFuncInsts_(const InstGroupPtr&);
+
         void ArbitrateInst_();
 
     private:
@@ -52,12 +55,18 @@ namespace TimingModel {
         sparta::DataInPort<FlushingCriteria> writeback_flush_in
                 {&unit_port_set_, "writeback_flush_in", sparta::SchedulingPhase::Flush, 1};
 
+        sparta::DataInPort<InstGroupPtr> write_back_insts_in
+                {&unit_port_set_, "write_back_insts_in", sparta::SchedulingPhase::Tick, 0};
+
+
         // events
         sparta::SingleCycleUniqueEvent<> arbitrate_inst_event
                 {&unit_event_set_, "arbitrate_inst_event", CREATE_SPARTA_HANDLER(WriteBackStage, ArbitrateInst_)};
 
     private:
         uint64_t issue_num_;
+
+        bool is_wb_perfect_;
 
         std::map<FuncUnitType, std::deque<InstPtr>> func_inst_map_;
         std::vector<FuncUnitType> func_pop_pending_queue_;
@@ -66,6 +75,8 @@ namespace TimingModel {
         std::map<FuncUnitType, sparta::DataOutPort<Credit>*> func_unit_credit_ports_out_;
 
         uint64_t wb_latency_;
+
+        std::deque<InstPtr> inst_queue_;
     };
 
 }

@@ -19,7 +19,7 @@ typedef uint16_t CompressedInst_t;
 
 typedef uint8_t  IsaRegId_t;
 
-typedef uint16_t PhyRegId_t;
+typedef uint64_t PhyRegId_t;
 
 typedef int32_t  Imm_t;
 
@@ -154,10 +154,10 @@ struct InstInfo {
 
     uint64_t     LSQTag;
 
-    PhyRegId_t   PhyRs1;
-    PhyRegId_t   PhyRs2;
-    PhyRegId_t   PhyRd;
-    PhyRegId_t   LPhyRd;
+    PhyRegId_t   PhyRs1 = 0;
+    PhyRegId_t   PhyRs2 = 0;
+    PhyRegId_t   PhyRd = 0;
+    PhyRegId_t   LPhyRd = 0;
 
     /* function unit info */
     xReg_t       Operand1 = 0;

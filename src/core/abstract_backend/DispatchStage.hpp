@@ -11,6 +11,7 @@
 #include "sparta/ports/SignalPort.hpp"
 
 #include <string>
+#include <deque>
 
 #include "basic/Inst.hpp"
 #include "basic/InstGroup.hpp"
@@ -31,6 +32,7 @@ namespace TimingModel {
             PARAMETER(uint64_t, issue_num, 4, "the issuing bandwidth in a cycle")
             PARAMETER(uint32_t, phy_reg_num, 64, "the issuing bandwidth in a cycle")
             PARAMETER(uint32_t, issue_queue_depth, 16, "the issuing bandwidth in a cycle")
+            PARAMETER(bool, is_perfect_mode, false, "the issuing bandwidth in a cycle")
         };
 
         struct IssueQueueEntry {
@@ -93,6 +95,8 @@ namespace TimingModel {
             // with rs -> also should be constructed in dispatch stage constructor
             std::map<RsType, sparta::SpartaSharedPointer<sparta::DataOutPort<InstPtr>>> dispatch_rs_out;
 
+            std::map<RsType, sparta::SpartaSharedPointer<sparta::DataOutPort<InstGroupPtr>>> dispatch_rs_insts_out;
+
             // with rs Credits
             std::vector<sparta::SpartaSharedPointer<sparta::DataInPort<RsCreditPtr>>> rs_dispatch_credits_in;
 
@@ -116,9 +120,10 @@ namespace TimingModel {
 
             sparta::SingleCycleUniqueEvent<> dispatch_get_operator_events_
                 {&unit_event_set_, "dispatch_get_operator_events_", CREATE_SPARTA_HANDLER(DispatchStage, ReadPhyReg_)};
-
     private:
         uint64_t issue_num_;
+
+        bool is_perfect_mode_;
 
         std::map<RsType, Credit> rs_credits_;
 
@@ -126,9 +131,11 @@ namespace TimingModel {
 
         const uint64_t inst_queue_depth_;
 
-        sparta::Queue<IssueQueueEntryPtr> inst_queue_;
+        std::deque<IssueQueueEntryPtr> inst_queue_;
 
         std::map<RsType, InstPtr> dispatch_pending_queue_;
+
+        std::map<RsType, std::vector<InstPtr>> dispatch_pending_queues_;
     };
 
 }

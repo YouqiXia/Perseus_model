@@ -1,4 +1,4 @@
-# Model for Genshin Simulator
+# Model for Perseus Simulator
 
 <h2> Git Commit Style </h2>
 

@@ -48,9 +48,12 @@ namespace TimingModel
         // Allocators used in simulation.  These values can be
         // parameterized in the future by converting this class into a
         // full-blown sparta::Resource and adding a sparta::ParameterSet
-        InstAllocator         inst_allocator          {3000, 2500};
-        InstArchInfoAllocator inst_arch_info_allocator{3000, 2500};
-        MemAccInfoAllocator   mem_acc_info_allocator  {3000, 2500};
+//        InstAllocator         inst_allocator          {3000, 2500};
+//        InstArchInfoAllocator inst_arch_info_allocator{3000, 2500};
+//        MemAccInfoAllocator   mem_acc_info_allocator  {3000, 2500};
+        InstAllocator         inst_allocator          {655360, 328680};
+        InstArchInfoAllocator inst_arch_info_allocator{655360, 328680};
+        MemAccInfoAllocator   mem_acc_info_allocator  {655360, 328680};
 
     };
 }

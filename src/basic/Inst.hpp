@@ -162,49 +162,49 @@ namespace TimingModel
         Imm_t getImm() { return inst_.imm; } 
 
         void setRs1Type(RegType_t Rs1Type) { inst_.Rs1Type = Rs1Type; }
-        RegType_t getRs1Type() { return inst_.Rs1Type; }
+        RegType_t getRs1Type() const { return inst_.Rs1Type; }
         
         void setRs2Type(RegType_t Rs2Type) { inst_.Rs2Type = Rs2Type; }
-        RegType_t getRs2Type() { return inst_.Rs2Type; }
+        RegType_t getRs2Type() const { return inst_.Rs2Type; }
 
         void setRdType(RegType_t RdType) { inst_.RdType = RdType; }
-        RegType_t getRdType() { return inst_.RdType; }
+        RegType_t getRdType() const { return inst_.RdType; }
 
         void setFuType(FuncType func_type) { inst_.Fu = func_type; }
-        FuncType getFuType() { return inst_.Fu; }
+        FuncType getFuType() const { return inst_.Fu; }
 
         void setSubOp(uint8_t sub_op) { inst_.SubOp = sub_op; }
-        uint8_t getSubOp() { return inst_.SubOp; }
+        uint8_t getSubOp() const { return inst_.SubOp; }
 
         void setRobTag(uint64_t RobTag) { inst_.RobTag = RobTag; }
-        uint64_t getRobTag() { return inst_.RobTag; }
+        uint64_t getRobTag() const { return inst_.RobTag; }
 
         void setIsRs1Forward(bool IsRs1Forward) { inst_.IsRs1Forward = IsRs1Forward; }
-        bool getIsRs1Forward() { return inst_.IsRs1Forward; }
+        bool getIsRs1Forward() const { return inst_.IsRs1Forward; }
 
         void setIsRs2Forward(bool IsRs2Forward) { inst_.IsRs2Forward = IsRs2Forward; }
-        bool getIsRs2Forward() { return inst_.IsRs2Forward; }
+        bool getIsRs2Forward() const { return inst_.IsRs2Forward; }
 
         void setPhyRs1(PhyRegId_t PhyRs1) { inst_.PhyRs1 = PhyRs1; }
-        uint64_t getPhyRs1() { return inst_.PhyRs1; }
+        uint64_t getPhyRs1() const { return inst_.PhyRs1; }
 
         void setPhyRs2(PhyRegId_t PhyRs2) { inst_.PhyRs2 = PhyRs2; }
-        uint64_t getPhyRs2() { return inst_.PhyRs2; }
+        uint64_t getPhyRs2() const { return inst_.PhyRs2; }
 
         void setPhyRd(PhyRegId_t PhyRd) { inst_.PhyRd = PhyRd; }
-        uint64_t getPhyRd() { return inst_.PhyRd; }
+        uint64_t getPhyRd() const { return inst_.PhyRd; }
 
         void setLPhyRd(PhyRegId_t LPhyRd) { inst_.LPhyRd = LPhyRd; }
-        uint64_t getLPhyRd() { return inst_.LPhyRd; }
+        uint64_t getLPhyRd() const { return inst_.LPhyRd; }
 
         void setOperand1(xReg_t Operand1) { inst_.Operand1 = Operand1; }
-        xReg_t getOperand1() { return inst_.Operand1; }
+        xReg_t getOperand1() const { return inst_.Operand1; }
 
         void setOperand2(xReg_t Operand2) { inst_.Operand2 = Operand2; }
-        xReg_t getOperand2() { return inst_.Operand2; }
+        xReg_t getOperand2() const { return inst_.Operand2; }
 
         void setRdResult(xReg_t RdResult) { inst_.RdResult = RdResult; }
-        xReg_t getRdResult() { return inst_.RdResult; }
+        xReg_t getRdResult() const { return inst_.RdResult; }
 
         // Static instruction information
         bool        isLoadStoreInst() const {return inst_arch_info_->isLoadStore(); }
@@ -238,7 +238,9 @@ namespace TimingModel
         os << "uid: " << inst.getUniqueID()
            << " " << std::setw(4)
            << ", pc: " << std::hex << inst.getPC() << std::dec
-           << ", pid: " << inst.getProgramID() << " '" << inst.getDisasm() << "' ";
+           << ", pid: " << inst.getProgramID() << " '" << inst.getDisasm() << "' "
+           << ", prd: " << inst.getPhyRd() << " ps1: " << inst.getPhyRs1()
+           << " ps2: " << inst.getPhyRs2();
         return os;
     }
 

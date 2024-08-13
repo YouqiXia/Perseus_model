@@ -2,6 +2,7 @@
 // Created by yzhang on 1/2/24.
 //
 #include "sparta/utils/LogUtils.hpp"
+#include "sparta/utils/SpartaAssert.hpp"
 
 #include "Rob.hpp"
 
@@ -107,6 +108,7 @@ namespace TimingModel {
 
             inst_group_ptr->emplace_back(rob_.front().inst_ptr);
             rob_.front().inst_ptr->clearCommitInfo();
+            stall_cycle_count_ = 0;
 
             if (rob_.front().inst_ptr->getFuType() == FuncType::BRU) {
                 inst_bpu_group_ptr->emplace_back(rob_.front().inst_ptr);
@@ -136,7 +138,12 @@ namespace TimingModel {
 
         if (commit_num) {
             rob_preceding_credit_out.send(commit_num);
+        } else {
+            stall_cycle_count_++;
+            sparta_assert(stall_cycle_count_ < 1000, "commit stall: " << rob_.front().inst_ptr);
         }
+
+
         ILOG(getName() << " commit instructions: " << commit_num << " , remaining: " << rob_.size());
         if (rob_.front().valid && !rob_.empty()) {
             ILOG(getName() << " rob front id: " << rob_.front().inst_ptr->getUniqueID());

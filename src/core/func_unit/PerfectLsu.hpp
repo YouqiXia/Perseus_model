@@ -9,6 +9,8 @@
 #include "basic/Inst.hpp"
 #include "PortInterface.hpp"
 
+#include <deque>
+
 namespace TimingModel {
     class PerfectLsu : public sparta::Unit {
     public:
@@ -39,6 +41,8 @@ namespace TimingModel {
 
         void RecieveInst_(const InstPtr&);
 
+        void RecieveInsts_(const InstGroupPtr&);
+
         void SendInitCredit();
 
         void WriteBack_();
@@ -51,8 +55,11 @@ namespace TimingModel {
         sparta::DataInPort<InstPtr> preceding_func_inst_in
             {&unit_port_set_, "preceding_func_inst_in", sparta::SchedulingPhase::Tick, 1};
 
+        sparta::DataInPort<InstGroupPtr> preceding_func_insts_in
+                {&unit_port_set_, "preceding_func_insts_in", sparta::SchedulingPhase::Tick, 1};
+
         sparta::DataInPort<Credit> write_back_func_credit_in
-            {&unit_port_set_, "write_back_func_credit_in", sparta::SchedulingPhase::Tick, 0};
+            {&unit_port_set_, "write_back_func_credit_in", sparta::SchedulingPhase::Tick, 1};
 
         sparta::DataOutPort<Credit> func_rs_credit_out
             {&unit_port_set_, "func_rs_credit_out"};
@@ -75,6 +82,9 @@ namespace TimingModel {
         sparta::DataOutPort<FuncInstPtr> func_following_finish_out
             {&unit_port_set_, "func_following_finish_out"};
 
+        sparta::DataOutPort<InstGroupPtr> func_following_finishs_out
+                {&unit_port_set_, "func_following_finishs_out"};
+
     /* events */
 
         sparta::SingleCycleUniqueEvent<> write_back_event
@@ -88,7 +98,7 @@ namespace TimingModel {
 
         uint32_t credit_ = 0;
 
-        InstQueue lsu_queue_;
+        std::deque<InstPtr> lsu_queue_;
     };
 
 }

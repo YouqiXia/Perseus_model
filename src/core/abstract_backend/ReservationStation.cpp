@@ -22,11 +22,14 @@ namespace TimingModel {
                 (CREATE_SPARTA_HANDLER_WITH_DATA(ReservationStation, HandleFlush_, FlushingCriteria));
         preceding_reservation_inst_in.registerConsumerHandler
                 (CREATE_SPARTA_HANDLER_WITH_DATA(ReservationStation, AllocateReStation, InstPtr));
+        preceding_reservation_insts_in.registerConsumerHandler
+                (CREATE_SPARTA_HANDLER_WITH_DATA(ReservationStation, AllocateInstsReStation_, InstGroupPtr));
         following_reservation_credit_in.registerConsumerHandler
                 (CREATE_SPARTA_HANDLER_WITH_DATA(ReservationStation, AcceptCredit_, Credit));
         forwarding_reservation_inst_in.registerConsumerHandler
                 (CREATE_SPARTA_HANDLER_WITH_DATA(ReservationStation, GetForwardingData, InstGroupPtr));
         preceding_reservation_inst_in >> sparta::GlobalOrderingPoint(node, "rs_allocate_forwarding");
+        preceding_reservation_insts_in >> sparta::GlobalOrderingPoint(node, "rs_allocate_forwarding");
         sparta::GlobalOrderingPoint(node, "rs_allocate_forwarding") >> forwarding_reservation_inst_in;
     }
 
@@ -66,12 +69,37 @@ namespace TimingModel {
         }
         reservation_station_.emplace_back(tmp_restation_entry);
 
-        passing_event.
-                schedule(sparta::Clock::Cycle(0));
+        pop_event.schedule(sparta::Clock::Cycle(1));
+        passing_event.schedule(sparta::Clock::Cycle(0));
+    }
+
+    void ReservationStation::AllocateInstsReStation_(const InstGroupPtr& inst_group_ptr) {
+        ILOG(getName() << " get instructions: " << inst_group_ptr->size());
+        for (auto& inst_ptr: *inst_group_ptr) {
+            ILOG("get insn from preceding: " << inst_ptr);
+            ReStationEntryPtr tmp_restation_entry{new ReStationEntry};
+            tmp_restation_entry->inst_ptr = inst_ptr;
+            if (!inst_ptr->getIsRs1Forward()) {
+                tmp_restation_entry->rs1_valid = true;
+            }
+            if (!inst_ptr->getIsRs2Forward()) {
+                tmp_restation_entry->rs2_valid = true;
+
+            }
+            reservation_station_.emplace_back(tmp_restation_entry);
+        }
+
+        pop_event.schedule(sparta::Clock::Cycle(1));
+        passing_event.schedule(sparta::Clock::Cycle(0));
     }
 
     void ReservationStation::GetForwardingData(const TimingModel::InstGroupPtr &forwarding_inst_group_ptr) {
+        int i = 0;
         for (auto &rs_entry_ptr: reservation_station_) {
+            i++;
+            if (rs_entry_ptr->is_issued) {
+                continue;
+            }
             for (auto& forwarding_inst_ptr: *forwarding_inst_group_ptr) {
                 if (!rs_entry_ptr->rs1_valid) {
                     if (rs_entry_ptr->inst_ptr->getPhyRs1() == forwarding_inst_ptr->getPhyRd()) {
@@ -93,36 +121,62 @@ namespace TimingModel {
         }
     }
 
+    void ReservationStation::PopInst_() {
+        for (int i = 0; i < reservation_station_.size(); i++) {
+            if (reservation_station_.front()->is_issued) {
+                reservation_station_.pop_front();
+            } else {
+                break;
+            }
+        }
+
+        if (!reservation_station_.empty()) {
+            pop_event.schedule(sparta::Clock::Cycle(1));
+        }
+    }
+
     void ReservationStation::PassingInst() {
         if (reservation_station_.empty()) {
             return;
         }
         // in-order passing
-        InstPtr inst_ptr_tmp;
+        InstGroupPtr inst_group_tmp_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
         uint64_t produce_num = std::min(credit_, issue_num_);
+        uint64_t consume_num = 0;
         ILOG("produce_num = " << produce_num << ", credit_ = " << credit_ << ", issue_num = " << issue_num_);
-        for (auto rs_entry_iter = reservation_station_.begin();
-                rs_entry_iter != reservation_station_.end(); ++rs_entry_iter) {
+        for (auto &rs_entry: reservation_station_) {
             if (produce_num == 0) {
                 break;
             }
-            if (rs_entry_iter->get()->rs1_valid && rs_entry_iter->get()->rs2_valid) {
-                ILOG(getName() << " passing instruction rob tag: " << rs_entry_iter->get()->inst_ptr->getRobTag());
+
+            if (rs_entry->is_issued) {
+                continue;
+            }
+
+            if (rs_entry->rs1_valid && rs_entry->rs2_valid) {
+                ILOG(getName() << " passing instruction: " << rs_entry->inst_ptr);
                 --credit_;
                 --produce_num;
-                inst_ptr_tmp = rs_entry_iter->get()->inst_ptr;
-                reservation_station_.erase(rs_entry_iter);
-                break;
-            } else {
-                ILOG(getName() << " insn operand not ready: " << rs_entry_iter->get()->inst_ptr);
+                inst_group_tmp_ptr->emplace_back(rs_entry->inst_ptr);
+                rs_entry->is_issued = true;
+                consume_num++;
             }
         }
 
-        RsCreditPtr rs_credit_ptr_tmp {new RsCredit{getName(), 1}};
-        if (inst_ptr_tmp != nullptr) {
+        RsCreditPtr rs_credit_ptr_tmp {new RsCredit{getName(), consume_num}};
+        if (issue_num_ == 1) {
+            for (auto &inst_ptr: *inst_group_tmp_ptr) {
+                ILOG("send insn to following: " << inst_ptr);
+                reservation_following_inst_out.send(inst_ptr);
+            }
+        } else {
+            if (!inst_group_tmp_ptr->empty()) {
+                reservation_following_insts_out.send(inst_group_tmp_ptr);
+            }
+        }
+
+        if (!inst_group_tmp_ptr->empty()) {
             reservation_preceding_credit_out.send(rs_credit_ptr_tmp);
-            ILOG("send insn to following: " << inst_ptr_tmp);
-            reservation_following_inst_out.send(inst_ptr_tmp);
         }
 
         if (!reservation_station_.empty() && credit_ > 0) {

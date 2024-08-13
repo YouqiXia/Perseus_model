@@ -7,6 +7,7 @@
 #include "sparta/ports/SignalPort.hpp"
 
 #include <string>
+#include <deque>
 
 #include "basic/Inst.hpp"
 #include "basic/InstGroup.hpp"
@@ -109,7 +110,7 @@ private:
             {&unit_event_set_, "rename_event", CREATE_SPARTA_HANDLER(RenamingStage, RenameInst_)};
 
 private:
-    InstQueue renaming_stage_queue_;
+    std::deque<InstPtr> renaming_stage_queue_;
 
     Freelist free_list_;
 

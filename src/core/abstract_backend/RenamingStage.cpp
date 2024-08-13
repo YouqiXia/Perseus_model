@@ -15,8 +15,7 @@ namespace TimingModel {
         renaming_table_(p->isa_reg_num, 0),
         is_perfect_lsu_(p->is_perfect_lsu),
         renaming_stage_queue_depth_(p->renaming_stage_queue_depth),
-        renaming_stage_queue_
-            ("rename_queue", p->renaming_stage_queue_depth, node->getClock(), &unit_stat_set_),
+        renaming_stage_queue_(),
         free_list_("free_list", p->free_list_depth, node->getClock(), &unit_stat_set_)
     {
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(RenamingStage, InitCredit_));
@@ -89,7 +88,7 @@ namespace TimingModel {
         ILOG("renaming stage get instructions: " << inst_group_ptr->size());
         for (auto& inst_ptr: *inst_group_ptr) {
             ILOG("renaming stage get instructions: " << inst_ptr);
-            renaming_stage_queue_.push(inst_ptr);
+            renaming_stage_queue_.push_back(inst_ptr);
         }
 
         rename_event.schedule(sparta::Clock::Cycle(0));
@@ -142,7 +141,7 @@ namespace TimingModel {
             RenameInstImp_(inst_tmp_ptr);
             inst_group_tmp_ptr->emplace_back(inst_tmp_ptr);
             ILOG("send insn to following: " << inst_tmp_ptr);
-            renaming_stage_queue_.pop();
+            renaming_stage_queue_.pop_front();
             if (inst_tmp_ptr->getFuType() == FuncType::STU || inst_tmp_ptr->getFuType() == FuncType::LDU) {
                 inst_lsu_group_tmp_ptr->emplace_back(inst_tmp_ptr);
             }

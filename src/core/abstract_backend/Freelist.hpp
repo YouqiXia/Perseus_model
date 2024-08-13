@@ -8,6 +8,7 @@
 #include "sparta/simulation/Clock.hpp"
 
 #include <string>
+#include <deque>
 #include "basic/Inst.hpp"
 #include "basic/InstGroup.hpp"
 
@@ -33,9 +34,13 @@ namespace TimingModel {
         void RollBack();
 
     private:
-        sparta::Queue<uint64_t> free_list_;
+        std::deque<uint64_t> free_list_;
 
-        sparta::Queue<uint64_t> free_list_backup_;
+        std::deque<uint64_t> free_list_backup_;
+
+        std::vector<uint64_t> free_list_idx_vector_;
+
+        std::vector<uint64_t> free_list_idx_vector_backup_;
     };
 }
 

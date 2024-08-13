@@ -11,14 +11,17 @@ namespace TimingModel {
         load_to_use_latency_(p->load_to_use_latency),
         ld_queue_size_(p->ld_queue_size),
         st_queue_size_(p->st_queue_size),
-        lsu_queue_("lsu_queue", p->ld_queue_size + p->st_queue_size, node->getClock(), &unit_stat_set_)
+        lsu_queue_()
     {
         lsu_flush_in.registerConsumerHandler(
                 CREATE_SPARTA_HANDLER_WITH_DATA(PerfectLsu, HandleFlush_, FlushingCriteria));
 
         preceding_func_inst_in.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(PerfectLsu, RecieveInst_, InstPtr));
+        preceding_func_insts_in.registerConsumerHandler
+            (CREATE_SPARTA_HANDLER_WITH_DATA(PerfectLsu, RecieveInsts_, InstGroupPtr));
         preceding_func_inst_in >> sparta::GlobalOrderingPoint(node, "backend_lsu_multiport_order");
+        preceding_func_insts_in >> sparta::GlobalOrderingPoint(node, "backend_lsu_multiport_order");
 
         write_back_func_credit_in.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(PerfectLsu, AcceptCredit_, Credit));
@@ -58,7 +61,16 @@ namespace TimingModel {
     }
 
     void PerfectLsu::RecieveInst_(const InstPtr& inst_ptr) {
-        lsu_queue_.push(inst_ptr);
+        ILOG("get instruction: " << inst_ptr);
+        lsu_queue_.push_back(inst_ptr);
+        write_back_event.schedule(0);
+    }
+
+    void PerfectLsu::RecieveInsts_(const InstGroupPtr& inst_group_ptr) {
+        for (auto& inst_ptr: *inst_group_ptr) {
+            ILOG("get instruction: " << inst_ptr);
+            lsu_queue_.push_back(inst_ptr);
+        }
         write_back_event.schedule(0);
     }
 
@@ -75,30 +87,59 @@ namespace TimingModel {
     }
 
     void PerfectLsu::WriteBack_() {
-        uint32_t produce_num = std::min(lsu_width_, credit_);
+        if (lsu_width_ == 1) {
+            uint32_t produce_num = std::min(lsu_width_, credit_);
 
-        if (lsu_queue_.empty()) {
-            return;
-        }
-        while(produce_num--) {
             if (lsu_queue_.empty()) {
-                break;
+                return;
             }
-            auto inst_ptr = lsu_queue_.front();
-            FuncInstPtr func_inst_ptr {new FuncInst{getName(), inst_ptr}};
-            if (inst_ptr->getFuType() == FuncType::LDU) {
-                ILOG(getName() << " get load inst: " << inst_ptr->getRobTag());
-                func_following_finish_out.send(func_inst_ptr, load_to_use_latency_ - 1);
-                lsu_renaming_ldq_credit_out.send(1);
-            } else if (inst_ptr->getFuType() == FuncType::STU) {
-                ILOG(getName() << " get store inst: " << inst_ptr->getRobTag());
-                func_following_finish_out.send(func_inst_ptr, load_to_use_latency_ - 1);
-                lsu_renaming_stq_credit_out.send(1);
+            while(produce_num--) {
+                if (lsu_queue_.empty()) {
+                    break;
+                }
+                auto inst_ptr = lsu_queue_.front();
+                FuncInstPtr func_inst_ptr {new FuncInst{getName(), inst_ptr}};
+                if (inst_ptr->getFuType() == FuncType::LDU) {
+                    ILOG(getName() << " get load inst: " << inst_ptr->getRobTag());
+                    func_following_finish_out.send(func_inst_ptr, load_to_use_latency_ - 1);
+                    lsu_renaming_ldq_credit_out.send(1);
+                } else if (inst_ptr->getFuType() == FuncType::STU) {
+                    ILOG(getName() << " get store inst: " << inst_ptr->getRobTag());
+                    func_following_finish_out.send(func_inst_ptr, load_to_use_latency_ - 1);
+                    lsu_renaming_stq_credit_out.send(1);
+                }
+                lsu_queue_.pop_front();
+                func_rs_credit_out.send(1);
+                --credit_;
             }
-            lsu_queue_.pop();
-            func_rs_credit_out.send(1);
-            --credit_;
+        } else {
+            InstGroupPtr inst_group_tmp_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
+            for (int i = 0; i < lsu_width_; i++) {
+                if (lsu_queue_.empty()) {
+                    break;
+                }
+
+                inst_group_tmp_ptr->emplace_back(lsu_queue_.front());
+                ILOG("write back instruction: " << lsu_queue_.front());
+                lsu_queue_.pop_front();
+            }
+
+            if (!inst_group_tmp_ptr->empty()) {
+                uint64_t load_credit = 0, store_credit = 0;
+                func_following_finishs_out.send(inst_group_tmp_ptr);
+                func_rs_credit_out.send(inst_group_tmp_ptr->size());
+                for (auto& inst_ptr: *inst_group_tmp_ptr) {
+                    if (inst_ptr->getFuType() == FuncType::LDU) {
+                        load_credit++;
+                    } else if (inst_ptr->getFuType() == FuncType::STU) {
+                        store_credit++;
+                    }
+                }
+                lsu_renaming_ldq_credit_out.send(load_credit);
+                lsu_renaming_stq_credit_out.send(store_credit);
+            }
         }
+
 
         if (!lsu_queue_.empty() && credit_) {
             write_back_event.schedule(1);
