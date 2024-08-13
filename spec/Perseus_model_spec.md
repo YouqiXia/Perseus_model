@@ -37,9 +37,3 @@ The format of the symbol name should be <filename>_HH_
 ```
 
 ## Question
-* 疑问
-  * writeback(跨pipeline数据传输)
-    * writeback的当拍不能使用对应的数据，需要在后面跟一个timebuffer然后写回，有没有更好的做法，怎么做
-  * pipeline可以采用递归结构链式索引子pipeline？
-    * Scheduler是怎么相互认识彼此的
-    * backend那样的结构如何使用scheduler来搭建pipeline，而不是直接写入
