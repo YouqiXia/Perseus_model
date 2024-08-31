@@ -20,7 +20,8 @@ namespace TimingModel {
                 sparta::ParameterSet(n)
             {}
 
-            PARAMETER(uint32_t, alu_width, 1, "alu queue width")
+            PARAMETER(uint32_t, issue_width, 1, "alu issue width")
+            PARAMETER(uint32_t, queue_depth, 1, "alu queue width")
         };
 
         static const char* name;

@@ -7,8 +7,8 @@ namespace TimingModel {
 
     PerfectAlu::PerfectAlu(sparta::TreeNode* node, const PerfectAluParameter* p) :
         sparta::Unit(node),
-        alu_width_(p->alu_width),
-        credit_(p->alu_width),
+        alu_width_(p->issue_width),
+        credit_(p->queue_depth),
         alu_queue_()
     {
         preceding_func_inst_in.registerConsumerHandler(
@@ -88,7 +88,6 @@ namespace TimingModel {
                 func_following_finishs_out.send(inst_group_tmp_ptr);
                 func_rs_credit_out.send(inst_group_tmp_ptr->size());
             }
-
         }
     }
 

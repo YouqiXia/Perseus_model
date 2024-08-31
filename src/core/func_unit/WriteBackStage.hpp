@@ -27,9 +27,9 @@ namespace TimingModel {
                     sparta::ParameterSet(n)
             {}
 
-            PARAMETER(uint64_t, issue_num, 4, "the issuing bandwidth in a cycle")
+            PARAMETER(uint64_t, issue_width, 4, "the issuing bandwidth in a cycle")
             PARAMETER(uint64_t, wb_latency, 1, "write back latency")
-            PARAMETER(bool, is_wb_perfect, false, "write back latency")
+            PARAMETER(bool, is_perfect_mode, false, "write back latency")
         };
 
         static const char* name;

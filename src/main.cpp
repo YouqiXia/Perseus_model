@@ -42,8 +42,6 @@ int main(int argc, char **argv) {
         sparta::app::CommandLineSimulator cls(USAGE, DEFAULTS);
         auto& app_opts = cls.getApplicationOptions();
         app_opts.add_options()
-            ("run",
-             "run the simulation")
             ("elf",
              sparta::app::named_value<std::string>("elf", &cmd_data.workload),
              "Specifies the instruction workload (elf)")
@@ -84,25 +82,24 @@ int main(int argc, char **argv) {
             dram_input.DRAMoutdir = vm["DRAMoutdir"].as<std::string>();
         }
 
-        if (vm.count("run") != 0) {
 
-            if (vm.count("elf") != 0) {
-                cmd_data.is_elf_workload = true;
-            }
-
-            // Create the simulator
-            sparta::Scheduler scheduler;
-            TimingModel::Simulation sim(scheduler,
-                                        cmd_data,
-                                        dram_input);  // run for ilimit instructions
-
-            sparta::SleeperThread::disableForever();
-            cls.populateSimulation(&sim);
-
-            cls.runSimulator(&sim);
-
-            cls.postProcess(&sim);
+        if (vm.count("elf") != 0) {
+            cmd_data.is_elf_workload = true;
         }
+
+        // Create the simulator
+        sparta::Scheduler scheduler;
+        TimingModel::Simulation sim(scheduler,
+                                    cmd_data,
+                                    dram_input);  // run for ilimit instructions
+
+        sparta::SleeperThread::disableForever();
+        cls.populateSimulation(&sim);
+
+        cls.runSimulator(&sim);
+
+        cls.postProcess(&sim);
+
     }catch(...){
         // Could still handle or log the exception here
         throw;

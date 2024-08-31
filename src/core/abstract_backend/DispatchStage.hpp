@@ -29,9 +29,9 @@ namespace TimingModel {
             DispatchStageParameter(sparta::TreeNode *n) :
                     sparta::ParameterSet(n) {}
 
-            PARAMETER(uint64_t, issue_num, 4, "the issuing bandwidth in a cycle")
+            PARAMETER(uint64_t, issue_width, 4, "the issuing bandwidth in a cycle")
             PARAMETER(uint32_t, phy_reg_num, 64, "the issuing bandwidth in a cycle")
-            PARAMETER(uint32_t, issue_queue_depth, 16, "the issuing bandwidth in a cycle")
+            PARAMETER(uint32_t, queue_depth, 16, "the issuing bandwidth in a cycle")
             PARAMETER(bool, is_perfect_mode, false, "the issuing bandwidth in a cycle")
         };
 

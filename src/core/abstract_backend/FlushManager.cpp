@@ -17,13 +17,8 @@ namespace TimingModel {
     }
 
     void FlushManager::ForwardingFlushSignal(const FlushingCriteria& flush_criteria) {
-        auto tick = scheduler_->getCurrentTick();
-        scheduler_->stopRunning();
-        scheduler_->restartAt(tick);
         flush_criteria_ = flush_criteria;
-        nop_event_.schedule(0);
         flush_event_.schedule(1);
-        scheduler_->keepRunning();
     }
 
     void FlushManager::DoFlush() {

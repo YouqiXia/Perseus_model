@@ -6,8 +6,8 @@ namespace TimingModel {
 
     PerfectLsu::PerfectLsu(sparta::TreeNode* node, const PerfectLsuParameter* p) :
         sparta::Unit(node),
-        lsu_width_(p->lsu_width),
-        credit_(p->load_to_use_latency * p->lsu_width),
+        lsu_width_(p->issue_width),
+        credit_(p->load_to_use_latency * p->issue_width),
         load_to_use_latency_(p->load_to_use_latency),
         ld_queue_size_(p->ld_queue_size),
         st_queue_size_(p->st_queue_size),
@@ -135,8 +135,12 @@ namespace TimingModel {
                         store_credit++;
                     }
                 }
-                lsu_renaming_ldq_credit_out.send(load_credit);
-                lsu_renaming_stq_credit_out.send(store_credit);
+                if (load_credit) {
+                    lsu_renaming_ldq_credit_out.send(load_credit);
+                }
+                if (store_credit) {
+                    lsu_renaming_stq_credit_out.send(store_credit);
+                }
             }
         }
 

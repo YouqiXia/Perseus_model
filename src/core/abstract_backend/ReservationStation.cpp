@@ -13,8 +13,11 @@ namespace TimingModel {
     ReservationStation::ReservationStation(sparta::TreeNode *node,
                                            const TimingModel::ReservationStation::ReservationStationParameter *p) :
             sparta::Unit(node),
-            issue_num_(p->issue_num),
-            rs_depth_(p->rs_depth),
+            issue_num_(p->issue_width),
+            rs_depth_(p->queue_depth),
+            phy_reg_num_(p->phy_reg_num),
+            is_perfect_mode_(p->is_perfect_mode),
+            rs_dependency_table_(p->phy_reg_num),
             reservation_station_()
     {
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(ReservationStation, InitCredit_));
@@ -67,6 +70,7 @@ namespace TimingModel {
             tmp_restation_entry->rs2_valid = true;
 
         }
+        rs_dependency_table_.Allocate(tmp_restation_entry);
         reservation_station_.emplace_back(tmp_restation_entry);
 
         pop_event.schedule(sparta::Clock::Cycle(1));
@@ -86,6 +90,7 @@ namespace TimingModel {
                 tmp_restation_entry->rs2_valid = true;
 
             }
+            rs_dependency_table_.Allocate(tmp_restation_entry);
             reservation_station_.emplace_back(tmp_restation_entry);
         }
 
@@ -94,30 +99,9 @@ namespace TimingModel {
     }
 
     void ReservationStation::GetForwardingData(const TimingModel::InstGroupPtr &forwarding_inst_group_ptr) {
-        int i = 0;
-        for (auto &rs_entry_ptr: reservation_station_) {
-            i++;
-            if (rs_entry_ptr->is_issued) {
-                continue;
-            }
-            for (auto& forwarding_inst_ptr: *forwarding_inst_group_ptr) {
-                if (!rs_entry_ptr->rs1_valid) {
-                    if (rs_entry_ptr->inst_ptr->getPhyRs1() == forwarding_inst_ptr->getPhyRd()) {
-                        ILOG(getName() << " rs1 get forwarding data form rob tag: " << forwarding_inst_ptr->getRobTag());
-                        rs_entry_ptr->inst_ptr->setOperand1(forwarding_inst_ptr->getPhyRd());
-                        rs_entry_ptr->rs1_valid = true;
-                        passing_event.schedule(sparta::Clock::Cycle(0));
-                    }
-                }
-                if (!rs_entry_ptr->rs2_valid) {
-                    if (rs_entry_ptr->inst_ptr->getPhyRs2() == forwarding_inst_ptr->getPhyRd()) {
-                        ILOG(getName() << " rs2 get forwarding data form rob tag: " << forwarding_inst_ptr->getRobTag());
-                        rs_entry_ptr->inst_ptr->setOperand2(forwarding_inst_ptr->getPhyRd());
-                        rs_entry_ptr->rs2_valid = true;
-                        passing_event.schedule(sparta::Clock::Cycle(0));
-                    }
-                }
-            }
+        bool find = false;
+        for (auto& forwarding_inst_ptr: *forwarding_inst_group_ptr) {
+            find |= rs_dependency_table_.Resolve(forwarding_inst_ptr);
         }
     }
 
@@ -164,12 +148,15 @@ namespace TimingModel {
         }
 
         RsCreditPtr rs_credit_ptr_tmp {new RsCredit{getName(), consume_num}};
-        if (issue_num_ == 1) {
+        if (!is_perfect_mode_) {
             for (auto &inst_ptr: *inst_group_tmp_ptr) {
                 ILOG("send insn to following: " << inst_ptr);
                 reservation_following_inst_out.send(inst_ptr);
             }
         } else {
+            for (auto &inst_ptr: *inst_group_tmp_ptr) {
+                ILOG("send insn to following: " << inst_ptr);
+            }
             if (!inst_group_tmp_ptr->empty()) {
                 reservation_following_insts_out.send(inst_group_tmp_ptr);
             }

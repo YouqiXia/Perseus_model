@@ -13,8 +13,9 @@ namespace TimingModel {
              const TimingModel::Rob::RobParameter *p) :
              sparta::Unit(node),
              issue_width_(p->issue_width),
-             rob_depth_(p->rob_depth),
-             rob_(p->rob_depth),
+             rob_depth_(p->queue_depth),
+             rob_(p->queue_depth),
+             retire_heartbeat_(p->retire_heartbeat),
              stat_ipc_(&unit_stat_set_,
                        "ipc",
                        "Instructions retired per cycle",

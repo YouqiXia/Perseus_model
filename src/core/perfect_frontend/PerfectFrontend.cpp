@@ -12,7 +12,7 @@ namespace TimingModel {
         sparta::Unit(node),
         is_speculation_(p->is_speculation),
         node_(node),
-        issue_num_(p->issue_num),
+        issue_num_(p->issue_width),
         mavis_facade_(getMavis(node)),
         insn_gen_type_(p->insn_gen_type)
     {

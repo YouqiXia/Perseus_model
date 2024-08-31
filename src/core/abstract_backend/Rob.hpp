@@ -32,7 +32,8 @@ namespace TimingModel {
             {}
 
             PARAMETER(uint32_t, issue_width, 4, "the issuing bandwidth in a cycle")
-            PARAMETER(uint32_t, rob_depth, 32, "the number of isa register file")
+            PARAMETER(uint32_t, queue_depth, 32, "the number of isa register file")
+            PARAMETER(uint32_t, retire_heartbeat, 10000, "the number of isa register file")
             PARAMETER(uint32_t, num_insts_to_retire, 0,
                       "Number of instructions to retire after which simulation will be "
                       "terminated. 0 means simulation will run until end of testcase")
@@ -113,7 +114,7 @@ namespace TimingModel {
 
         sparta::StatisticInstance   ipc_;
 
-        const uint64_t retire_heartbeat_ = 1000;
+        const uint64_t retire_heartbeat_;
 
         const uint32_t num_insts_to_retire_; // parameter from ilimit
 

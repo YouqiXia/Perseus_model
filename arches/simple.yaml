@@ -28,14 +28,22 @@ top.extension.topo_extensions:
              ["alu1_rs", "reservation_station"],
              ["alu2_rs", "reservation_station"],
              ["alu3_rs", "reservation_station"],
-             ["alu4_rs", "reservation_station"]
+             ["alu4_rs", "reservation_station"],
+             ["alu5_rs", "reservation_station"],
+             ["alu6_rs", "reservation_station"],
+             ["alu7_rs", "reservation_station"],
+             ["alu8_rs", "reservation_station"]
   ]
 
   fu_group: [["lsu", "perfect_lsu"],
              ["alu1", "perfect_alu"],
              ["alu2", "perfect_alu"],
              ["alu3", "perfect_alu"],
-             ["alu4", "perfect_alu"]
+             ["alu4", "perfect_alu"],
+             ["alu5", "perfect_alu"],
+             ["alu6", "perfect_alu"],
+             ["alu7", "perfect_alu"],
+             ["alu8", "perfect_alu"]
   ]
 
   abstract_lsu: [["lsu", "LSUShell"],
@@ -46,10 +54,14 @@ top.extension.topo_extensions:
   dispatch_map: [
     ["lsu_rs", "FuncType::STU", "FuncType::LDU"],
     ["lsu2_rs", "FuncType::STU", "FuncType::LDU"],
-    ["alu1_rs", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::FPU", "FuncType::CSR"],
-    ["alu2_rs", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::FPU", "FuncType::CSR"],
-    ["alu3_rs", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::FPU", "FuncType::CSR"],
-    ["alu4_rs", "FuncType::ALU", "FuncType::MUL", "FuncType::DIV", "FuncType::BRU", "FuncType::FPU", "FuncType::CSR"]
+    ["alu1_rs", "FuncType::STU", "FuncType::LDU"],
+    ["alu2_rs", "FuncType::STU", "FuncType::LDU"],
+    ["alu3_rs", "FuncType::ALU", "FuncType::BRU", "FuncType::FPU", "FuncType::CSR"],
+    ["alu4_rs", "FuncType::ALU", "FuncType::BRU", "FuncType::FPU", "FuncType::CSR"],
+    ["alu5_rs", "FuncType::ALU", "FuncType::MUL", "FuncType::FPU", "FuncType::CSR"],
+    ["alu6_rs", "FuncType::ALU", "FuncType::DIV", "FuncType::FPU", "FuncType::CSR"],
+    ["alu7_rs", "FuncType::ALU", "FuncType::FPU", "FuncType::CSR"],
+    ["alu8_rs", "FuncType::ALU", "FuncType::FPU", "FuncType::CSR"]
   ]
 
   all_component: []
@@ -92,36 +104,60 @@ top.extension.topo_extensions:
                      "dispatch_stage.ports.dispatch_alu2_rs_out", "alu2_rs.ports.preceding_reservation_inst_in",
                      "dispatch_stage.ports.dispatch_alu3_rs_out", "alu3_rs.ports.preceding_reservation_inst_in",
                      "dispatch_stage.ports.dispatch_alu4_rs_out", "alu4_rs.ports.preceding_reservation_inst_in",
+                     "dispatch_stage.ports.dispatch_alu5_rs_out", "alu5_rs.ports.preceding_reservation_inst_in",
+                     "dispatch_stage.ports.dispatch_alu6_rs_out", "alu6_rs.ports.preceding_reservation_inst_in",
+                     "dispatch_stage.ports.dispatch_alu7_rs_out", "alu7_rs.ports.preceding_reservation_inst_in",
+                     "dispatch_stage.ports.dispatch_alu8_rs_out", "alu8_rs.ports.preceding_reservation_inst_in",
 
                      "dispatch_stage.ports.dispatch_lsu_rs_insts_out" , "lsu_rs.ports.preceding_reservation_insts_in",
                      "dispatch_stage.ports.dispatch_alu1_rs_insts_out", "alu1_rs.ports.preceding_reservation_insts_in",
                      "dispatch_stage.ports.dispatch_alu2_rs_insts_out", "alu2_rs.ports.preceding_reservation_insts_in",
                      "dispatch_stage.ports.dispatch_alu3_rs_insts_out", "alu3_rs.ports.preceding_reservation_insts_in",
                      "dispatch_stage.ports.dispatch_alu4_rs_insts_out", "alu4_rs.ports.preceding_reservation_insts_in",
+                     "dispatch_stage.ports.dispatch_alu5_rs_insts_out", "alu5_rs.ports.preceding_reservation_insts_in",
+                     "dispatch_stage.ports.dispatch_alu6_rs_insts_out", "alu6_rs.ports.preceding_reservation_insts_in",
+                     "dispatch_stage.ports.dispatch_alu7_rs_insts_out", "alu7_rs.ports.preceding_reservation_insts_in",
+                     "dispatch_stage.ports.dispatch_alu8_rs_insts_out", "alu8_rs.ports.preceding_reservation_insts_in",
     # separate rs -> function units
                      "lsu_rs.ports.reservation_following_inst_out" , "lsu.ports.preceding_func_inst_in",
                      "alu1_rs.ports.reservation_following_inst_out", "alu1.ports.preceding_func_inst_in",
                      "alu2_rs.ports.reservation_following_inst_out", "alu2.ports.preceding_func_inst_in",
                      "alu3_rs.ports.reservation_following_inst_out", "alu3.ports.preceding_func_inst_in",
                      "alu4_rs.ports.reservation_following_inst_out", "alu4.ports.preceding_func_inst_in",
+                     "alu5_rs.ports.reservation_following_inst_out", "alu5.ports.preceding_func_inst_in",
+                     "alu6_rs.ports.reservation_following_inst_out", "alu6.ports.preceding_func_inst_in",
+                     "alu7_rs.ports.reservation_following_inst_out", "alu7.ports.preceding_func_inst_in",
+                     "alu8_rs.ports.reservation_following_inst_out", "alu8.ports.preceding_func_inst_in",
 
                      "lsu_rs.ports.reservation_following_insts_out" , "lsu.ports.preceding_func_insts_in",
                      "alu1_rs.ports.reservation_following_insts_out", "alu1.ports.preceding_func_insts_in",
                      "alu2_rs.ports.reservation_following_insts_out", "alu2.ports.preceding_func_insts_in",
                      "alu3_rs.ports.reservation_following_insts_out", "alu3.ports.preceding_func_insts_in",
                      "alu4_rs.ports.reservation_following_insts_out", "alu4.ports.preceding_func_insts_in",
+                     "alu5_rs.ports.reservation_following_insts_out", "alu5.ports.preceding_func_insts_in",
+                     "alu6_rs.ports.reservation_following_insts_out", "alu6.ports.preceding_func_insts_in",
+                     "alu7_rs.ports.reservation_following_insts_out", "alu7.ports.preceding_func_insts_in",
+                     "alu8_rs.ports.reservation_following_insts_out", "alu8.ports.preceding_func_insts_in",
     # function units -> write back arbiter
                      "lsu.ports.func_following_finish_out" , "write_back_stage.ports.lsu_write_back_port_in",
                      "alu1.ports.func_following_finish_out", "write_back_stage.ports.alu1_write_back_port_in",
                      "alu2.ports.func_following_finish_out", "write_back_stage.ports.alu2_write_back_port_in",
                      "alu3.ports.func_following_finish_out", "write_back_stage.ports.alu3_write_back_port_in",
                      "alu4.ports.func_following_finish_out", "write_back_stage.ports.alu4_write_back_port_in",
+                     "alu5.ports.func_following_finish_out", "write_back_stage.ports.alu5_write_back_port_in",
+                     "alu6.ports.func_following_finish_out", "write_back_stage.ports.alu6_write_back_port_in",
+                     "alu7.ports.func_following_finish_out", "write_back_stage.ports.alu7_write_back_port_in",
+                     "alu8.ports.func_following_finish_out", "write_back_stage.ports.alu8_write_back_port_in",
     # write back -> separate rs
                      "write_back_stage.ports.write_back_following_port_out", "lsu_rs.ports.forwarding_reservation_inst_in",
                      "write_back_stage.ports.write_back_following_port_out", "alu1_rs.ports.forwarding_reservation_inst_in",
                      "write_back_stage.ports.write_back_following_port_out", "alu2_rs.ports.forwarding_reservation_inst_in",
                      "write_back_stage.ports.write_back_following_port_out", "alu3_rs.ports.forwarding_reservation_inst_in",
                      "write_back_stage.ports.write_back_following_port_out", "alu4_rs.ports.forwarding_reservation_inst_in",
+                     "write_back_stage.ports.write_back_following_port_out", "alu5_rs.ports.forwarding_reservation_inst_in",
+                     "write_back_stage.ports.write_back_following_port_out", "alu6_rs.ports.forwarding_reservation_inst_in",
+                     "write_back_stage.ports.write_back_following_port_out", "alu7_rs.ports.forwarding_reservation_inst_in",
+                     "write_back_stage.ports.write_back_following_port_out", "alu8_rs.ports.forwarding_reservation_inst_in",
     # /* Credit */
     # separate rs -> dispatch stage
                      "lsu_rs.ports.reservation_preceding_credit_out" , "dispatch_stage.ports.lsu_rs_dispatch_credit_in",
@@ -129,23 +165,39 @@ top.extension.topo_extensions:
                      "alu2_rs.ports.reservation_preceding_credit_out", "dispatch_stage.ports.alu2_rs_dispatch_credit_in",
                      "alu3_rs.ports.reservation_preceding_credit_out", "dispatch_stage.ports.alu3_rs_dispatch_credit_in",
                      "alu4_rs.ports.reservation_preceding_credit_out", "dispatch_stage.ports.alu4_rs_dispatch_credit_in",
+                     "alu5_rs.ports.reservation_preceding_credit_out", "dispatch_stage.ports.alu5_rs_dispatch_credit_in",
+                     "alu6_rs.ports.reservation_preceding_credit_out", "dispatch_stage.ports.alu6_rs_dispatch_credit_in",
+                     "alu7_rs.ports.reservation_preceding_credit_out", "dispatch_stage.ports.alu7_rs_dispatch_credit_in",
+                     "alu8_rs.ports.reservation_preceding_credit_out", "dispatch_stage.ports.alu8_rs_dispatch_credit_in",
     # write back -> function unit
                      "write_back_stage.ports.lsu_rs_credit_out" , "lsu.ports.write_back_func_credit_in",
                      "write_back_stage.ports.alu1_rs_credit_out", "alu1.ports.write_back_func_credit_in",
                      "write_back_stage.ports.alu2_rs_credit_out", "alu2.ports.write_back_func_credit_in",
                      "write_back_stage.ports.alu3_rs_credit_out", "alu3.ports.write_back_func_credit_in",
                      "write_back_stage.ports.alu4_rs_credit_out", "alu4.ports.write_back_func_credit_in",
+                     "write_back_stage.ports.alu5_rs_credit_out", "alu5.ports.write_back_func_credit_in",
+                     "write_back_stage.ports.alu6_rs_credit_out", "alu6.ports.write_back_func_credit_in",
+                     "write_back_stage.ports.alu7_rs_credit_out", "alu7.ports.write_back_func_credit_in",
+                     "write_back_stage.ports.alu8_rs_credit_out", "alu8.ports.write_back_func_credit_in",
     # function unit -> separate rs
                      "lsu.ports.func_rs_credit_out" , "lsu_rs.ports.following_reservation_credit_in",
                      "alu1.ports.func_rs_credit_out", "alu1_rs.ports.following_reservation_credit_in",
                      "alu2.ports.func_rs_credit_out", "alu2_rs.ports.following_reservation_credit_in",
                      "alu3.ports.func_rs_credit_out", "alu3_rs.ports.following_reservation_credit_in",
                      "alu4.ports.func_rs_credit_out", "alu4_rs.ports.following_reservation_credit_in",
+                     "alu5.ports.func_rs_credit_out", "alu5_rs.ports.following_reservation_credit_in",
+                     "alu6.ports.func_rs_credit_out", "alu6_rs.ports.following_reservation_credit_in",
+                     "alu7.ports.func_rs_credit_out", "alu7_rs.ports.following_reservation_credit_in",
+                     "alu8.ports.func_rs_credit_out", "alu8_rs.ports.following_reservation_credit_in",
     # resolve branch func -> bpu
                      "alu1.ports.func_branch_resolve_out", "frontend.ports.backend_branch_resolve_inst_in",
                      "alu2.ports.func_branch_resolve_out", "frontend.ports.backend_branch_resolve_inst_in",
                      "alu3.ports.func_branch_resolve_out", "frontend.ports.backend_branch_resolve_inst_in",
                      "alu4.ports.func_branch_resolve_out", "frontend.ports.backend_branch_resolve_inst_in",
+                     "alu5.ports.func_branch_resolve_out", "frontend.ports.backend_branch_resolve_inst_in",
+                     "alu6.ports.func_branch_resolve_out", "frontend.ports.backend_branch_resolve_inst_in",
+                     "alu7.ports.func_branch_resolve_out", "frontend.ports.backend_branch_resolve_inst_in",
+                     "alu8.ports.func_branch_resolve_out", "frontend.ports.backend_branch_resolve_inst_in",
     # additional lsu2 rs
                      "dispatch_stage.ports.dispatch_lsu2_rs_out" , "lsu2_rs.ports.preceding_reservation_inst_in",
                      "dispatch_stage.ports.dispatch_lsu2_rs_insts_out" , "lsu2_rs.ports.preceding_reservation_insts_in",
@@ -160,6 +212,10 @@ top.extension.topo_extensions:
                      "alu2.ports.func_following_finishs_out", "write_back_stage.ports.write_back_insts_in",
                      "alu3.ports.func_following_finishs_out", "write_back_stage.ports.write_back_insts_in",
                      "alu4.ports.func_following_finishs_out", "write_back_stage.ports.write_back_insts_in",
+                     "alu5.ports.func_following_finishs_out", "write_back_stage.ports.write_back_insts_in",
+                     "alu6.ports.func_following_finishs_out", "write_back_stage.ports.write_back_insts_in",
+                     "alu7.ports.func_following_finishs_out", "write_back_stage.ports.write_back_insts_in",
+                     "alu8.ports.func_following_finishs_out", "write_back_stage.ports.write_back_insts_in",
     # flush manager
                      "flush_manager.ports.global_flush_signal_out", "dispatch_stage.ports.dispatch_flush_in",
                      "flush_manager.ports.global_flush_signal_out", "renaming_stage.ports.renaming_flush_in",
@@ -169,14 +225,19 @@ top.extension.topo_extensions:
                      "flush_manager.ports.global_flush_signal_out", "alu2_rs.ports.reservation_flush_in",
                      "flush_manager.ports.global_flush_signal_out", "alu3_rs.ports.reservation_flush_in",
                      "flush_manager.ports.global_flush_signal_out", "alu4_rs.ports.reservation_flush_in",
+                     "flush_manager.ports.global_flush_signal_out", "alu5_rs.ports.reservation_flush_in",
+                     "flush_manager.ports.global_flush_signal_out", "alu6_rs.ports.reservation_flush_in",
+                     "flush_manager.ports.global_flush_signal_out", "alu7_rs.ports.reservation_flush_in",
+                     "flush_manager.ports.global_flush_signal_out", "alu8_rs.ports.reservation_flush_in",
                      "flush_manager.ports.global_flush_signal_out", "alu1.ports.func_flush_in",
                      "flush_manager.ports.global_flush_signal_out", "alu2.ports.func_flush_in",
                      "flush_manager.ports.global_flush_signal_out", "alu3.ports.func_flush_in",
                      "flush_manager.ports.global_flush_signal_out", "alu4.ports.func_flush_in",
+                     "flush_manager.ports.global_flush_signal_out", "alu5.ports.func_flush_in",
+                     "flush_manager.ports.global_flush_signal_out", "alu6.ports.func_flush_in",
+                     "flush_manager.ports.global_flush_signal_out", "alu7.ports.func_flush_in",
+                     "flush_manager.ports.global_flush_signal_out", "alu8.ports.func_flush_in",
                      "flush_manager.ports.global_flush_signal_out", "lsu.ports.lsu_flush_in",
                      "flush_manager.ports.global_flush_signal_out", "rob.ports.rob_flush_in",
                      "flush_manager.ports.global_flush_signal_out", "write_back_stage.ports.writeback_flush_in",
-
-
   ]
-

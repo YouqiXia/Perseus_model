@@ -14,9 +14,9 @@ namespace TimingModel {
         issue_width_(p->issue_width),
         renaming_table_(p->isa_reg_num, 0),
         is_perfect_lsu_(p->is_perfect_lsu),
-        renaming_stage_queue_depth_(p->renaming_stage_queue_depth),
+        renaming_stage_queue_depth_(p->queue_depth),
         renaming_stage_queue_(),
-        free_list_("free_list", p->free_list_depth, node->getClock(), &unit_stat_set_)
+        free_list_("free_list", p->phy_reg_num, node->getClock(), &unit_stat_set_)
     {
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(RenamingStage, InitCredit_));
         renaming_flush_in.registerConsumerHandler
@@ -35,7 +35,6 @@ namespace TimingModel {
            (CREATE_SPARTA_HANDLER_WITH_DATA(RenamingStage, AcceptLsuAllocateIdx, InstGroupPtr));
         Rob_cmt_inst_in.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(RenamingStage, RobCommit_, InstGroupPtr));
-
 
         // preceding -> rob & dispatch stage
         following_renaming_credit_in >> sparta::GlobalOrderingPoint(node, "renaming_node");
@@ -117,8 +116,10 @@ namespace TimingModel {
             return;
         }
         uint64_t produce_inst_num = std::min<uint64_t>(dispatch_credit_, rob_credit_);
-        produce_inst_num = std::min<uint64_t>(produce_inst_num, ldq_credit_);
-        produce_inst_num = std::min<uint64_t>(produce_inst_num, stq_credit_);
+        if (!is_perfect_lsu_) {
+            produce_inst_num = std::min<uint64_t>(produce_inst_num, ldq_credit_);
+            produce_inst_num = std::min<uint64_t>(produce_inst_num, stq_credit_);
+        }
         produce_inst_num = std::min<uint64_t>(produce_inst_num, issue_width_);
 
         ILOG(getName() << " rename instructions, produce_inst_num = " << produce_inst_num 
@@ -148,9 +149,9 @@ namespace TimingModel {
 
             --dispatch_credit_;
             --rob_credit_;
-            if (inst_tmp_ptr->getFuType() == FuncType::STU) {
+            if (inst_tmp_ptr->getFuType() == FuncType::STU && !is_perfect_lsu_) {
                 stq_credit_--;
-            }else if (inst_tmp_ptr->getFuType() == FuncType::LDU) {
+            }else if (inst_tmp_ptr->getFuType() == FuncType::LDU && !is_perfect_lsu_) {
                 ldq_credit_--;
             }
         }

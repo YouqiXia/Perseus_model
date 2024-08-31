@@ -10,8 +10,8 @@ namespace TimingModel {
 
     DispatchStage::DispatchStage(sparta::TreeNode *node, const DispatchStageParameter *p) :
             sparta::Unit(node),
-            issue_num_(p->issue_num),
-            inst_queue_depth_(p->issue_queue_depth),
+            issue_num_(p->issue_width),
+            inst_queue_depth_(p->queue_depth),
             is_perfect_mode_(p->is_perfect_mode),
             scoreboard_("scoreboard", p->phy_reg_num, info_logger_),
             inst_queue_()
@@ -81,6 +81,9 @@ namespace TimingModel {
             ILOG("get inst from preceding: " << inst_ptr);
             IssueQueueEntryPtr issue_entry_ptr_tmp {new IssueQueueEntry};
             issue_entry_ptr_tmp->inst_ptr = inst_ptr;
+            if (inst_ptr->getRdType() != RegType_t::NONE) {
+                scoreboard_.SetBusyBit(inst_ptr->getPhyRd());
+            }
             inst_queue_.push_back(issue_entry_ptr_tmp);
         }
 
@@ -128,9 +131,6 @@ namespace TimingModel {
             if (scoreboard_.GetBusyBit(inst_ptr->getPhyRs2())) {
                 inst_ptr->setIsRs2Forward(true);
             }
-        }
-        if (inst_ptr->getRdType() != RegType_t::NONE) {
-            scoreboard_.SetBusyBit(inst_ptr->getPhyRd());
         }
     }
 
@@ -220,9 +220,9 @@ namespace TimingModel {
     }
 
     void DispatchStage::IssueInst_() {
-        InstGroupPtr inst_group_tmp_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
         if (is_perfect_mode_) {
             for (auto& dispatch_pending_pair: dispatch_pending_queues_) {
+                InstGroupPtr inst_group_tmp_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
                 for (auto& inst_ptr: dispatch_pending_pair.second) {
                     ILOG(getName() << " issue instruction rob tag: " << inst_ptr->getRobTag());
                     ILOG("issue insn to following: " << inst_ptr);
