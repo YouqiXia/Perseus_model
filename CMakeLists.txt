@@ -3,10 +3,7 @@ cmake_minimum_required (VERSION 3.20)
 # enable c++17
 set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
-set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -fsanitize=address")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
 # Define the project name and the language used
 project(PERSEUS LANGUAGES CXX)
@@ -66,13 +63,6 @@ file(GLOB_RECURSE Perseus_SRCS "src/*.cc" "src/*.cpp" "src/*.c")
 # head file
 include_directories(./src)
 include_directories(./config/cpp_file)
-#include_directories(thirdparty/mavis)
-#include_directories(thirdparty/ELFIO)
-#include_directories(thirdparty/stf_lib)
-#include_directories(thirdparty/pybind11/include)
-#include_directories(${Python3_INCLUDE_DIRS})
-#include_directories(thirdparty/DRAMsim3/src)
-#include_directories(thirdparty/DRAMsim3/ext/headers)
 include_directories(./src/utils/spikeInterface/src)
 include_directories (./thirdparty/riscv-isa-sim/libs/include)
 include_directories (./thirdparty/riscv-isa-sim/libs/include/riscv)
@@ -92,11 +82,6 @@ file(CREATE_LINK ${PROJECT_SOURCE_DIR}/traces     ${CMAKE_CURRENT_BINARY_DIR}/tr
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}//src/utils/spikeInterface/default.dtb     ${CMAKE_CURRENT_BINARY_DIR}/default.dtb          SYMBOLIC)
 
 # thirdparty link lib
-#add_subdirectory(thirdparty/mavis)
-#add_subdirectory (${STF_LIB_BASE})
-#add_subdirectory(thirdparty/DRAMsim3)
-#add_subdirectory(thirdparty/ELFIO)
-#add_subdirectory(thirdparty/pybind11)
 
 link_directories(./thirdparty/riscv-isa-sim/libs/lib)
 set (SPIKE_INTF_LIBS riscv softfloat fesvr disasm fdt boost_regex)
@@ -107,7 +92,6 @@ add_executable(model ${Perseus_SRCS})
 # link lib
 target_include_directories(model PUBLIC ${Perseus_INCLUDES})
 target_link_libraries(model PRIVATE ${SPIKE_INTF_LIBS} ${Perseus_LIBS})
-set_target_properties(model PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # pybind11
 pybind11_add_module(unitlib ${PybindLib_SRCS} ${Perseus_SRCS})
