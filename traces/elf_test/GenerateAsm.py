@@ -63,6 +63,10 @@ dependencyloop = [
     "add x18, x17, x16\n"
 ]
 
+dependencyloop2 = [
+    "add x3,  x3,  x2 \n"
+]
+
 tail = [
     "RVTEST_PASS\n", "\n", ".data\n", "RVTEST_DATA_BEGIN\n", '\n'
 ]
@@ -83,8 +87,8 @@ end = ["RVTEST_DATA_END\n"]
 asm_file.writelines(header)
 asm_file.writelines(body)
 
-for i in range(10000):
-    asm_file.writelines(dependencyloop)
+for i in range(100000):
+    asm_file.writelines(loopnop)
 
 asm_file.writelines(tail)
 asm_file.writelines(generate_string_array(inner_loop_num))
