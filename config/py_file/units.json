@@ -1,0 +1,241 @@
+{
+    "units": {
+        "write_back_stage": {
+            "ports": {
+                "out_ports": [
+                    "preceding_write_back_credit_out",
+                    "write_back_following_port_out"
+                ],
+                "in_ports": [
+                    "preceding_write_back_inst_in",
+                    "writeback_flush_in"
+                ]
+            },
+            "params": {
+                "issue_width": 4,
+                "wb_latency": 1,
+                "is_perfect_mode": false
+            },
+            "hierarchy": "core0.func_units"
+        },
+        "rob": {
+            "ports": {
+                "out_ports": [
+                    "Rob_cmt_inst_out",
+                    "rob_bpu_inst_out",
+                    "rob_preceding_credit_out",
+                    "Rob_lsu_wakeup_out",
+                    "rob_redirect_pc_inst_out",
+                    "rob_flush_out"
+                ],
+                "in_ports": [
+                    "write_back_rob_finish_in",
+                    "preceding_rob_inst_in",
+                    "rob_flush_in"
+                ]
+            },
+            "params": {
+                "issue_width": 4,
+                "queue_depth": 32,
+                "retire_heartbeat": 10000,
+                "num_insts_to_retire": 0
+            },
+            "hierarchy": "core0.backend"
+        },
+        "reservation_station": {
+            "ports": {
+                "out_ports": [
+                    "reservation_following_inst_out",
+                    "reservation_preceding_credit_out"
+                ],
+                "in_ports": [
+                    "forwarding_reservation_inst_in",
+                    "preceding_reservation_inst_in",
+                    "following_reservation_credit_in",
+                    "reservation_flush_in"
+                ]
+            },
+            "params": {
+                "issue_width": 1,
+                "queue_depth": 4,
+                "phy_reg_num": 64
+            },
+            "hierarchy": "core0.backend"
+        },
+        "renaming_stage": {
+            "ports": {
+                "out_ports": [
+                    "renaming_lsu_allocate_out",
+                    "renaming_following_inst_out",
+                    "renaming_preceding_credit_out"
+                ],
+                "in_ports": [
+                    "lsu_renaming_stq_credit_in",
+                    "lsu_renaming_ldq_credit_in",
+                    "lsu_renaming_allocate_in",
+                    "Rob_cmt_inst_in",
+                    "rob_renaming_credit_in",
+                    "following_renaming_credit_in",
+                    "preceding_renaming_inst_in",
+                    "renaming_flush_in"
+                ]
+            },
+            "params": {
+                "issue_width": 4,
+                "isa_reg_num": 32,
+                "queue_depth": 4,
+                "phy_reg_num": 64,
+                "is_perfect_lsu": true
+            },
+            "hierarchy": "core0.backend"
+        },
+        "physical_regfile": {
+            "ports": {
+                "out_ports": [
+                    "physical_regfile_following_read_out"
+                ],
+                "in_ports": [
+                    "preceding_physical_regfile_write_in",
+                    "preceding_physical_regfile_read_in"
+                ]
+            },
+            "params": {
+                "phy_reg_num": 64
+            },
+            "hierarchy": "core0.backend"
+        },
+        "perfect_fu": {
+            "ports": {
+                "out_ports": [
+                    "func_branch_resolve_out",
+                    "func_following_finish_out",
+                    "func_rs_credit_out"
+                ],
+                "in_ports": [
+                    "write_back_func_credit_in",
+                    "preceding_rob_wakeup_store_in",
+                    "func_flush_in",
+                    "preceding_func_inst_in"
+                ]
+            },
+            "params": {
+                "issue_width": 1,
+                "queue_depth": 1
+            },
+            "hierarchy": "core0.func_units"
+        },
+        "perfect_frontend": {
+            "ports": {
+                "out_ports": [
+                    "fetch_backend_inst_out"
+                ],
+                "in_ports": [
+                    "backend_redirect_pc_inst_in",
+                    "backend_bpu_inst_in",
+                    "backend_branch_resolve_inst_in",
+                    "backend_fetch_credit_in"
+                ]
+            },
+            "params": {
+                "issue_width": 4,
+                "is_config": true,
+                "input_file": "",
+                "insn_gen_type": "trace",
+                "is_speculation": false
+            },
+            "hierarchy": "core0.frontend"
+        },
+        "flush_manager": {
+            "ports": {
+                "out_ports": [
+                    "global_flush_signal_out"
+                ],
+                "in_ports": [
+                    "rob_flush_manager_in"
+                ]
+            },
+            "params": {},
+            "hierarchy": "core0.global_ctrl"
+        },
+        "mavis": {
+            "ports": {},
+            "params": {
+                "isa_file_path": "mavis_isa_files",
+                "uarch_file_path": "arches/isa_json",
+                "pseudo_file_path": "",
+                "uarch_overrides_json": "",
+                "uarch_overrides": []
+            },
+            "hierarchy": ".info"
+        },
+        "dispatch_stage": {
+            "ports": {
+                "out_ports": [
+                    "dispatch_rs_inst_out",
+                    "dispatch_physical_reg_read_out",
+                    "dispatch_preceding_credit_out"
+                ],
+                "in_ports": [
+                    "write_back_dispatch_port_in",
+                    "rs_dispatch_credit_in",
+                    "dispatch_physical_reg_read_in",
+                    "preceding_dispatch_inst_in",
+                    "dispatch_flush_in"
+                ]
+            },
+            "params": {
+                "issue_width": 4,
+                "phy_reg_num": 64,
+                "queue_depth": 16
+            },
+            "hierarchy": "core0.backend"
+        },
+        "global_param": {
+            "ports": {},
+            "params": {
+                "dispatch_map": [
+                    "following_unit_name",
+                    "|",
+                    "bandwidth",
+                    "|",
+                    "fu_type_n",
+                    "|"
+                ],
+                "write_back_map": [
+                    "following_unit_name",
+                    "|",
+                    "bandwidth",
+                    "|"
+                ]
+            },
+            "hierarchy": ".info"
+        }
+    },
+    "hierarchy": {
+        "info": [
+            "mavis",
+            "global_param"
+        ],
+        "core0": {
+            "frontend": [
+                "perfect_frontend"
+            ],
+            "backend": [
+                "renaming_stage",
+                "dispatch_stage",
+                "rob",
+                "physical_regfile",
+                "reservation_station"
+            ],
+            "func_units": [
+                "perfect_fu",
+                "write_back_stage"
+            ],
+            "global_ctrl": [
+                "flush_manager"
+            ],
+            "cache": [],
+            "memory": []
+        }
+    }
+}
