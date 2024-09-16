@@ -25,11 +25,11 @@ Compiling and Running an elf or trace file
 
 Running a trace file:
 
-    ./model --run --arch simple --workload ./traces/dhry_riscv.zstf
+    ./model --json arches/config/simple_arch.json --workload ./traces/dhry_riscv.zstf
 
 Running an elf file:
 
-    ./model --run --arch simple --elf ./traces/elf_test/benchmarks/dhrystone.riscv
+    ./model --json arches/config/simple_arch.json --elf ./traces/elf_test/benchmarks/dhrystone.riscv
 
 For more infomation, to see:
 
