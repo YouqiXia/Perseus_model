@@ -4,7 +4,7 @@
 #include "sparta/simulation/ParameterSet.hpp"
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/events/PayloadEvent.hpp"
-#include "MemAccessInfo.hpp"
+#include "uncore/MemAccessInfo.hpp"
 
 namespace TimingModel {
 

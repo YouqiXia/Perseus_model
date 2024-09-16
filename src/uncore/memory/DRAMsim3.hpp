@@ -6,7 +6,7 @@
 #include "sparta/ports/SignalPort.hpp"
 #include "sparta/events/PayloadEvent.hpp"
 #include "olympia/OlympiaAllocators.hpp"
-#include "MemAccessInfo.hpp"
+#include "uncore/MemAccessInfo.hpp"
 #include "memory_system.h"
 
 namespace TimingModel {

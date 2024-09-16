@@ -10,7 +10,7 @@
 #include <string>
 #include <memory>
 
-#include "Inst.hpp"
+#include "basic/Inst.hpp"
 #include "MavisUnit.hpp"
 #include "sparta/utils/SpartaAssert.hpp"
 

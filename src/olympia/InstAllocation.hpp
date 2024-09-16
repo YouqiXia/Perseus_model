@@ -12,7 +12,7 @@
 
 #include <iostream>
 
-#include "Inst.hpp"
+#include "basic/Inst.hpp"
 
 #include "sparta/utils/SpartaSharedPointer.hpp"
 #include "sparta/utils/SpartaSharedPointerAllocator.hpp"

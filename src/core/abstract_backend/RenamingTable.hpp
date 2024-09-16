@@ -6,7 +6,7 @@
 
 #include <vector>
 
-#include "Inst.hpp"
+#include "basic/Inst.hpp"
 
 namespace TimingModel {
 

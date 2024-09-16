@@ -14,8 +14,8 @@
 
 #include "basic/Inst.hpp"
 #include "basic/InstGroup.hpp"
-#include "FuncUnits.hpp"
-#include "PortInterface.hpp"
+#include "basic/PortInterface.hpp"
+#include "basic/GlobalParam.hpp"
 
 namespace TimingModel {
 
@@ -41,9 +41,9 @@ namespace TimingModel {
     private:
         void HandleFlush_(const FlushingCriteria&);
 
-        void AcceptFuncInst_(const FuncInstPtr&);
+        void AcceptFuncInst_(const InstGroupPairPtr&);
 
-        void AcceptFuncInsts_(const InstGroupPtr&);
+        void SendInitCredit_();
 
         void ArbitrateInst_();
 
@@ -52,11 +52,14 @@ namespace TimingModel {
         sparta::DataOutPort<InstGroupPtr> write_back_following_port_out
                 {&unit_port_set_, "write_back_following_port_out"};
 
+        sparta::DataOutPort<CreditPairPtr> preceding_write_back_credit_out
+                {&unit_port_set_, "preceding_write_back_credit_out"};
+
         sparta::DataInPort<FlushingCriteria> writeback_flush_in
                 {&unit_port_set_, "writeback_flush_in", sparta::SchedulingPhase::Flush, 1};
 
-        sparta::DataInPort<InstGroupPtr> write_back_insts_in
-                {&unit_port_set_, "write_back_insts_in", sparta::SchedulingPhase::Tick, 0};
+        sparta::DataInPort<InstGroupPairPtr> preceding_write_back_inst_in
+                {&unit_port_set_, "preceding_write_back_inst_in", sparta::SchedulingPhase::Tick, 0};
 
 
         // events
@@ -68,15 +71,13 @@ namespace TimingModel {
 
         bool is_wb_perfect_;
 
-        std::map<FuncUnitType, std::deque<InstPtr>> func_inst_map_;
-        std::vector<FuncUnitType> func_pop_pending_queue_;
-
-        std::map<FuncUnitType, sparta::DataInPort<FuncInstPtr>*> func_unit_write_back_ports_in_;
-        std::map<FuncUnitType, sparta::DataOutPort<Credit>*> func_unit_credit_ports_out_;
+        GlobalParam* global_param_ptr_ = nullptr;
 
         uint64_t wb_latency_;
 
-        std::deque<InstPtr> inst_queue_;
+        std::map<std::string, std::deque<InstPtr>> inst_queue_map_;
+
+        std::map<std::string, Credit> write_back_width_map_;
     };
 
 }

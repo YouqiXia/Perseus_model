@@ -16,6 +16,7 @@ namespace TimingModel {
         is_perfect_lsu_(p->is_perfect_lsu),
         renaming_stage_queue_depth_(p->queue_depth),
         renaming_stage_queue_(),
+        physical_reg_credit_(p->phy_reg_num),
         free_list_("free_list", p->phy_reg_num, node->getClock(), &unit_stat_set_)
     {
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(RenamingStage, InitCredit_));
@@ -112,7 +113,12 @@ namespace TimingModel {
     }
 
     void RenamingStage::RenameInst_() {
-        if (renaming_stage_queue_.empty() || free_list_.IsEmpty()) {
+        if (renaming_stage_queue_.empty()) {
+            return;
+        }
+
+        if (free_list_.IsEmpty()) {
+            rename_event.schedule(sparta::Clock::Cycle(1));
             return;
         }
         uint64_t produce_inst_num = std::min<uint64_t>(dispatch_credit_, rob_credit_);
@@ -169,7 +175,7 @@ namespace TimingModel {
             renaming_following_inst_out.send(inst_group_tmp_ptr);
         }
 
-        if (!inst_lsu_group_tmp_ptr->empty()) {
+        if (!inst_lsu_group_tmp_ptr->empty() && !is_perfect_lsu_) {
             ILOG("issue insn to lsu");
             renaming_lsu_allocate_out.send(inst_lsu_group_tmp_ptr);
         }

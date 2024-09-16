@@ -122,6 +122,8 @@ private:
 
     const bool is_perfect_lsu_;
 
+    Credit physical_reg_credit_;
+
     Credit dispatch_credit_ = 0;
 
     Credit rob_credit_ = 0;

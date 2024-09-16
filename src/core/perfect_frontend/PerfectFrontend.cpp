@@ -11,15 +11,18 @@ namespace TimingModel {
     PerfectFrontend::PerfectFrontend(sparta::TreeNode* node, const PerfectFrontendParameter* p) : 
         sparta::Unit(node),
         is_speculation_(p->is_speculation),
+        is_config_(p->is_config),
         node_(node),
         issue_num_(p->issue_width),
         mavis_facade_(getMavis(node)),
         insn_gen_type_(p->insn_gen_type)
     {
-        if (insn_gen_type_.compare("spike") == 0){
-            inst_generator_ = InstGenerator::createGenerator(mavis_facade_, p->input_file);
-        }else if (insn_gen_type_.compare("trace") == 0){
-            inst_generator_ = InstGenerator::createGenerator(mavis_facade_, p->input_file, false);
+        if (!is_config_) {
+            if (insn_gen_type_.compare("spike") == 0){
+                inst_generator_ = InstGenerator::createGenerator(mavis_facade_, p->input_file);
+            }else if (insn_gen_type_.compare("trace") == 0){
+                inst_generator_ = InstGenerator::createGenerator(mavis_facade_, p->input_file, false);
+            }
         }
 
         backend_fetch_credit_in.registerConsumerHandler(

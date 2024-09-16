@@ -11,25 +11,26 @@
 #include <cstdint>
 #include "Inst.hpp"
 #include "InstGroup.hpp"
-#include "FuncUnits.hpp"
 
 namespace TimingModel {
 
-    // rs <-> dispatch stage
-    struct RsCredit {
-        std::string rs_name;
+    struct CreditPair {
+        std::string name;
         Credit credit;
     };
 
-    using RsCreditPtr = sparta::SpartaSharedPointer<RsCredit>;
+    using CreditPairPtr = sparta::SpartaSharedPointer<CreditPair>;
+    using CreditPairAllocator = sparta::SpartaSharedPointerAllocator<CreditPair>;
+    extern CreditPairAllocator    credit_pair_allocator;
 
-    // fu <-> write back stage
-    struct FuncInst {
-        FuncUnitType func_type;
-        InstPtr inst_ptr;
+    struct InstGroupPair {
+        std::string name;
+        std::vector<InstPtr> inst_group;
     };
 
-    using FuncInstPtr = sparta::SpartaSharedPointer<FuncInst>;
+    using InstGroupPairPtr = sparta::SpartaSharedPointer<InstGroupPair>;
+    using InstGroupPairAllocator = sparta::SpartaSharedPointerAllocator<InstGroupPair>;
+    extern InstGroupPairAllocator inst_group_pair_allocator;
 }
 
 #endif //MODEL_PORTINTERFACE_HPP

@@ -4,22 +4,25 @@
 
 #include "DispatchStage.hpp"
 
-namespace TimingModel {
 
+namespace TimingModel {
     const char* DispatchStage::name = "dispatch_stage";
 
     DispatchStage::DispatchStage(sparta::TreeNode *node, const DispatchStageParameter *p) :
             sparta::Unit(node),
             issue_num_(p->issue_width),
             inst_queue_depth_(p->queue_depth),
-            is_perfect_mode_(p->is_perfect_mode),
             scoreboard_("scoreboard", p->phy_reg_num, info_logger_),
+            global_param_ptr_(getGlobalParams(node)),
             inst_queue_()
     {
         // Startup events
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(DispatchStage, InitCredit_));
 
         // normal ports binding
+        rs_dispatch_credit_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA
+           (DispatchStage, AcceptCredit_, CreditPairPtr));
+
         preceding_dispatch_inst_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA
             (DispatchStage, AllocateInst_, InstGroupPtr));
 
@@ -32,32 +35,8 @@ namespace TimingModel {
         physical_reg_dispatch_read_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA
             (DispatchStage, ReadFromPhysicalReg_, InstGroupPtr));
 
-        // credits initialization
-        DispatchMap& dispatch_map = getDispatchMap();
-        for (auto& func_pair: dispatch_map) {
-            rs_credits_[func_pair.first] = Credit(0);
-
-            // credits in ports initialization
-            rs_dispatch_credits_in.emplace_back(new sparta::DataInPort<RsCreditPtr>
-                    (&unit_port_set_, func_pair.first+"_dispatch_credit_in", sparta::SchedulingPhase::Tick, 0));
-            rs_dispatch_credits_in.back()->registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA
-                (DispatchStage, AcceptCredit_, RsCreditPtr));
-            *(rs_dispatch_credits_in.back()) >> sparta::GlobalOrderingPoint(node, "dispatch_node");
-
-            // construct ports will be connected with Reservation Station
-            sparta::SpartaSharedPointer<sparta::DataOutPort<InstGroupPtr>> tmp_insts_out_port_ptr
-                    {new sparta::DataOutPort<InstGroupPtr>
-                             (&unit_port_set_, "dispatch_"+func_pair.first+"_insts_out")};
-            std::pair<RsType, sparta::SpartaSharedPointer<sparta::DataOutPort<InstGroupPtr>>> tmp_insts_pair =
-                    {func_pair.first, tmp_insts_out_port_ptr};
-            dispatch_rs_insts_out.emplace(tmp_insts_pair);
-
-            sparta::SpartaSharedPointer<sparta::DataOutPort<InstPtr>> tmp_out_port_ptr
-                    {new sparta::DataOutPort<InstPtr>
-                             (&unit_port_set_, "dispatch_"+func_pair.first+"_out")};
-            std::pair<RsType, sparta::SpartaSharedPointer<sparta::DataOutPort<InstPtr>>> tmp_pair =
-                    {func_pair.first, tmp_out_port_ptr};
-            dispatch_rs_out.emplace(tmp_pair);
+        for(auto dispatch_map_pair: global_param_ptr_->getDispatchMap()) {
+            credit_map_[dispatch_map_pair.first] = 0;
         }
 
         // precedence determination
@@ -95,9 +74,6 @@ namespace TimingModel {
         ILOG(getName() << " read physical register.");
         InstGroupPtr inst_group_tmp_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
         for (auto& dispatch_pending_pair : dispatch_pending_queue_) {
-            inst_group_tmp_ptr->emplace_back(dispatch_pending_pair.second);
-        }
-        for (auto& dispatch_pending_pair : dispatch_pending_queues_) {
             for (auto& inst_ptr: dispatch_pending_pair.second) {
                 inst_group_tmp_ptr->emplace_back(inst_ptr);
             }
@@ -136,68 +112,45 @@ namespace TimingModel {
 
     void DispatchStage::SelectInst_() {
         uint64_t produce_max = issue_num_;
-        DispatchMap& dispatch_map = getDispatchMap();
+        uint64_t produce_num = 0;
 
-        if (is_perfect_mode_) {
-            bool at_end_of_map = false;
-            while(!at_end_of_map) {
-                at_end_of_map = true;
-                for (auto &func_pair: dispatch_map) {
-                    if (!rs_credits_.at(func_pair.first)) {
-                        continue;
-                    }
-
-                    for (auto &issue_entry_ptr: inst_queue_) {
-                        if (issue_entry_ptr->is_issued) {
-                            continue;
-                        }
-
-                        if (func_pair.second.find(issue_entry_ptr->inst_ptr->getFuType()) == func_pair.second.end()) {
-                            continue;
-                        }
-
-                        ILOG(getName() << " Instruction Select rob tag: " << issue_entry_ptr->inst_ptr->getRobTag()
-                                       << ", function unit type is " << func_pair.first);
-                        --produce_max;
-                        dispatch_pending_queues_[func_pair.first].emplace_back(issue_entry_ptr->inst_ptr);
-                        CheckRegStatusImp_(issue_entry_ptr->inst_ptr);
-                        --rs_credits_.at(func_pair.first);
-                        issue_entry_ptr->is_issued = true;
-                        at_end_of_map = false;
-                        break;
-                    }
-                    at_end_of_map = at_end_of_map & true;
-                }
+        for (auto &func_pair: global_param_ptr_->getDispatchMap()) {
+            uint32_t issue_width_per_pipe = global_param_ptr_->getDispatchIssueWidthMap().at(func_pair.first);
+            if (!credit_map_.at(func_pair.first)) {
+                continue;
             }
-        } else {
-            for (auto &func_pair: dispatch_map) {
-                if (!produce_max) {
+
+            for (auto &issue_entry_ptr: inst_queue_) {
+                if (!credit_map_.at(func_pair.first)) {
                     break;
                 }
 
-                if (!rs_credits_.at(func_pair.first)) {
+                if (!issue_width_per_pipe) {
+                    break;
+                }
+
+                if (issue_entry_ptr->is_issued) {
                     continue;
                 }
 
-                for (auto &issue_entry_ptr: inst_queue_) {
-                    if (issue_entry_ptr->is_issued) {
-                        continue;
-                    }
-
-                    if (func_pair.second.find(issue_entry_ptr->inst_ptr->getFuType()) == func_pair.second.end()) {
-                        continue;
-                    }
-
-                    ILOG(getName() << " Instruction Select rob tag: " << issue_entry_ptr->inst_ptr->getRobTag()
-                                   << ", function unit type is " << func_pair.first);
-                    --produce_max;
-                    dispatch_pending_queue_[func_pair.first] = issue_entry_ptr->inst_ptr;
-                    CheckRegStatusImp_(issue_entry_ptr->inst_ptr);
-                    --rs_credits_.at(func_pair.first);
-                    issue_entry_ptr->is_issued = true;
-                    break;
+                if (func_pair.second.find(issue_entry_ptr->inst_ptr->getFuType()) == func_pair.second.end()) {
+                    continue;
                 }
+
+                ILOG(getName() << " Instruction Select rob tag: " << issue_entry_ptr->inst_ptr->getRobTag()
+                               << ", function unit type is " << func_pair.first);
+                --produce_max;
+                ++produce_num;
+                --issue_width_per_pipe;
+                dispatch_pending_queue_[func_pair.first].emplace_back(issue_entry_ptr->inst_ptr);
+                CheckRegStatusImp_(issue_entry_ptr->inst_ptr);
+                --credit_map_.at(func_pair.first);
+                issue_entry_ptr->is_issued = true;
             }
+        }
+
+        if (produce_num) {
+            dispatch_preceding_credit_out.send(produce_num);
         }
 
         dispatch_get_operator_events_.schedule(0);
@@ -208,7 +161,7 @@ namespace TimingModel {
     void DispatchStage::HandleFlush_(const TimingModel::FlushingCriteria &flushing_criteria) {
         ILOG(name << "is flushed.");
 
-        for (auto& credit_pair: rs_credits_) {
+        for (auto& credit_pair: credit_map_) {
             credit_pair.second = 0;
         }
         dispatch_preceding_credit_out.send(inst_queue_depth_);
@@ -220,33 +173,20 @@ namespace TimingModel {
     }
 
     void DispatchStage::IssueInst_() {
-        if (is_perfect_mode_) {
-            for (auto& dispatch_pending_pair: dispatch_pending_queues_) {
-                InstGroupPtr inst_group_tmp_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
-                for (auto& inst_ptr: dispatch_pending_pair.second) {
-                    ILOG(getName() << " issue instruction rob tag: " << inst_ptr->getRobTag());
-                    ILOG("issue insn to following: " << inst_ptr);
-                    inst_group_tmp_ptr->emplace_back(inst_ptr);
-                }
-                dispatch_rs_insts_out.at(dispatch_pending_pair.first)->send(inst_group_tmp_ptr);
+        for (auto& dispatch_pending_pair: dispatch_pending_queue_) {
+            InstGroupPairPtr inst_group_tmp_ptr =
+                    sparta::allocate_sparta_shared_pointer<InstGroupPair>(inst_group_pair_allocator);
+            for (auto& inst_ptr: dispatch_pending_pair.second) {
+                ILOG(getName() << " issue instruction rob tag: " << inst_ptr->getRobTag());
+                ILOG("issue insn to following: " << inst_ptr);
+                inst_group_tmp_ptr->inst_group.emplace_back(inst_ptr);
+                inst_group_tmp_ptr->name = dispatch_pending_pair.first;
             }
-            dispatch_pending_queues_.clear();
-        } else {
-            for (auto& dispatch_pending_pair: dispatch_pending_queue_) {
-                ILOG(getName() << " issue instruction rob tag: " << dispatch_pending_pair.second->getRobTag());
-                ILOG("issue insn to following: " << dispatch_pending_pair.second);
-                dispatch_rs_out.at(dispatch_pending_pair.first)->send(dispatch_pending_pair.second);
-            }
-            dispatch_pending_queue_.clear();
+            dispatch_rs_inst_out.send(inst_group_tmp_ptr);
         }
+        dispatch_pending_queue_.clear();
 
-        uint64_t whole_credit = 256;
-
-        for (auto& rs_credit_pair: rs_credits_) {
-            whole_credit = std::min(whole_credit, rs_credit_pair.second);
-        }
-
-        if (!inst_queue_.empty() && whole_credit > 0) {
+        if (!inst_queue_.empty()) {
             dispatch_select_events_.schedule(1);
         }
 
@@ -265,19 +205,16 @@ namespace TimingModel {
             }
         }
 
-        if (issue_queue_pop_size) {
-            dispatch_preceding_credit_out.send(issue_queue_pop_size);
-        }
-
         if (!inst_queue_.empty()) {
             dispatch_pop_events_.schedule(1);
             dispatch_select_events_.schedule(1);
         }
     }
 
-    void DispatchStage::AcceptCredit_(const TimingModel::RsCreditPtr &rs_credit_ptr) {
-        ILOG("dispatch stage accept credits from " << rs_credit_ptr->rs_name << "_rs , credits is " << rs_credit_ptr->credit);
-        rs_credits_.at(rs_credit_ptr->rs_name) += rs_credit_ptr->credit;
+    void DispatchStage::AcceptCredit_(const TimingModel::CreditPairPtr &credit_pair_ptr) {
+        credit_map_.at(credit_pair_ptr->name) += credit_pair_ptr->credit;
+        ILOG("accept credits from " << credit_pair_ptr->name << " , credits is " << credit_pair_ptr->credit <<
+            " updated credits is: " << credit_map_.at(credit_pair_ptr->name));
     }
 
 }

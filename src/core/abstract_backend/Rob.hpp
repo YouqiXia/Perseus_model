@@ -98,7 +98,7 @@ namespace TimingModel {
                 {&unit_port_set_, "Rob_cmt_inst_out"};
 
         // with lsu wakeup
-        sparta::DataOutPort<InstPtr> Rob_lsu_wakeup_out
+        sparta::DataOutPort<InstGroupPtr> Rob_lsu_wakeup_out
                {&unit_port_set_, "Rob_lsu_wakeup_out"};
 
         /* events */

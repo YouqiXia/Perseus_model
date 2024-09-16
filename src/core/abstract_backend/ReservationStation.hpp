@@ -16,7 +16,7 @@
 
 #include "basic/Inst.hpp"
 #include "basic/InstGroup.hpp"
-#include "PortInterface.hpp"
+#include "basic/PortInterface.hpp"
 
 namespace TimingModel {
 
@@ -32,7 +32,6 @@ namespace TimingModel {
             PARAMETER(uint64_t, issue_width, 1, "the issuing bandwidth in a cycle")
             PARAMETER(uint64_t, queue_depth, 4, "the issuing bandwidth in a cycle")
             PARAMETER(uint64_t, phy_reg_num, 64, "the issuing bandwidth in a cycle")
-            PARAMETER(bool, is_perfect_mode, false, "if it is perfect mode")
         };
 
         struct ReStationEntry {
@@ -43,6 +42,7 @@ namespace TimingModel {
         };
 
         using ReStationEntryPtr = sparta::SpartaSharedPointer<ReStationEntry>;
+        using ReStationEntryAllocator = sparta::SpartaSharedPointerAllocator<ReStationEntry>;
 
         class ReservationTable {
         public:
@@ -50,8 +50,12 @@ namespace TimingModel {
             reservation_table_(phy_reg_num, std::vector<std::vector<ReStationEntryPtr>>(2)) {}
 
             void Allocate(ReStationEntryPtr rs_entry_ptr) {
-                reservation_table_[rs_entry_ptr->inst_ptr->getPhyRs1()][0].emplace_back(rs_entry_ptr);
-                reservation_table_[rs_entry_ptr->inst_ptr->getPhyRs2()][1].emplace_back(rs_entry_ptr);
+                if (!rs_entry_ptr->rs1_valid) {
+                    reservation_table_[rs_entry_ptr->inst_ptr->getPhyRs1()][0].emplace_back(rs_entry_ptr);
+                }
+                if (!rs_entry_ptr->rs2_valid) {
+                    reservation_table_[rs_entry_ptr->inst_ptr->getPhyRs2()][1].emplace_back(rs_entry_ptr);
+                }
             }
 
             bool Resolve(InstPtr inst_ptr) {
@@ -85,9 +89,7 @@ namespace TimingModel {
 
         void InitCredit_();
 
-        void AllocateReStation(const InstPtr&);
-
-        void AllocateInstsReStation_(const InstGroupPtr&);
+        void AllocateReStation(const InstGroupPairPtr&);
 
         void PassingInst();
 
@@ -104,21 +106,15 @@ namespace TimingModel {
                 {&unit_port_set_, "reservation_flush_in", sparta::SchedulingPhase::Flush, 1};
 
         // with issue queue
-        sparta::DataInPort<InstPtr> preceding_reservation_inst_in
+        sparta::DataInPort<InstGroupPairPtr> preceding_reservation_inst_in
                 {&unit_port_set_, "preceding_reservation_inst_in", sparta::SchedulingPhase::Tick, 1};
 
-        sparta::DataInPort<InstGroupPtr> preceding_reservation_insts_in
-                {&unit_port_set_, "preceding_reservation_insts_in", sparta::SchedulingPhase::Tick, 1};
-
-        sparta::DataOutPort<RsCreditPtr> reservation_preceding_credit_out
+        sparta::DataOutPort<CreditPairPtr> reservation_preceding_credit_out
                 {&unit_port_set_, "reservation_preceding_credit_out"};
 
         // with function unit
-        sparta::DataOutPort<InstPtr> reservation_following_inst_out
+        sparta::DataOutPort<InstGroupPtr> reservation_following_inst_out
                 {&unit_port_set_, "reservation_following_inst_out"};
-
-        sparta::DataOutPort<InstGroupPtr> reservation_following_insts_out
-                {&unit_port_set_, "reservation_following_insts_out"};
 
         sparta::DataInPort<Credit> following_reservation_credit_in
                 {&unit_port_set_, "following_reservation_credit_in", sparta::SchedulingPhase::Tick, 0};
@@ -139,7 +135,6 @@ namespace TimingModel {
         uint64_t rs_depth_;
 
         PhyRegId_t phy_reg_num_;
-        bool is_perfect_mode_;
         std::deque<ReStationEntryPtr> reservation_station_;
         ReservationTable rs_dependency_table_;
         Credit credit_ = 0;

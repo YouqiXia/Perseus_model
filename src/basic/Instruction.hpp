@@ -38,7 +38,7 @@ typedef std::vector<std::tuple<size_t, int>> MemRead_t;
 typedef std::vector<std::tuple<size_t, int, size_t*>> MemWrite_t;
 
 enum FuncType {
-    NO_TYPE=0, ALU, MUL, DIV, BRU, CSR, LDU, STU, FPU
+    NO_TYPE=0, ALU, MUL, DIV, BRU, CSR, LDU, STU, FPU, LAST
 };
 
 /* exception */

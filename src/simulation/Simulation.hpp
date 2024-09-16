@@ -10,15 +10,21 @@
 #include "sparta/simulation/ParameterSet.hpp"
 #include "sparta/utils/Utils.hpp"
 #include "basic/Instruction.hpp"
-#include "ExtensionsCfg.hpp"
 #include "ResourceMapFactory.hpp"
 #include "variable.hpp"
+#include "json.hpp"
 
 struct CommandLineData {
     bool is_elf_workload = false;
     std::string workload = "";
+    std::string unit_factory = "";
+    std::string json_config = "";
     uint64_t instruction_limit = 0;
 };
+
+namespace nlohmann {
+    using json = class nlohmann::basic_json<>;
+}
 
 namespace TimingModel {
 
@@ -42,14 +48,18 @@ namespace TimingModel {
         //! to bind things together.
         void bindTree_() override;
 
-        void buildHierarchicalTopology_(TopoExtensions::CommonTopoType&, sparta::TreeNode*);
+        void buildHierarchicalTopology_(const nlohmann::json &json, sparta::TreeNode*);
 
-        void bindBindingTopology_(TopoExtensions::BindingTopology&);
+        void bindBindingTopology_(const nlohmann::json &json, sparta::TreeNode*);
+
+        void buildInfoTopology(const nlohmann::json &json, sparta::TreeNode*);
 
     private:
         bool is_elf_workload_;
 
         std::string workload_;
+
+        nlohmann::json json_config_;
 
         VAR::DRAMinput dram_input_;
 

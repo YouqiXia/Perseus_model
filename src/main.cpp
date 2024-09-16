@@ -1,4 +1,10 @@
+#include <string>
+
 #include "simulation/Simulation.hpp"
+
+#include "sparta/utils/File.hpp"
+#include "sparta/simulation/ParameterTree.hpp"
+#include "sparta/simulation/TreeNode.hpp"
 
 #include "sparta/app/SimulationConfiguration.hpp"
 #include "sparta/app/FeatureConfiguration.hpp"
@@ -8,6 +14,9 @@
 
 #include "basic/Inst.hpp"
 #include "simulation/variable.hpp"
+
+// for test
+#include "simulation/ResourceMapFactory.hpp"
 
 // User-friendly usage that correspond with sparta::app::CommandLineSimulator
 // options
@@ -34,7 +43,8 @@ int main(int argc, char **argv) {
 
     // try/catch block to ensure proper destruction of the cls/sim classes in
     // the event of an error
-    try{
+
+//    try{
         // Helper class for parsing command line arguments, setting up the
         // simulator, and running the simulator. All of the things done by this
         // classs can be done manually if desired. Use the source for the
@@ -42,6 +52,11 @@ int main(int argc, char **argv) {
         sparta::app::CommandLineSimulator cls(USAGE, DEFAULTS);
         auto& app_opts = cls.getApplicationOptions();
         app_opts.add_options()
+            ("debug",
+             "model will stalls in the debug mode")
+            ("json",
+             sparta::app::named_value<std::string>("unit", &cmd_data.json_config),
+             "Specifies the units should be to build")
             ("elf",
              sparta::app::named_value<std::string>("elf", &cmd_data.workload),
              "Specifies the instruction workload (elf)")
@@ -83,27 +98,64 @@ int main(int argc, char **argv) {
         }
 
 
-        if (vm.count("elf") != 0) {
-            cmd_data.is_elf_workload = true;
+        if (vm.count("debug") != 0) {
+//            std::vector<std::string> arch_search_paths {"arches"};
+//            sparta::TreeNode dummy("dummy", "dummy");
+//            std::string found_filename = sparta::utils::findArchitectureConfigFile(arch_search_paths, cmd_data.unit_factory);
+//            sparta::ConfigParser::YAML param_file(found_filename, arch_search_paths);
+//            param_file.allowMissingNodes(true);
+//            param_file.consumeParameters(&dummy);
+//            auto param_node = param_file.getParameterTree().getRoot();
+//            PybindInterface::UnitsSet unit_set;
+
+//            sparta::Scheduler scheduler;
+//            sparta::Clock clk("clock", &scheduler);
+//            sparta::RootTreeNode dummy_node("dummy_rtn");
+//            dummy_node.setClock(&clk);
+//            dummy_node.enterConfiguring();
+//            TimingModel::ResourceMapFactory resource_map;
+//            // TODO: should be modified
+//            TimingModel::OlympiaAllocators allocator{&dummy_node};
+//            sparta::ResourceTreeNode* resource_node = new sparta::ResourceTreeNode{&dummy_node,
+//                                                                     "perfect_alu",
+//                                                                     sparta::TreeNode::GROUP_NAME_NONE,
+//                                                                     sparta::TreeNode::GROUP_IDX_NONE,
+//                                                                     "perfect_alu",
+//                                                                     resource_map["perfect_alu"]};
+//            std::cout << resource_node->getParameterSet()->getParameter("haha")->getDefaultAsString() << std::endl;
+//            resource_node->getParameterSet()->getParameter("haha")->setValueFromStringVector({"fdv", "is", "my", "son"});
+//            std::cout << resource_node->getParameterSet()->getParameter("haha")->getValueAsString() << std::endl;
+//            for (auto param: *resource_node->getParameterSet()) {
+//                std::cout << param->getName() << ", ";
+//                std::cout << param->getDefaultAsString() << ", ";
+//                std::cout << param->getTypeName() << ", ";
+//                std::cout << std::endl;
+//            }
+//            dummy_node.enterFinalized();
+//            dummy_node.enterTeardown();
+        } else {
+            if (vm.count("elf") != 0) {
+                cmd_data.is_elf_workload = true;
+            }
+
+            // Create the simulator
+            sparta::Scheduler scheduler;
+            TimingModel::Simulation sim(scheduler,
+                                        cmd_data,
+                                        dram_input);  // run for ilimit instructions
+
+            sparta::SleeperThread::disableForever();
+            cls.populateSimulation(&sim);
+
+            cls.runSimulator(&sim);
+
+            cls.postProcess(&sim);
         }
 
-        // Create the simulator
-        sparta::Scheduler scheduler;
-        TimingModel::Simulation sim(scheduler,
-                                    cmd_data,
-                                    dram_input);  // run for ilimit instructions
-
-        sparta::SleeperThread::disableForever();
-        cls.populateSimulation(&sim);
-
-        cls.runSimulator(&sim);
-
-        cls.postProcess(&sim);
-
-    }catch(...){
-        // Could still handle or log the exception here
-        throw;
-    }
+//    }catch(...){
+//        // Could still handle or log the exception here
+//        throw;
+//    }
 
     return 0;
 }

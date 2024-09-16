@@ -9,8 +9,9 @@
  */
 
 #include "sparta/simulation/TreeNode.hpp"
-#include "MemAccessInfo.hpp"
-#include "Inst.hpp"
+#include "uncore/cache/BaseCache.hpp"
+#include "basic/Inst.hpp"
+#include "basic/PortInterface.hpp"
 
 namespace TimingModel
 {
@@ -48,13 +49,12 @@ namespace TimingModel
         // Allocators used in simulation.  These values can be
         // parameterized in the future by converting this class into a
         // full-blown sparta::Resource and adding a sparta::ParameterSet
-//        InstAllocator         inst_allocator          {3000, 2500};
-//        InstArchInfoAllocator inst_arch_info_allocator{3000, 2500};
-//        MemAccInfoAllocator   mem_acc_info_allocator  {3000, 2500};
+        InstAllocator          inst_allocator            {3000, 2500};
+        InstArchInfoAllocator  inst_arch_info_allocator  {3000, 2500};
+        MemAccInfoAllocator    mem_acc_info_allocator    {3000, 2500};
         // for perfect
-        InstAllocator         inst_allocator          {6553600, 3286800};
-        InstArchInfoAllocator inst_arch_info_allocator{6553600, 3286800};
-        MemAccInfoAllocator   mem_acc_info_allocator  {6553600, 3286800};
+//        InstAllocator         inst_allocator          {6553600, 3286800};
+//        InstArchInfoAllocator inst_arch_info_allocator{6553600, 3286800};
 
     };
 }

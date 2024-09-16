@@ -87,9 +87,11 @@ namespace TimingModel {
             return;
         }
         if (rob_.front().inst_ptr->getFuType() == FuncType::STU && !rob_.front().waked_up) {
+            InstGroupPtr inst_group_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
             rob_.front().waked_up = true;
-            ILOG("rob wakeup: " << rob_.front().inst_ptr->getLSQTag());
-            Rob_lsu_wakeup_out.send(rob_.front().inst_ptr);
+            ILOG("rob wakeup: " << rob_.front().inst_ptr);
+            inst_group_ptr->emplace_back(rob_.front().inst_ptr);
+            Rob_lsu_wakeup_out.send(inst_group_ptr);
         }
     }
 
@@ -98,7 +100,7 @@ namespace TimingModel {
         InstGroupPtr inst_bpu_group_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
         uint64_t issue_num = std::min(issue_width_, uint64_t(rob_.size()));
         bool do_flush = false;
-        while(issue_num--) {
+        while(issue_num > 0) {
             if (rob_.empty()) {
                 break;
             }
@@ -122,10 +124,9 @@ namespace TimingModel {
             }
 
             rob_.pop();
+            issue_num--;
         }
-        ILOG("before rob wakeup store ");
         TryWakeupStore();
-        ILOG("after rob wakeup store ");
 
         if (!inst_group_ptr->empty()) {
             Rob_cmt_inst_out.send(inst_group_ptr);

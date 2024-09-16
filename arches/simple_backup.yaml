@@ -1,4 +1,5 @@
 top.extension.topo_extensions:
+  processor.haha: ["haha"]
   # component - implementation
   processor: [["core0", "basic_core"]
     #              ["core1", "basic_core"]

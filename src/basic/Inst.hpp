@@ -144,7 +144,7 @@ namespace TimingModel
                 free(std::get<2>(entry));
             }
 
-            inst_.reg_write.clear(); 
+            inst_.reg_write.clear();
             inst_.mem_read.clear();
             inst_.mem_write.clear();
         }
@@ -159,11 +159,11 @@ namespace TimingModel
         IsaRegId_t  getIsaRd() { return inst_.IsaRd; }
 
         void  setImm(Imm_t imm) { inst_.imm = imm; }
-        Imm_t getImm() { return inst_.imm; } 
+        Imm_t getImm() { return inst_.imm; }
 
         void setRs1Type(RegType_t Rs1Type) { inst_.Rs1Type = Rs1Type; }
         RegType_t getRs1Type() const { return inst_.Rs1Type; }
-        
+
         void setRs2Type(RegType_t Rs2Type) { inst_.Rs2Type = Rs2Type; }
         RegType_t getRs2Type() const { return inst_.Rs2Type; }
 

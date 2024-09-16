@@ -15,8 +15,8 @@
 
 #include "basic/Inst.hpp"
 #include "basic/InstGroup.hpp"
-#include "FuncUnits.hpp"
-#include "PortInterface.hpp"
+#include "basic/PortInterface.hpp"
+#include "basic/GlobalParam.hpp"
 
 #include "Scoreboard.hpp"
 
@@ -32,7 +32,6 @@ namespace TimingModel {
             PARAMETER(uint64_t, issue_width, 4, "the issuing bandwidth in a cycle")
             PARAMETER(uint32_t, phy_reg_num, 64, "the issuing bandwidth in a cycle")
             PARAMETER(uint32_t, queue_depth, 16, "the issuing bandwidth in a cycle")
-            PARAMETER(bool, is_perfect_mode, false, "the issuing bandwidth in a cycle")
         };
 
         struct IssueQueueEntry {
@@ -51,7 +50,7 @@ namespace TimingModel {
 
         void InitCredit_();
 
-        void AcceptCredit_(const RsCreditPtr&);
+        void AcceptCredit_(const CreditPairPtr&);
 
         void AllocateInst_(const InstGroupPtr&);
 
@@ -93,12 +92,12 @@ namespace TimingModel {
                     {&unit_port_set_, "dispatch_physical_reg_read_in", sparta::SchedulingPhase::Tick, 1};
 
             // with rs -> also should be constructed in dispatch stage constructor
-            std::map<RsType, sparta::SpartaSharedPointer<sparta::DataOutPort<InstPtr>>> dispatch_rs_out;
-
-            std::map<RsType, sparta::SpartaSharedPointer<sparta::DataOutPort<InstGroupPtr>>> dispatch_rs_insts_out;
+            sparta::DataOutPort<InstGroupPairPtr> dispatch_rs_inst_out
+                    {&unit_port_set_, "dispatch_rs_inst_out"};
 
             // with rs Credits
-            std::vector<sparta::SpartaSharedPointer<sparta::DataInPort<RsCreditPtr>>> rs_dispatch_credits_in;
+            sparta::DataInPort<CreditPairPtr> rs_dispatch_credit_in
+                    {&unit_port_set_, "rs_dispatch_credit_in", sparta::SchedulingPhase::Tick, 0};
 
             // write back ports
             sparta::DataInPort<InstGroupPtr> write_back_dispatch_port_in
@@ -123,9 +122,9 @@ namespace TimingModel {
     private:
         uint64_t issue_num_;
 
-        bool is_perfect_mode_;
+        std::map<std::string, Credit> credit_map_;
 
-        std::map<RsType, Credit> rs_credits_;
+        GlobalParam* global_param_ptr_ = nullptr;
 
         Scoreboard scoreboard_;
 
@@ -133,9 +132,7 @@ namespace TimingModel {
 
         std::deque<IssueQueueEntryPtr> inst_queue_;
 
-        std::map<RsType, InstPtr> dispatch_pending_queue_;
-
-        std::map<RsType, std::vector<InstPtr>> dispatch_pending_queues_;
+        std::map<std::string, std::vector<InstPtr>> dispatch_pending_queue_;
     };
 
 }

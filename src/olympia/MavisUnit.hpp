@@ -18,7 +18,7 @@
 
 #include "mavis/DecoderTypes.h"
 
-#include "Inst.hpp"
+#include "basic/Inst.hpp"
 #include "olympia/InstAllocation.hpp"
 
 // To reduce compile time and binary bloat, foward declare Mavis

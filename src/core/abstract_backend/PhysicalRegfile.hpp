@@ -15,7 +15,6 @@
 
 #include "basic/Inst.hpp"
 #include "basic/InstGroup.hpp"
-#include "FuncUnits.hpp"
 
 #include "ReservationStation.hpp"
 #include "Scoreboard.hpp"

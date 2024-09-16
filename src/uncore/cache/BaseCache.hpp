@@ -5,7 +5,7 @@
 #include "sparta/ports/SyncPort.hpp"
 #include "sparta/events/UniqueEvent.hpp"
 #include "sparta/ports/DataPort.hpp"
-#include "MemAccessInfo.hpp"
+#include "uncore/MemAccessInfo.hpp"
 #include "basic/Inst.hpp"
 #include "olympia/OlympiaAllocators.hpp"
 #include "Mshr.hpp"
