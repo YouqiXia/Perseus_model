@@ -1,44 +1,78 @@
 cmake_minimum_required (VERSION 3.20)
+
 # enable c++17
 set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
-project(model)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
+set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -fsanitize=address")
 
-# set sparta directory
-set(SPARTA_SEARCH_DIR /usr/local)
-set(SPARTA_INCLUDE_DIRS ${SPARTA_SEARCH_DIR}/include/sparta)
-set(CMAKE_MODULE_PATH "${SPARTA_SEARCH_DIR}/lib/cmake/sparta" ${CMAKE_MODULE_PATH})
-find_package(Sparta REQUIRED)
+# Define the project name and the language used
+project(PERSEUS LANGUAGES CXX)
 
-# set up STF lib
-set (STF_LIB_BASE ${PROJECT_SOURCE_DIR}/thirdparty/stf_lib)
-set (DISABLE_STF_DOXYGEN ON)
-
-if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
-  set (FULL_LTO true)
-  include(${STF_LIB_BASE}/cmake/stf_linker_setup.cmake)
-  setup_stf_linker(false)
+# Default Build Option -> Debug/Release
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build (Debug/Release)" FORCE)
 endif()
 
-# source
-file(GLOB_RECURSE DIR_SRCS "src/*.cc" "src/*.cpp" "src/*.c")
+# Unset C/CXX Flags
+set(CMAKE_C_FLAGS "")
+set(CMAKE_CXX_FLAGS "")
 
-# Profile build flags
-set(CMAKE_CXX_FLAGS_PROFILE   "-O3 -pg -g -ftime-trace")
-set(CMAKE_CXX_FLAGS_FASTDEBUG "-O3 -g")
-set(CMAKE_CXX_FLAGS_DEBUG     "-O0 -g")
+# Set C/CXX Debug Flags
+set(CMAKE_C_FLAGS_DEBUG       "-g -O0")
+set(CMAKE_CXX_FLAGS_DEBUG     "-g -O0")
+
+# Set C/CXX Release Flags
+set(CMAKE_C_FLAGS_RELEASE     "-g -O3")
+set(CMAKE_CXX_FLAGS_RELEASE   "-g -O3")
+
+# Add march flags for x86
+add_compile_options("-march=native")
+
+# params for perseus model
+set(Perseus_BASE ${CMAKE_CURRENT_SOURCE_DIR})
+set(Perseus_LIBS "")
+set(Perseus_INCLUDES "")
+set(Perseus_SRCS "")
+
+# params for pybind lib
+set(PybindLib_SRCS "")
+set(PybindLib_INCLUDES "")
+set(PybindLib_LIBS "")
+
+# set up sparta lib
+include(cmake/sparta.cmake)
+
+# set up STF lib
+include(cmake/stf.cmake)
+
+# set up DRAMSim3 lib
+include(cmake/DRAMSim3.cmake)
+
+# set up mavis lib
+include(cmake/mavis.cmake)
+
+# set up pybind lib
+include(cmake/pybind.cmake)
+
+# set up only include file
+include(cmake/include_only.cmake)
+
+# source
+file(GLOB_RECURSE Perseus_SRCS "src/*.cc" "src/*.cpp" "src/*.c")
 
 # head file
 include_directories(./src)
-include_directories(./src/basic)
-include_directories(./src/uncore)
-include_directories(thirdparty/mavis)
-include_directories(thirdparty/ELFIO)
-include_directories(thirdparty/stf_lib)
-include_directories(thirdparty/DRAMsim3/src)
-include_directories(thirdparty/DRAMsim3/ext/headers)
-include_directories(${SPARTA_INCLUDE_DIRS})
+include_directories(./config/cpp_file)
+#include_directories(thirdparty/mavis)
+#include_directories(thirdparty/ELFIO)
+#include_directories(thirdparty/stf_lib)
+#include_directories(thirdparty/pybind11/include)
+#include_directories(${Python3_INCLUDE_DIRS})
+#include_directories(thirdparty/DRAMsim3/src)
+#include_directories(thirdparty/DRAMsim3/ext/headers)
 include_directories(./src/utils/spikeInterface/src)
 include_directories (./thirdparty/riscv-isa-sim/libs/include)
 include_directories (./thirdparty/riscv-isa-sim/libs/include/riscv)
@@ -52,21 +86,32 @@ include_directories (./thirdparty/riscv-isa-sim/)
 # Create a few links like reports and arch directories
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/reports    ${CMAKE_CURRENT_BINARY_DIR}/reports         SYMBOLIC)
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/arches     ${CMAKE_CURRENT_BINARY_DIR}/arches          SYMBOLIC)
+file(CREATE_LINK ${PROJECT_SOURCE_DIR}/config/py_file     ${CMAKE_CURRENT_BINARY_DIR}/config          SYMBOLIC)
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/thirdparty/mavis/json ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/traces     ${CMAKE_CURRENT_BINARY_DIR}/traces          SYMBOLIC)
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}//src/utils/spikeInterface/default.dtb     ${CMAKE_CURRENT_BINARY_DIR}/default.dtb          SYMBOLIC)
 
 # thirdparty link lib
-add_subdirectory(thirdparty/mavis)
-add_subdirectory (${STF_LIB_BASE})
-add_subdirectory(thirdparty/DRAMsim3)
-add_subdirectory(thirdparty/ELFIO)
+#add_subdirectory(thirdparty/mavis)
+#add_subdirectory (${STF_LIB_BASE})
+#add_subdirectory(thirdparty/DRAMsim3)
+#add_subdirectory(thirdparty/ELFIO)
+#add_subdirectory(thirdparty/pybind11)
 
 link_directories(./thirdparty/riscv-isa-sim/libs/lib)
 set (SPIKE_INTF_LIBS riscv softfloat fesvr disasm fdt boost_regex)
 
 # add_subdirectory()
-add_executable(model ${DIR_SRCS})
+add_executable(model ${Perseus_SRCS})
 
 # link lib
-target_link_libraries(model SPARTA::sparta mavis dramsim3 ${STF_LINK_LIBS} ${SPIKE_INTF_LIBS})
+target_include_directories(model PUBLIC ${Perseus_INCLUDES})
+target_link_libraries(model PRIVATE ${SPIKE_INTF_LIBS} ${Perseus_LIBS})
+set_target_properties(model PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+# pybind11
+pybind11_add_module(unitlib ${PybindLib_SRCS} ${Perseus_SRCS})
+set_target_properties(unitlib PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_include_directories(unitlib PUBLIC ${Perseus_INCLUDES} ${PybindLib_INCLUDES})
+target_link_libraries(unitlib PRIVATE ${SPIKE_INTF_LIBS} ${Perseus_LIBS})
+install(TARGETS unitlib DESTINATION ${Perseus_BASE}/lib/python)

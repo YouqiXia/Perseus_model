@@ -17,3 +17,9 @@
 [submodule "traces/elf_test/riscv-test-env"]
     path = traces/elf_test/riscv-test-env
     url = https://github.com/riscv/riscv-test-env.git
+[submodule "thirdparty/map"]
+	path = thirdparty/map
+	url = https://github.com/sparcians/map.git
+[submodule "thirdparty/pybind11"]
+	path = thirdparty/pybind11
+	url = https://github.com/pybind/pybind11

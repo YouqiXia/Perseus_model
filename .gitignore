@@ -2,8 +2,11 @@
 .idea/
 cmake-build-debug/
 build/
+__pycache__/
 traces/elf_test/test/*
 !traces/elf_test/test/*.elf
+lib/stubs
+lib/python
 
 [Rr]elease
 [Dd]ebug
