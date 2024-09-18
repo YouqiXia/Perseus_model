@@ -111,7 +111,7 @@
                         "renaming_stage": {
                             "issue_width": 4,
                             "isa_reg_num": 32,
-                            "queue_depth": 4,
+                            "queue_depth": 8,
                             "phy_reg_num": 128,
                             "is_perfect_lsu": true
                         }

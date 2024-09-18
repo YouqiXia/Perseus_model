@@ -39,7 +39,7 @@ namespace TimingModel {
         credit_ += credit;
         ILOG(getName() << " accept credits: " << credit << ", updated credits: " << credit_);
 
-        passing_event.schedule(sparta::Clock::Cycle(0));
+        passing_event.schedule(sparta::Clock::Cycle(1));
     }
 
     void ReservationStation::HandleFlush_(const TimingModel::FlushingCriteria &flush_criteria) {
@@ -50,7 +50,7 @@ namespace TimingModel {
                 sparta::allocate_sparta_shared_pointer<CreditPair>(credit_pair_allocator);
         rs_credit_ptr_tmp->name = getName();
         rs_credit_ptr_tmp->credit = rs_depth_;
-        reservation_preceding_credit_out.send(rs_credit_ptr_tmp);
+        reservation_preceding_credit_out.send(rs_credit_ptr_tmp, sparta::Clock::Cycle(1));
         reservation_station_.clear();
     }
 
@@ -89,9 +89,12 @@ namespace TimingModel {
     }
 
     void ReservationStation::GetForwardingData(const TimingModel::InstGroupPtr &forwarding_inst_group_ptr) {
-        bool find = false;
         for (auto& forwarding_inst_ptr: *forwarding_inst_group_ptr) {
-            find |= rs_dependency_table_.Resolve(forwarding_inst_ptr);
+            bool find = false;
+            find = rs_dependency_table_.Resolve(forwarding_inst_ptr);
+            if (find) {
+                ILOG("get forwarding data from: " << forwarding_inst_ptr);
+            }
         }
     }
 
@@ -149,7 +152,7 @@ namespace TimingModel {
         }
 
         if (!inst_group_tmp_ptr->empty()) {
-            reservation_preceding_credit_out.send(rs_credit_ptr_tmp);
+            reservation_preceding_credit_out.send(rs_credit_ptr_tmp, sparta::Clock::Cycle(1));
         }
 
         if (!reservation_station_.empty() && credit_ > 0) {

@@ -85,13 +85,12 @@ namespace TimingModel {
     }
 
     void RenamingStage::AllocateInst_(const InstGroupPtr& inst_group_ptr) {
-        ILOG("renaming stage get instructions: " << inst_group_ptr->size());
         for (auto& inst_ptr: *inst_group_ptr) {
             ILOG("renaming stage get instructions: " << inst_ptr);
             renaming_stage_queue_.push_back(inst_ptr);
         }
 
-        rename_event.schedule(sparta::Clock::Cycle(0));
+        rename_event.schedule(sparta::Clock::Cycle(1));
     }
 
     void RenamingStage::FlushCredit_() {
@@ -105,7 +104,7 @@ namespace TimingModel {
         ILOG("RenamingStage is flushed");
 
         FlushCredit_();
-        renaming_preceding_credit_out.send(renaming_stage_queue_depth_);
+        renaming_preceding_credit_out.send(renaming_stage_queue_depth_, sparta::Clock::Cycle(1));
         renaming_stage_queue_.clear();
 
         free_list_.RollBack();
@@ -127,11 +126,6 @@ namespace TimingModel {
             produce_inst_num = std::min<uint64_t>(produce_inst_num, stq_credit_);
         }
         produce_inst_num = std::min<uint64_t>(produce_inst_num, issue_width_);
-
-        ILOG(getName() << " rename instructions, produce_inst_num = " << produce_inst_num 
-             << ", dispatch_credit_ = " << dispatch_credit_ << ", rob_credit_ = " << rob_credit_
-             << ", ldq_credit_ = " << ldq_credit_ << ", stq_credit_ = " << stq_credit_
-             << ", issue_width_ = " << issue_width_);
 
         InstGroupPtr inst_group_tmp_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
         InstGroupPtr inst_lsu_group_tmp_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
@@ -171,12 +165,11 @@ namespace TimingModel {
         }
 
         if (!inst_group_tmp_ptr->empty()) {
-            renaming_preceding_credit_out.send(inst_group_tmp_ptr->size());
+            renaming_preceding_credit_out.send(inst_group_tmp_ptr->size(), sparta::Clock::Cycle(1));
             renaming_following_inst_out.send(inst_group_tmp_ptr);
         }
 
         if (!inst_lsu_group_tmp_ptr->empty() && !is_perfect_lsu_) {
-            ILOG("issue insn to lsu");
             renaming_lsu_allocate_out.send(inst_lsu_group_tmp_ptr);
         }
 
@@ -192,7 +185,6 @@ namespace TimingModel {
         if (inst_ptr->getIsaRd() != 0) {
             renaming_table_[inst_ptr->getIsaRd()] = phy_reg_idx;
             inst_ptr->setPhyRd(phy_reg_idx);
-            ILOG("free list pop: " << free_list_.Front() << " rob tag: " << inst_ptr->getRobTag());
             free_list_.Pop();
         } else {
             inst_ptr->setPhyRd(0);
@@ -216,8 +208,6 @@ namespace TimingModel {
                 rename_event.schedule(1);
             }
             renaming_table_.GetBackup(inst_ptr->getIsaRd()) = inst_ptr->getPhyRd();
-            ILOG("inst release resource: " << inst_ptr);
-            ILOG("free list push: " << inst_ptr->getLPhyRd() << " rob tag: " << inst_ptr->getRobTag());
         }
     }
 }

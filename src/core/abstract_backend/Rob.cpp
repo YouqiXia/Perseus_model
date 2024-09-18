@@ -58,25 +58,22 @@ namespace TimingModel {
     void Rob::HandleFlush_(const TimingModel::FlushingCriteria &flush_criteria) {
         ILOG(name << " is flushed.");
 
-        rob_preceding_credit_out.send(rob_depth_);
+        rob_preceding_credit_out.send(rob_depth_, sparta::Clock::Cycle(1));
         rob_.clear();
     }
 
     void Rob::AllocateRob_(const TimingModel::InstGroupPtr &inst_group_ptr) {
-        ILOG("rob get instructions: " << inst_group_ptr->size());
         for (auto& inst_ptr: *inst_group_ptr) {
             RobEntry rob_entry;
             rob_entry.inst_ptr = inst_ptr;
             inst_ptr->setRobTag(rob_.push(rob_entry).getIndex());
-            ILOG("get insn from preceding: " << inst_ptr);
-            ILOG("rob allocate instruction tag is: " << inst_ptr->getRobTag());
+            ILOG("get inst from preceding: " << inst_ptr);
         }
         commit_event.schedule(1);
     }
 
     void Rob::Finish_(const TimingModel::InstGroupPtr &inst_group_ptr) {
         for (auto& inst_ptr: *inst_group_ptr) {
-            ILOG("rob finish instruction rob tag is: " << inst_ptr->getRobTag());
             ILOG("rob finish instruction: " << inst_ptr);
             rob_.access(inst_ptr->getRobTag()).finish = true;
         }
@@ -139,7 +136,7 @@ namespace TimingModel {
         uint64_t commit_num = inst_group_ptr->size();
 
         if (commit_num) {
-            rob_preceding_credit_out.send(commit_num);
+            rob_preceding_credit_out.send(commit_num, sparta::Clock::Cycle(1));
         } else {
             stall_cycle_count_++;
             sparta_assert(stall_cycle_count_ < 1000, "commit stall: " << rob_.front().inst_ptr);
@@ -147,9 +144,6 @@ namespace TimingModel {
 
 
         ILOG(getName() << " commit instructions: " << commit_num << " , remaining: " << rob_.size());
-        if (rob_.front().valid && !rob_.empty()) {
-            ILOG(getName() << " rob front id: " << rob_.front().inst_ptr->getUniqueID());
-        }
 
         num_retired_ += commit_num;
 

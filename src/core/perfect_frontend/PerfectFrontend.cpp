@@ -84,6 +84,7 @@ namespace TimingModel {
             if(nullptr == dinst) {
                 break;
             }
+            ILOG("perfect frontend generate: " << dinst);
 
             /* simulate bpu */
             /* ============================ */
@@ -119,7 +120,6 @@ namespace TimingModel {
         if (credit_ && (false == inst_generator_->isDone())) {
             produce_inst_event_.schedule(1);
         }
-        ILOG("perfect frontend send " << inst_group_ptr->size() << " instructions to backend");
         fetch_backend_inst_out.send(inst_group_ptr);
     }
 

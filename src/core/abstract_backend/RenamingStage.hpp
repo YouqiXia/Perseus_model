@@ -26,7 +26,7 @@ public:
 
         PARAMETER(uint32_t, issue_width, 4, "the issuing bandwidth in a cycle")
         PARAMETER(uint32_t, isa_reg_num, 32, "the number of isa register file")
-        PARAMETER(uint32_t, queue_depth, 4, "the depth of renaming queue")
+        PARAMETER(uint32_t, queue_depth, 8, "the depth of renaming queue")
         PARAMETER(uint32_t, phy_reg_num, 64, "the depth of freelist")
         PARAMETER(bool, is_perfect_lsu, true, "if it cooperates with a perfect lsu")
     };

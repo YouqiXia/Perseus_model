@@ -56,7 +56,6 @@ namespace TimingModel {
 
     void DispatchStage::AllocateInst_(const TimingModel::InstGroupPtr &inst_group_ptr) {
         for (auto& inst_ptr: *inst_group_ptr) {
-            ILOG(getName() << " get instruction rob tag: " << inst_ptr->getRobTag());
             ILOG("get inst from preceding: " << inst_ptr);
             IssueQueueEntryPtr issue_entry_ptr_tmp {new IssueQueueEntry};
             issue_entry_ptr_tmp->inst_ptr = inst_ptr;
@@ -66,8 +65,8 @@ namespace TimingModel {
             inst_queue_.push_back(issue_entry_ptr_tmp);
         }
 
-        dispatch_select_events_.schedule(0);
-        dispatch_pop_events_.schedule(0);
+        dispatch_select_events_.schedule(1);
+        dispatch_pop_events_.schedule(1);
     }
 
     void DispatchStage::ReadPhyReg_() {
@@ -85,7 +84,6 @@ namespace TimingModel {
     }
 
     void DispatchStage::CheckRegStatus_() {
-        ILOG(getName() << " check register status.");
     }
 
     void DispatchStage::FuncUnitBack_(const TimingModel::InstGroupPtr &inst_group_ptr) {
@@ -137,8 +135,7 @@ namespace TimingModel {
                     continue;
                 }
 
-                ILOG(getName() << " Instruction Select rob tag: " << issue_entry_ptr->inst_ptr->getRobTag()
-                               << ", function unit type is " << func_pair.first);
+                ILOG(getName() << " Instruction Select: " << issue_entry_ptr->inst_ptr);
                 --produce_max;
                 ++produce_num;
                 --issue_width_per_pipe;
@@ -150,7 +147,7 @@ namespace TimingModel {
         }
 
         if (produce_num) {
-            dispatch_preceding_credit_out.send(produce_num);
+            dispatch_preceding_credit_out.send(produce_num, sparta::Clock::Cycle(1));
         }
 
         dispatch_get_operator_events_.schedule(0);
@@ -164,7 +161,7 @@ namespace TimingModel {
         for (auto& credit_pair: credit_map_) {
             credit_pair.second = 0;
         }
-        dispatch_preceding_credit_out.send(inst_queue_depth_);
+        dispatch_preceding_credit_out.send(inst_queue_depth_, sparta::Clock::Cycle(1));
         inst_queue_.clear();
     }
 
@@ -177,8 +174,7 @@ namespace TimingModel {
             InstGroupPairPtr inst_group_tmp_ptr =
                     sparta::allocate_sparta_shared_pointer<InstGroupPair>(inst_group_pair_allocator);
             for (auto& inst_ptr: dispatch_pending_pair.second) {
-                ILOG(getName() << " issue instruction rob tag: " << inst_ptr->getRobTag());
-                ILOG("issue insn to following: " << inst_ptr);
+                ILOG("issue inst to following: " << inst_ptr);
                 inst_group_tmp_ptr->inst_group.emplace_back(inst_ptr);
                 inst_group_tmp_ptr->name = dispatch_pending_pair.first;
             }
