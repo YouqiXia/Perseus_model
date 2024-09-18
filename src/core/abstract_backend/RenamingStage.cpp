@@ -36,14 +36,6 @@ namespace TimingModel {
            (CREATE_SPARTA_HANDLER_WITH_DATA(RenamingStage, AcceptLsuAllocateIdx, InstGroupPtr));
         Rob_cmt_inst_in.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(RenamingStage, RobCommit_, InstGroupPtr));
-
-        // preceding -> rob & dispatch stage
-        following_renaming_credit_in >> sparta::GlobalOrderingPoint(node, "renaming_node");
-        rob_renaming_credit_in >> sparta::GlobalOrderingPoint(node, "renaming_node");
-        sparta::GlobalOrderingPoint(node, "renaming_node") >> rename_event;
-    }
-
-    RenamingStage::~RenamingStage() {
     }
 
     void RenamingStage::AcceptRobCredit_(const Credit& credit) {

@@ -35,7 +35,6 @@ namespace TimingModel {
             (CREATE_SPARTA_HANDLER_WITH_DATA(Rob, AllocateRob_, InstGroupPtr));
         write_back_rob_finish_in.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(Rob, Finish_, InstGroupPtr));
-        preceding_rob_inst_in >> sparta::GlobalOrderingPoint(node, "rob_dispatch_node");
     }
 
     Rob::~Rob() {

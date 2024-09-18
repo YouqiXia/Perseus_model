@@ -35,7 +35,7 @@ public:
 
     RenamingStage(sparta::TreeNode* node, const RenamingParameter* p);
 
-    ~RenamingStage();
+    ~RenamingStage() = default;
 
 private:
     void AcceptRobCredit_(const Credit&);
@@ -72,7 +72,7 @@ private:
 
         // with frontend
         sparta::DataInPort<InstGroupPtr> preceding_renaming_inst_in
-            {&unit_port_set_, "preceding_renaming_inst_in", sparta::SchedulingPhase::Tick, 1};
+            {&unit_port_set_, "preceding_renaming_inst_in", sparta::SchedulingPhase::PortUpdate, 1};
 
         sparta::DataOutPort<Credit> renaming_preceding_credit_out
             {&unit_port_set_, "renaming_preceding_credit_out"};

@@ -43,15 +43,6 @@ namespace TimingModel {
             // for dispatch itself
             dispatch_pop_events_ >> dispatch_select_events_ >>
             dispatch_scoreboard_events_ >> dispatch_get_operator_events_ >> dispatch_issue_events_;
-
-            physical_reg_dispatch_read_in >> sparta::GlobalOrderingPoint(node, "dispatch_physical_reg_node");
-            sparta::GlobalOrderingPoint(node, "dispatch_physical_reg_node") >> dispatch_issue_events_;
-
-            write_back_dispatch_port_in >> sparta::GlobalOrderingPoint(node, "dispatch_node");
-            sparta::GlobalOrderingPoint(node, "dispatch_node") >> dispatch_select_events_;
-
-            sparta::GlobalOrderingPoint(node, "rob_dispatch_node") >> dispatch_scoreboard_events_;
-
     }
 
     void DispatchStage::AllocateInst_(const TimingModel::InstGroupPtr &inst_group_ptr) {
