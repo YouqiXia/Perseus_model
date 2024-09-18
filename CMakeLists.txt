@@ -3,7 +3,6 @@ cmake_minimum_required (VERSION 3.20)
 # enable c++17
 set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
 # Define the project name and the language used
 project(PERSEUS LANGUAGES CXX)
@@ -30,6 +29,7 @@ add_compile_options("-march=native")
 
 # params for perseus model
 set(Perseus_BASE ${CMAKE_CURRENT_SOURCE_DIR})
+set(Perseus_LINK_DIR "")
 set(Perseus_LIBS "")
 set(Perseus_INCLUDES "")
 set(Perseus_SRCS "")
@@ -41,6 +41,9 @@ set(PybindLib_LIBS "")
 
 # set up sparta lib
 include(cmake/sparta.cmake)
+
+# set up spike lib
+include(cmake/spike.cmake)
 
 # set up STF lib
 include(cmake/stf.cmake)
@@ -63,15 +66,6 @@ file(GLOB_RECURSE Perseus_SRCS "src/*.cc" "src/*.cpp" "src/*.c")
 # head file
 include_directories(./src)
 include_directories(./config/cpp_file)
-include_directories(./src/utils/spikeInterface/src)
-include_directories (./thirdparty/riscv-isa-sim/libs/include)
-include_directories (./thirdparty/riscv-isa-sim/libs/include/riscv)
-include_directories (./thirdparty/riscv-isa-sim/libs/include/fesvr)
-include_directories (./thirdparty/riscv-isa-sim/libs/include/fdt)
-include_directories (./thirdparty/riscv-isa-sim/libs/include/softfloat)
-include_directories (./thirdparty/riscv-isa-sim/riscv)
-include_directories (./thirdparty/riscv-isa-sim/)
-
 
 # Create a few links like reports and arch directories
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/reports    ${CMAKE_CURRENT_BINARY_DIR}/reports         SYMBOLIC)
@@ -79,23 +73,22 @@ file(CREATE_LINK ${PROJECT_SOURCE_DIR}/arches     ${CMAKE_CURRENT_BINARY_DIR}/ar
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/config/py_file     ${CMAKE_CURRENT_BINARY_DIR}/config          SYMBOLIC)
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/thirdparty/mavis/json ${CMAKE_CURRENT_BINARY_DIR}/mavis_isa_files SYMBOLIC)
 file(CREATE_LINK ${PROJECT_SOURCE_DIR}/traces     ${CMAKE_CURRENT_BINARY_DIR}/traces          SYMBOLIC)
-file(CREATE_LINK ${PROJECT_SOURCE_DIR}//src/utils/spikeInterface/default.dtb     ${CMAKE_CURRENT_BINARY_DIR}/default.dtb          SYMBOLIC)
+file(CREATE_LINK ${PROJECT_SOURCE_DIR}/src/utils/spikeInterface/default.dtb     ${CMAKE_CURRENT_BINARY_DIR}/default.dtb          SYMBOLIC)
 
 # thirdparty link lib
-
-link_directories(./thirdparty/riscv-isa-sim/libs/lib)
-set (SPIKE_INTF_LIBS riscv softfloat fesvr disasm fdt boost_regex)
 
 # add_subdirectory()
 add_executable(model ${Perseus_SRCS})
 
 # link lib
 target_include_directories(model PUBLIC ${Perseus_INCLUDES})
-target_link_libraries(model PRIVATE ${SPIKE_INTF_LIBS} ${Perseus_LIBS})
+target_link_directories(model PRIVATE ${Perseus_LINK_DIR})
+target_link_libraries(model PRIVATE ${Perseus_LIBS})
 
 # pybind11
 pybind11_add_module(unitlib ${PybindLib_SRCS} ${Perseus_SRCS})
 set_target_properties(unitlib PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_include_directories(unitlib PUBLIC ${Perseus_INCLUDES} ${PybindLib_INCLUDES})
-target_link_libraries(unitlib PRIVATE ${SPIKE_INTF_LIBS} ${Perseus_LIBS})
+target_link_directories(unitlib PRIVATE ${Perseus_LINK_DIR})
+target_link_libraries(unitlib PRIVATE ${Perseus_LIBS})
 install(TARGETS unitlib DESTINATION ${Perseus_BASE}/lib/python)
