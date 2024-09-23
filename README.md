@@ -14,7 +14,12 @@ First download and build the [Spike](https://github.com/riscv-software-src/riscv
     cd thirdparty/riscv-isa-sim/
     ./build.sh
 
-We assume that the [Sparta](https://github.com/sparcians/map) environment variable is set to install path. And install all tools in thirdparty.
+Then Download and install submodules. The first is pybind11, and tag global to install head file of pybind11 in your .local/ 
+and make sure .local/ is in your PATH
+    
+    pip install pybind11[global]
+
+We assume that the [Sparta](https://github.com/sparcians/map) environment variable is set to install path.
 
     cmake -Bbuild
     cd build

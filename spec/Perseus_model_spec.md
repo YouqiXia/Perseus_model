@@ -3,8 +3,8 @@
 <h2> Git Commit Style </h2>
 
 ```
-[type]<Scope>: <Subject>
-eg: [feat]<undone>: new feature or file are added
+[type]: <Subject>
+eg: [feat]: new feature or file are added
 ```
 
 | Type | Description |
@@ -17,12 +17,6 @@ eg: [feat]<undone>: new feature or file are added
 |test	       | Adding missing or correcting existing tests                                                             |
 |chore	     | Changes to the build process or auxiliary tools and libraries such as documentation generation          |
 |perf	       | A code change that improves performance                                                                 |
-
-| Scope  | Description |
-| :---:  | --- |
-| done   | the change is done        |
-| undone | the change is in progress |
-
 
 <h2> Code Style </h2>
 The detail of cpp code style is in <a title="cppguide">https://google.github.io/styleguide/cppguide.html</a>
