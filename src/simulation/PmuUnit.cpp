@@ -3,3 +3,7 @@
 //
 
 #include "PmuUnit.hpp"
+
+namespace TimingModel {
+
+}
