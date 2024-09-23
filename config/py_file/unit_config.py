@@ -4,7 +4,7 @@ import json
 class Config:
     def __init__(self, units_) -> None:
         # the number of pipeline after disptach stage
-        self.dispatch_path_num = 4
+        self.dispatch_path_num = 1
         
         self.units_map = self.gen_units_map(units_.GetUnitsInfo())
         self.unbind_ports = self.gen_ports(units_.GetUnitsInfo())
@@ -79,6 +79,7 @@ class Config:
         hierarchy["core0"]["cache"] = []
         hierarchy["core0"]["memory"] = []
         
+        hierarchy["info"].append(self.gen_units_pair(unitlib.units.self_allocators, is_gen_static_units))
         hierarchy["info"].append(self.gen_units_pair(unitlib.units.mavis, is_gen_static_units))
         hierarchy["info"].append(self.gen_units_pair(unitlib.units.global_param, is_gen_static_units))
     
@@ -162,8 +163,9 @@ class Config:
         hierarchy = self.gen_hierarchy(False)
         
         topology = {"hierarchy": hierarchy,
-                    "instances": self.instances,
-                    "unbinding": self.unbind_ports,
+                    # for debug
+                    # "instances": self.instances,
+                    # "unbinding": self.unbind_ports,
                     "binding"  : self.bindings}
         with open("topology.json", "w") as file :
             json.dump(topology, file)

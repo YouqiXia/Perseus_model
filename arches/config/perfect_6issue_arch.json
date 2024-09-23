@@ -1,0 +1,829 @@
+{
+    "hierarchy": {
+        "info": [
+            {
+                "self_allocators": {
+                    "self_allocators": {
+                        "inst_max_num": 300000,
+                        "inst_arch_info_max_num": 300000,
+                        "inst_group_pair_max_num": 300000,
+                        "inst_group_max_num": 300000,
+                        "credit_pair_max_num": 300000
+                    }
+                }
+            },
+            {
+                "mavis": {
+                    "mavis": {
+                        "isa_file_path": "mavis_isa_files",
+                        "uarch_file_path": "arches/isa_json",
+                        "pseudo_file_path": "",
+                        "uarch_overrides_json": "",
+                        "uarch_overrides": []
+                    }
+                }
+            },
+            {
+                "global_param": {
+                    "global_param": {
+                        "dispatch_map": [
+                            "reservation_station_0",
+                            "|",
+                            "1",
+                            "|",
+                            "ALU",
+                            "BRU",
+                            "CSR",
+                            "MUL",
+                            "DIV",
+                            "FPU",
+                            "LDU",
+                            "STU",
+                            "|",
+                            "reservation_station_1",
+                            "|",
+                            "1",
+                            "|",
+                            "ALU",
+                            "BRU",
+                            "CSR",
+                            "MUL",
+                            "DIV",
+                            "FPU",
+                            "LDU",
+                            "STU",
+                            "|",
+                            "reservation_station_2",
+                            "|",
+                            "1",
+                            "|",
+                            "ALU",
+                            "BRU",
+                            "CSR",
+                            "MUL",
+                            "DIV",
+                            "FPU",
+                            "LDU",
+                            "STU",
+                            "|",
+                            "reservation_station_3",
+                            "|",
+                            "1",
+                            "|",
+                            "ALU",
+                            "BRU",
+                            "CSR",
+                            "MUL",
+                            "DIV",
+                            "FPU",
+                            "LDU",
+                            "STU",
+                            "|",
+                            "reservation_station_4",
+                            "|",
+                            "1",
+                            "|",
+                            "ALU",
+                            "BRU",
+                            "CSR",
+                            "MUL",
+                            "DIV",
+                            "FPU",
+                            "LDU",
+                            "STU",
+                            "|",
+                            "reservation_station_5",
+                            "|",
+                            "1",
+                            "|",
+                            "ALU",
+                            "BRU",
+                            "CSR",
+                            "MUL",
+                            "DIV",
+                            "FPU",
+                            "LDU",
+                            "STU",
+                            "|"
+                        ],
+                        "write_back_map": [
+                            "perfect_fu_0",
+                            "|",
+                            "1",
+                            "|",
+                            "perfect_fu_1",
+                            "|",
+                            "1",
+                            "|",
+                            "perfect_fu_2",
+                            "|",
+                            "1",
+                            "|",
+                            "perfect_fu_3",
+                            "|",
+                            "1",
+                            "|",
+                            "perfect_fu_4",
+                            "|",
+                            "1",
+                            "|",
+                            "perfect_fu_5",
+                            "|",
+                            "1",
+                            "|"
+                        ]
+                    }
+                }
+            }
+        ],
+        "core0": {
+            "frontend": [
+                {
+                    "perfect_frontend": {
+                        "perfect_frontend": {
+                            "issue_width": 6,
+                            "is_config": true,
+                            "input_file": "",
+                            "insn_gen_type": "trace",
+                            "is_speculation": false
+                        }
+                    }
+                }
+            ],
+            "backend": [
+                {
+                    "renaming_stage": {
+                        "renaming_stage": {
+                            "issue_width": 6,
+                            "isa_reg_num": 32,
+                            "queue_depth": 20,
+                            "phy_reg_num": 150000,
+                            "is_perfect_lsu": true
+                        }
+                    }
+                },
+                {
+                    "dispatch_stage": {
+                        "dispatch_stage": {
+                            "issue_width": 6,
+                            "phy_reg_num": 150000,
+                            "queue_depth": 16
+                        }
+                    }
+                },
+                {
+                    "rob": {
+                        "rob": {
+                            "issue_width": 6,
+                            "queue_depth": 160000,
+                            "retire_heartbeat": 100000,
+                            "num_insts_to_retire": 0
+                        }
+                    }
+                },
+                {
+                    "physical_regfile": {
+                        "physical_regfile": {
+                            "phy_reg_num": 150000
+                        }
+                    }
+                },
+                {
+                    "reservation_station": {
+                        "reservation_station_0": {
+                            "issue_width": 1,
+                            "queue_depth": 16384,
+                            "phy_reg_num": 150000
+                        },
+                        "reservation_station_1": {
+                            "issue_width": 1,
+                            "queue_depth": 16384,
+                            "phy_reg_num": 150000
+                        },
+                        "reservation_station_2": {
+                            "issue_width": 1,
+                            "queue_depth": 16384,
+                            "phy_reg_num": 150000
+                        },
+                        "reservation_station_3": {
+                            "issue_width": 1,
+                            "queue_depth": 16384,
+                            "phy_reg_num": 150000
+                        },
+                        "reservation_station_4": {
+                            "issue_width": 1,
+                            "queue_depth": 16384,
+                            "phy_reg_num": 150000
+                        },
+                        "reservation_station_5": {
+                            "issue_width": 1,
+                            "queue_depth": 16384,
+                            "phy_reg_num": 150000
+                        }
+                    }
+                }
+            ],
+            "func_units": [
+                {
+                    "perfect_fu": {
+                        "perfect_fu_0": {
+                            "issue_width": 1,
+                            "queue_depth": 1
+                        },
+                        "perfect_fu_1": {
+                            "issue_width": 1,
+                            "queue_depth": 1
+                        },
+                        "perfect_fu_2": {
+                            "issue_width": 1,
+                            "queue_depth": 1
+                        },
+                        "perfect_fu_3": {
+                            "issue_width": 1,
+                            "queue_depth": 1
+                        },
+                        "perfect_fu_4": {
+                            "issue_width": 1,
+                            "queue_depth": 1
+                        },
+                        "perfect_fu_5": {
+                            "issue_width": 1,
+                            "queue_depth": 1
+                        }
+                    }
+                },
+                {
+                    "write_back_stage": {
+                        "write_back_stage": {
+                            "issue_width": 6,
+                            "wb_latency": 1,
+                            "is_perfect_mode": false
+                        }
+                    }
+                }
+            ],
+            "global_ctrl": [
+                {
+                    "flush_manager": {
+                        "flush_manager": {}
+                    }
+                }
+            ],
+            "cache": [],
+            "memory": []
+        }
+    },
+    "instances": {
+        "write_back_stage": {
+            "write_back_stage": {
+                "issue_width": 6,
+                "wb_latency": 1,
+                "is_perfect_mode": false
+            }
+        },
+        "rob": {
+            "rob": {
+                "issue_width": 6,
+                "queue_depth": 32,
+                "retire_heartbeat": 10000,
+                "num_insts_to_retire": 0
+            }
+        },
+        "reservation_station": {
+            "reservation_station_0": {
+                "issue_width": 1,
+                "queue_depth": 4,
+                "phy_reg_num": 150000
+            },
+            "reservation_station_1": {
+                "issue_width": 1,
+                "queue_depth": 4,
+                "phy_reg_num": 150000
+            },
+            "reservation_station_2": {
+                "issue_width": 1,
+                "queue_depth": 4,
+                "phy_reg_num": 150000
+            },
+            "reservation_station_3": {
+                "issue_width": 1,
+                "queue_depth": 4,
+                "phy_reg_num": 150000
+            },
+            "reservation_station_4": {
+                "issue_width": 1,
+                "queue_depth": 4,
+                "phy_reg_num": 150000
+            },
+            "reservation_station_5": {
+                "issue_width": 1,
+                "queue_depth": 4,
+                "phy_reg_num": 150000
+            }
+        },
+        "renaming_stage": {
+            "renaming_stage": {
+                "issue_width": 6,
+                "isa_reg_num": 32,
+                "queue_depth": 8,
+                "phy_reg_num": 150000,
+                "is_perfect_lsu": true
+            }
+        },
+        "physical_regfile": {
+            "physical_regfile": {
+                "phy_reg_num": 150000
+            }
+        },
+        "perfect_fu": {
+            "perfect_fu_0": {
+                "issue_width": 1,
+                "queue_depth": 1
+            },
+            "perfect_fu_1": {
+                "issue_width": 1,
+                "queue_depth": 1
+            },
+            "perfect_fu_2": {
+                "issue_width": 1,
+                "queue_depth": 1
+            },
+            "perfect_fu_3": {
+                "issue_width": 1,
+                "queue_depth": 1
+            },
+            "perfect_fu_4": {
+                "issue_width": 1,
+                "queue_depth": 1
+            },
+            "perfect_fu_5": {
+                "issue_width": 1,
+                "queue_depth": 1
+            }
+        },
+        "perfect_frontend": {
+            "perfect_frontend": {
+                "issue_width": 6,
+                "is_config": true,
+                "input_file": "",
+                "insn_gen_type": "trace",
+                "is_speculation": false
+            }
+        },
+        "flush_manager": {
+            "flush_manager": {}
+        },
+        "mavis": {
+            "mavis": {
+                "isa_file_path": "mavis_isa_files",
+                "uarch_file_path": "arches/isa_json",
+                "pseudo_file_path": "",
+                "uarch_overrides_json": "",
+                "uarch_overrides": []
+            }
+        },
+        "dispatch_stage": {
+            "dispatch_stage": {
+                "issue_width": 6,
+                "phy_reg_num": 150000,
+                "queue_depth": 16
+            }
+        },
+        "global_param": {
+            "global_param": {
+                "dispatch_map": [
+                    "reservation_station_0",
+                    "|",
+                    "1",
+                    "|",
+                    "ALU",
+                    "BRU",
+                    "CSR",
+                    "MUL",
+                    "DIV",
+                    "FPU",
+                    "LDU",
+                    "STU",
+                    "|",
+                    "reservation_station_1",
+                    "|",
+                    "1",
+                    "|",
+                    "ALU",
+                    "BRU",
+                    "CSR",
+                    "MUL",
+                    "DIV",
+                    "FPU",
+                    "LDU",
+                    "STU",
+                    "|",
+                    "reservation_station_2",
+                    "|",
+                    "1",
+                    "|",
+                    "ALU",
+                    "BRU",
+                    "CSR",
+                    "MUL",
+                    "DIV",
+                    "FPU",
+                    "LDU",
+                    "STU",
+                    "|",
+                    "reservation_station_3",
+                    "|",
+                    "1",
+                    "|",
+                    "ALU",
+                    "BRU",
+                    "CSR",
+                    "MUL",
+                    "DIV",
+                    "FPU",
+                    "LDU",
+                    "STU",
+                    "|",
+                    "reservation_station_4",
+                    "|",
+                    "1",
+                    "|",
+                    "ALU",
+                    "BRU",
+                    "CSR",
+                    "MUL",
+                    "DIV",
+                    "FPU",
+                    "LDU",
+                    "STU",
+                    "|",
+                    "reservation_station_5",
+                    "|",
+                    "1",
+                    "|",
+                    "ALU",
+                    "BRU",
+                    "CSR",
+                    "MUL",
+                    "DIV",
+                    "FPU",
+                    "LDU",
+                    "STU",
+                    "|"
+                ],
+                "write_back_map": [
+                    "perfect_fu_0",
+                    "|",
+                    "1",
+                    "|",
+                    "perfect_fu_1",
+                    "|",
+                    "1",
+                    "|",
+                    "perfect_fu_2",
+                    "|",
+                    "1",
+                    "|",
+                    "perfect_fu_3",
+                    "|",
+                    "1",
+                    "|",
+                    "perfect_fu_4",
+                    "|",
+                    "1",
+                    "|",
+                    "perfect_fu_5",
+                    "|",
+                    "1",
+                    "|"
+                ]
+            }
+        }
+    },
+    "unbinding": [
+        "renaming_lsu_allocate_out",
+        "lsu_renaming_stq_credit_in",
+        "lsu_renaming_ldq_credit_in",
+        "lsu_renaming_allocate_in",
+        "func_branch_resolve_out",
+        "backend_branch_resolve_inst_in"
+    ],
+    "binding": [
+        {
+            "source": "core0.frontend.perfect_frontend.ports.fetch_backend_inst_out",
+            "target": "core0.backend.renaming_stage.ports.preceding_renaming_inst_in"
+        },
+        {
+            "source": "core0.backend.renaming_stage.ports.renaming_following_inst_out",
+            "target": "core0.backend.dispatch_stage.ports.preceding_dispatch_inst_in"
+        },
+        {
+            "source": "core0.backend.renaming_stage.ports.renaming_following_inst_out",
+            "target": "core0.backend.rob.ports.preceding_rob_inst_in"
+        },
+        {
+            "source": "core0.backend.renaming_stage.ports.renaming_preceding_credit_out",
+            "target": "core0.frontend.perfect_frontend.ports.backend_fetch_credit_in"
+        },
+        {
+            "source": "core0.backend.dispatch_stage.ports.dispatch_preceding_credit_out",
+            "target": "core0.backend.renaming_stage.ports.following_renaming_credit_in"
+        },
+        {
+            "source": "core0.backend.dispatch_stage.ports.dispatch_physical_reg_read_out",
+            "target": "core0.backend.physical_regfile.ports.preceding_physical_regfile_read_in"
+        },
+        {
+            "source": "core0.backend.dispatch_stage.ports.dispatch_rs_inst_out",
+            "target": "core0.backend.reservation_station_0.ports.preceding_reservation_inst_in"
+        },
+        {
+            "source": "core0.backend.dispatch_stage.ports.dispatch_rs_inst_out",
+            "target": "core0.backend.reservation_station_1.ports.preceding_reservation_inst_in"
+        },
+        {
+            "source": "core0.backend.dispatch_stage.ports.dispatch_rs_inst_out",
+            "target": "core0.backend.reservation_station_2.ports.preceding_reservation_inst_in"
+        },
+        {
+            "source": "core0.backend.dispatch_stage.ports.dispatch_rs_inst_out",
+            "target": "core0.backend.reservation_station_3.ports.preceding_reservation_inst_in"
+        },
+        {
+            "source": "core0.backend.dispatch_stage.ports.dispatch_rs_inst_out",
+            "target": "core0.backend.reservation_station_4.ports.preceding_reservation_inst_in"
+        },
+        {
+            "source": "core0.backend.dispatch_stage.ports.dispatch_rs_inst_out",
+            "target": "core0.backend.reservation_station_5.ports.preceding_reservation_inst_in"
+        },
+        {
+            "source": "core0.backend.rob.ports.rob_flush_out",
+            "target": "core0.global_ctrl.flush_manager.ports.rob_flush_manager_in"
+        },
+        {
+            "source": "core0.backend.rob.ports.rob_preceding_credit_out",
+            "target": "core0.backend.renaming_stage.ports.rob_renaming_credit_in"
+        },
+        {
+            "source": "core0.backend.rob.ports.Rob_cmt_inst_out",
+            "target": "core0.backend.renaming_stage.ports.Rob_cmt_inst_in"
+        },
+        {
+            "source": "core0.backend.rob.ports.rob_bpu_inst_out",
+            "target": "core0.frontend.perfect_frontend.ports.backend_bpu_inst_in"
+        },
+        {
+            "source": "core0.backend.rob.ports.Rob_lsu_wakeup_out",
+            "target": "core0.func_units.perfect_fu_0.ports.preceding_rob_wakeup_store_in"
+        },
+        {
+            "source": "core0.backend.rob.ports.Rob_lsu_wakeup_out",
+            "target": "core0.func_units.perfect_fu_1.ports.preceding_rob_wakeup_store_in"
+        },
+        {
+            "source": "core0.backend.rob.ports.Rob_lsu_wakeup_out",
+            "target": "core0.func_units.perfect_fu_2.ports.preceding_rob_wakeup_store_in"
+        },
+        {
+            "source": "core0.backend.rob.ports.Rob_lsu_wakeup_out",
+            "target": "core0.func_units.perfect_fu_3.ports.preceding_rob_wakeup_store_in"
+        },
+        {
+            "source": "core0.backend.rob.ports.Rob_lsu_wakeup_out",
+            "target": "core0.func_units.perfect_fu_4.ports.preceding_rob_wakeup_store_in"
+        },
+        {
+            "source": "core0.backend.rob.ports.Rob_lsu_wakeup_out",
+            "target": "core0.func_units.perfect_fu_5.ports.preceding_rob_wakeup_store_in"
+        },
+        {
+            "source": "core0.backend.rob.ports.rob_redirect_pc_inst_out",
+            "target": "core0.frontend.perfect_frontend.ports.backend_redirect_pc_inst_in"
+        },
+        {
+            "source": "core0.backend.physical_regfile.ports.physical_regfile_following_read_out",
+            "target": "core0.backend.dispatch_stage.ports.dispatch_physical_reg_read_in"
+        },
+        {
+            "source": "core0.backend.reservation_station_0.ports.reservation_following_inst_out",
+            "target": "core0.func_units.perfect_fu_0.ports.preceding_func_inst_in"
+        },
+        {
+            "source": "core0.backend.reservation_station_1.ports.reservation_following_inst_out",
+            "target": "core0.func_units.perfect_fu_1.ports.preceding_func_inst_in"
+        },
+        {
+            "source": "core0.backend.reservation_station_2.ports.reservation_following_inst_out",
+            "target": "core0.func_units.perfect_fu_2.ports.preceding_func_inst_in"
+        },
+        {
+            "source": "core0.backend.reservation_station_3.ports.reservation_following_inst_out",
+            "target": "core0.func_units.perfect_fu_3.ports.preceding_func_inst_in"
+        },
+        {
+            "source": "core0.backend.reservation_station_4.ports.reservation_following_inst_out",
+            "target": "core0.func_units.perfect_fu_4.ports.preceding_func_inst_in"
+        },
+        {
+            "source": "core0.backend.reservation_station_5.ports.reservation_following_inst_out",
+            "target": "core0.func_units.perfect_fu_5.ports.preceding_func_inst_in"
+        },
+        {
+            "source": "core0.backend.reservation_station_0.ports.reservation_preceding_credit_out",
+            "target": "core0.backend.dispatch_stage.ports.rs_dispatch_credit_in"
+        },
+        {
+            "source": "core0.backend.reservation_station_1.ports.reservation_preceding_credit_out",
+            "target": "core0.backend.dispatch_stage.ports.rs_dispatch_credit_in"
+        },
+        {
+            "source": "core0.backend.reservation_station_2.ports.reservation_preceding_credit_out",
+            "target": "core0.backend.dispatch_stage.ports.rs_dispatch_credit_in"
+        },
+        {
+            "source": "core0.backend.reservation_station_3.ports.reservation_preceding_credit_out",
+            "target": "core0.backend.dispatch_stage.ports.rs_dispatch_credit_in"
+        },
+        {
+            "source": "core0.backend.reservation_station_4.ports.reservation_preceding_credit_out",
+            "target": "core0.backend.dispatch_stage.ports.rs_dispatch_credit_in"
+        },
+        {
+            "source": "core0.backend.reservation_station_5.ports.reservation_preceding_credit_out",
+            "target": "core0.backend.dispatch_stage.ports.rs_dispatch_credit_in"
+        },
+        {
+            "source": "core0.func_units.perfect_fu_0.ports.func_following_finish_out",
+            "target": "core0.func_units.write_back_stage.ports.preceding_write_back_inst_in"
+        },
+        {
+            "source": "core0.func_units.perfect_fu_1.ports.func_following_finish_out",
+            "target": "core0.func_units.write_back_stage.ports.preceding_write_back_inst_in"
+        },
+        {
+            "source": "core0.func_units.perfect_fu_2.ports.func_following_finish_out",
+            "target": "core0.func_units.write_back_stage.ports.preceding_write_back_inst_in"
+        },
+        {
+            "source": "core0.func_units.perfect_fu_3.ports.func_following_finish_out",
+            "target": "core0.func_units.write_back_stage.ports.preceding_write_back_inst_in"
+        },
+        {
+            "source": "core0.func_units.perfect_fu_4.ports.func_following_finish_out",
+            "target": "core0.func_units.write_back_stage.ports.preceding_write_back_inst_in"
+        },
+        {
+            "source": "core0.func_units.perfect_fu_5.ports.func_following_finish_out",
+            "target": "core0.func_units.write_back_stage.ports.preceding_write_back_inst_in"
+        },
+        {
+            "source": "core0.func_units.perfect_fu_0.ports.func_rs_credit_out",
+            "target": "core0.backend.reservation_station_0.ports.following_reservation_credit_in"
+        },
+        {
+            "source": "core0.func_units.perfect_fu_1.ports.func_rs_credit_out",
+            "target": "core0.backend.reservation_station_1.ports.following_reservation_credit_in"
+        },
+        {
+            "source": "core0.func_units.perfect_fu_2.ports.func_rs_credit_out",
+            "target": "core0.backend.reservation_station_2.ports.following_reservation_credit_in"
+        },
+        {
+            "source": "core0.func_units.perfect_fu_3.ports.func_rs_credit_out",
+            "target": "core0.backend.reservation_station_3.ports.following_reservation_credit_in"
+        },
+        {
+            "source": "core0.func_units.perfect_fu_4.ports.func_rs_credit_out",
+            "target": "core0.backend.reservation_station_4.ports.following_reservation_credit_in"
+        },
+        {
+            "source": "core0.func_units.perfect_fu_5.ports.func_rs_credit_out",
+            "target": "core0.backend.reservation_station_5.ports.following_reservation_credit_in"
+        },
+        {
+            "source": "core0.func_units.write_back_stage.ports.write_back_following_port_out",
+            "target": "core0.backend.reservation_station_0.ports.forwarding_reservation_inst_in"
+        },
+        {
+            "source": "core0.func_units.write_back_stage.ports.write_back_following_port_out",
+            "target": "core0.backend.reservation_station_1.ports.forwarding_reservation_inst_in"
+        },
+        {
+            "source": "core0.func_units.write_back_stage.ports.write_back_following_port_out",
+            "target": "core0.backend.reservation_station_2.ports.forwarding_reservation_inst_in"
+        },
+        {
+            "source": "core0.func_units.write_back_stage.ports.write_back_following_port_out",
+            "target": "core0.backend.reservation_station_3.ports.forwarding_reservation_inst_in"
+        },
+        {
+            "source": "core0.func_units.write_back_stage.ports.write_back_following_port_out",
+            "target": "core0.backend.reservation_station_4.ports.forwarding_reservation_inst_in"
+        },
+        {
+            "source": "core0.func_units.write_back_stage.ports.write_back_following_port_out",
+            "target": "core0.backend.reservation_station_5.ports.forwarding_reservation_inst_in"
+        },
+        {
+            "source": "core0.func_units.write_back_stage.ports.write_back_following_port_out",
+            "target": "core0.backend.dispatch_stage.ports.write_back_dispatch_port_in"
+        },
+        {
+            "source": "core0.func_units.write_back_stage.ports.write_back_following_port_out",
+            "target": "core0.backend.rob.ports.write_back_rob_finish_in"
+        },
+        {
+            "source": "core0.func_units.write_back_stage.ports.write_back_following_port_out",
+            "target": "core0.backend.physical_regfile.ports.preceding_physical_regfile_write_in"
+        },
+        {
+            "source": "core0.func_units.write_back_stage.ports.preceding_write_back_credit_out",
+            "target": "core0.func_units.perfect_fu_0.ports.write_back_func_credit_in"
+        },
+        {
+            "source": "core0.func_units.write_back_stage.ports.preceding_write_back_credit_out",
+            "target": "core0.func_units.perfect_fu_1.ports.write_back_func_credit_in"
+        },
+        {
+            "source": "core0.func_units.write_back_stage.ports.preceding_write_back_credit_out",
+            "target": "core0.func_units.perfect_fu_2.ports.write_back_func_credit_in"
+        },
+        {
+            "source": "core0.func_units.write_back_stage.ports.preceding_write_back_credit_out",
+            "target": "core0.func_units.perfect_fu_3.ports.write_back_func_credit_in"
+        },
+        {
+            "source": "core0.func_units.write_back_stage.ports.preceding_write_back_credit_out",
+            "target": "core0.func_units.perfect_fu_4.ports.write_back_func_credit_in"
+        },
+        {
+            "source": "core0.func_units.write_back_stage.ports.preceding_write_back_credit_out",
+            "target": "core0.func_units.perfect_fu_5.ports.write_back_func_credit_in"
+        },
+        {
+            "source": "core0.global_ctrl.flush_manager.ports.global_flush_signal_out",
+            "target": "core0.func_units.perfect_fu_0.ports.func_flush_in"
+        },
+        {
+            "source": "core0.global_ctrl.flush_manager.ports.global_flush_signal_out",
+            "target": "core0.func_units.perfect_fu_1.ports.func_flush_in"
+        },
+        {
+            "source": "core0.global_ctrl.flush_manager.ports.global_flush_signal_out",
+            "target": "core0.func_units.perfect_fu_2.ports.func_flush_in"
+        },
+        {
+            "source": "core0.global_ctrl.flush_manager.ports.global_flush_signal_out",
+            "target": "core0.func_units.perfect_fu_3.ports.func_flush_in"
+        },
+        {
+            "source": "core0.global_ctrl.flush_manager.ports.global_flush_signal_out",
+            "target": "core0.func_units.perfect_fu_4.ports.func_flush_in"
+        },
+        {
+            "source": "core0.global_ctrl.flush_manager.ports.global_flush_signal_out",
+            "target": "core0.func_units.perfect_fu_5.ports.func_flush_in"
+        },
+        {
+            "source": "core0.global_ctrl.flush_manager.ports.global_flush_signal_out",
+            "target": "core0.backend.dispatch_stage.ports.dispatch_flush_in"
+        },
+        {
+            "source": "core0.global_ctrl.flush_manager.ports.global_flush_signal_out",
+            "target": "core0.backend.renaming_stage.ports.renaming_flush_in"
+        },
+        {
+            "source": "core0.global_ctrl.flush_manager.ports.global_flush_signal_out",
+            "target": "core0.backend.reservation_station_0.ports.reservation_flush_in"
+        },
+        {
+            "source": "core0.global_ctrl.flush_manager.ports.global_flush_signal_out",
+            "target": "core0.backend.reservation_station_1.ports.reservation_flush_in"
+        },
+        {
+            "source": "core0.global_ctrl.flush_manager.ports.global_flush_signal_out",
+            "target": "core0.backend.reservation_station_2.ports.reservation_flush_in"
+        },
+        {
+            "source": "core0.global_ctrl.flush_manager.ports.global_flush_signal_out",
+            "target": "core0.backend.reservation_station_3.ports.reservation_flush_in"
+        },
+        {
+            "source": "core0.global_ctrl.flush_manager.ports.global_flush_signal_out",
+            "target": "core0.backend.reservation_station_4.ports.reservation_flush_in"
+        },
+        {
+            "source": "core0.global_ctrl.flush_manager.ports.global_flush_signal_out",
+            "target": "core0.backend.reservation_station_5.ports.reservation_flush_in"
+        },
+        {
+            "source": "core0.global_ctrl.flush_manager.ports.global_flush_signal_out",
+            "target": "core0.backend.rob.ports.rob_flush_in"
+        },
+        {
+            "source": "core0.global_ctrl.flush_manager.ports.global_flush_signal_out",
+            "target": "core0.func_units.write_back_stage.ports.writeback_flush_in"
+        }
+    ]
+}

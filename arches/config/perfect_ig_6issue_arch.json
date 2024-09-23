@@ -4,11 +4,11 @@
             {
                 "self_allocators": {
                     "self_allocators": {
-                        "inst_max_num": 3000,
-                        "inst_arch_info_max_num": 3000,
-                        "inst_group_pair_max_num": 3000,
-                        "inst_group_max_num": 3000,
-                        "credit_pair_max_num": 3000
+                        "inst_max_num": 300000,
+                        "inst_arch_info_max_num": 300000,
+                        "inst_group_pair_max_num": 300000,
+                        "inst_group_max_num": 300000,
+                        "credit_pair_max_num": 300000
                     }
                 }
             },
@@ -29,7 +29,7 @@
                         "dispatch_map": [
                             "reservation_station_0",
                             "|",
-                            "1",
+                            "6",
                             "|",
                             "ALU",
                             "BRU",
@@ -44,7 +44,7 @@
                         "write_back_map": [
                             "perfect_fu_0",
                             "|",
-                            "1",
+                            "6",
                             "|"
                         ]
                     }
@@ -56,7 +56,7 @@
                 {
                     "perfect_frontend": {
                         "perfect_frontend": {
-                            "issue_width": 4,
+                            "issue_width": 6,
                             "is_config": true,
                             "input_file": "",
                             "insn_gen_type": "trace",
@@ -69,10 +69,10 @@
                 {
                     "renaming_stage": {
                         "renaming_stage": {
-                            "issue_width": 4,
+                            "issue_width": 6,
                             "isa_reg_num": 32,
-                            "queue_depth": 8,
-                            "phy_reg_num": 64,
+                            "queue_depth": 20,
+                            "phy_reg_num": 150000,
                             "is_perfect_lsu": true
                         }
                     }
@@ -80,18 +80,18 @@
                 {
                     "dispatch_stage": {
                         "dispatch_stage": {
-                            "issue_width": 4,
-                            "phy_reg_num": 64,
-                            "queue_depth": 16
+                            "issue_width": 6,
+                            "phy_reg_num": 150000,
+                            "queue_depth": 32
                         }
                     }
                 },
                 {
                     "rob": {
                         "rob": {
-                            "issue_width": 4,
-                            "queue_depth": 32,
-                            "retire_heartbeat": 10000,
+                            "issue_width": 6,
+                            "queue_depth": 160000,
+                            "retire_heartbeat": 100000,
                             "num_insts_to_retire": 0
                         }
                     }
@@ -99,16 +99,16 @@
                 {
                     "physical_regfile": {
                         "physical_regfile": {
-                            "phy_reg_num": 64
+                            "phy_reg_num": 150000
                         }
                     }
                 },
                 {
                     "reservation_station": {
                         "reservation_station_0": {
-                            "issue_width": 1,
-                            "queue_depth": 4,
-                            "phy_reg_num": 64
+                            "issue_width": 6,
+                            "queue_depth": 100000,
+                            "phy_reg_num": 150000
                         }
                     }
                 }
@@ -117,15 +117,15 @@
                 {
                     "perfect_fu": {
                         "perfect_fu_0": {
-                            "issue_width": 1,
-                            "queue_depth": 1
+                            "issue_width": 6,
+                            "queue_depth": 12
                         }
                     }
                 },
                 {
                     "write_back_stage": {
                         "write_back_stage": {
-                            "issue_width": 4,
+                            "issue_width": 6,
                             "wb_latency": 1,
                             "is_perfect_mode": false
                         }
@@ -143,6 +143,111 @@
             "memory": []
         }
     },
+    "instances": {
+        "write_back_stage": {
+            "write_back_stage": {
+                "issue_width": 6,
+                "wb_latency": 1,
+                "is_perfect_mode": false
+            }
+        },
+        "rob": {
+            "rob": {
+                "issue_width": 6,
+                "queue_depth": 32,
+                "retire_heartbeat": 10000,
+                "num_insts_to_retire": 0
+            }
+        },
+        "reservation_station": {
+            "reservation_station_0": {
+                "issue_width": 1,
+                "queue_depth": 4,
+                "phy_reg_num": 150000
+            }
+        },
+        "renaming_stage": {
+            "renaming_stage": {
+                "issue_width": 6,
+                "isa_reg_num": 32,
+                "queue_depth": 8,
+                "phy_reg_num": 150000,
+                "is_perfect_lsu": true
+            }
+        },
+        "physical_regfile": {
+            "physical_regfile": {
+                "phy_reg_num": 150000
+            }
+        },
+        "perfect_fu": {
+            "perfect_fu_0": {
+                "issue_width": 1,
+                "queue_depth": 1
+            }
+        },
+        "perfect_frontend": {
+            "perfect_frontend": {
+                "issue_width": 6,
+                "is_config": true,
+                "input_file": "",
+                "insn_gen_type": "trace",
+                "is_speculation": false
+            }
+        },
+        "flush_manager": {
+            "flush_manager": {}
+        },
+        "mavis": {
+            "mavis": {
+                "isa_file_path": "mavis_isa_files",
+                "uarch_file_path": "arches/isa_json",
+                "pseudo_file_path": "",
+                "uarch_overrides_json": "",
+                "uarch_overrides": []
+            }
+        },
+        "dispatch_stage": {
+            "dispatch_stage": {
+                "issue_width": 6,
+                "phy_reg_num": 150000,
+                "queue_depth": 16
+            }
+        },
+        "global_param": {
+            "global_param": {
+                "dispatch_map": [
+                    "reservation_station_0",
+                    "|",
+                    "1",
+                    "|",
+                    "ALU",
+                    "BRU",
+                    "CSR",
+                    "MUL",
+                    "DIV",
+                    "FPU",
+                    "LDU",
+                    "STU",
+                    "|"
+                ],
+                "write_back_map": [
+                    "perfect_fu_0",
+                    "|",
+                    "1",
+                    "|"
+                ]
+            }
+        }
+    },
+    "unbinding": [
+        "renaming_lsu_allocate_out",
+        "lsu_renaming_stq_credit_in",
+        "lsu_renaming_ldq_credit_in",
+        "lsu_renaming_allocate_in",
+        "func_branch_resolve_out",
+        "backend_branch_resolve_inst_in"
+    ],
     "binding": [
         {
             "source": "core0.frontend.perfect_frontend.ports.fetch_backend_inst_out",

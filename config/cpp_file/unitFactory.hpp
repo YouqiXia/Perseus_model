@@ -43,24 +43,8 @@ namespace PybindInterface {
             sparta::RootTreeNode dummy_node("dummy_rtn");
             dummy_node.setClock(&clk);
             dummy_node.enterConfiguring();
-            // TODO: should be modified
-            TimingModel::OlympiaAllocators allocator{&dummy_node};
-            std::set<std::string> priority{TimingModel::GlobalParam::name, TimingModel::MavisUnit::name};
+            
             for (auto factory_base_pair: resource_map.GetResourceFactory()) {
-                if (priority.find(factory_base_pair.first) == priority.end()) {
-                    continue;
-                }
-                resource_nodes.emplace_back(new sparta::ResourceTreeNode{&dummy_node,
-                                                                         factory_base_pair.first,
-                                                                         sparta::TreeNode::GROUP_NAME_NONE,
-                                                                         sparta::TreeNode::GROUP_IDX_NONE,
-                                                                         factory_base_pair.first,
-                                                                         factory_base_pair.second});
-            }
-            for (auto factory_base_pair: resource_map.GetResourceFactory()) {
-                if (priority.find(factory_base_pair.first) != priority.end()) {
-                    continue;
-                }
                 resource_nodes.emplace_back(new sparta::ResourceTreeNode{&dummy_node,
                                                                          factory_base_pair.first,
                                                                          sparta::TreeNode::GROUP_NAME_NONE,
