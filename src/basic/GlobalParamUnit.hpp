@@ -2,8 +2,8 @@
 // Created by yzhang on 9/12/24.
 //
 
-#ifndef PERSEUS_GLOBALPARAM_HPP
-#define PERSEUS_GLOBALPARAM_HPP
+#ifndef PERSEUS_GLOBALPARAMUNIT_HPP
+#define PERSEUS_GLOBALPARAMUNIT_HPP
 
 #include "sparta/simulation/Unit.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
@@ -43,7 +43,7 @@ namespace TimingModel {
         return nullptr;
     }
 
-    class GlobalParam : public sparta::Unit {
+    class GlobalParamUnit : public sparta::Unit {
     public:
         class GlobalParameter : public sparta::ParameterSet {
         public:
@@ -63,9 +63,9 @@ namespace TimingModel {
 
         static const char* name;
 
-        GlobalParam(sparta::TreeNode* node, const GlobalParameter* p);
+        GlobalParamUnit(sparta::TreeNode* node, const GlobalParameter* p);
 
-        ~GlobalParam() {}
+        ~GlobalParamUnit() {}
 
         DispatchMap& getDispatchMap() { return dispatch_following_map_; };
 
@@ -74,9 +74,9 @@ namespace TimingModel {
         WriteBackMap& getWriteBackMap() { return write_back_map_; };
 
     private:
-        void ParseDispatchMap_(const TimingModel::GlobalParam::GlobalParameter *p);
+        void ParseDispatchMap_(const TimingModel::GlobalParamUnit::GlobalParameter *p);
 
-        void ParseWriteBackMap_(const TimingModel::GlobalParam::GlobalParameter *p);
+        void ParseWriteBackMap_(const TimingModel::GlobalParamUnit::GlobalParameter *p);
 
     private:
         DispatchMap dispatch_following_map_;
@@ -84,9 +84,9 @@ namespace TimingModel {
         WriteBackMap write_back_map_;
     };
 
-    GlobalParam* getGlobalParams(sparta::TreeNode *);
+    GlobalParamUnit* getGlobalParams(sparta::TreeNode *);
 
 }
 
 
-#endif //PERSEUS_GLOBALPARAM_HPP
+#endif //PERSEUS_GLOBALPARAMUNIT_HPP

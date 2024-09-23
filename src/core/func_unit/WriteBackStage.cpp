@@ -13,29 +13,34 @@ namespace TimingModel {
             sparta::Unit(node),
             issue_num_(p->issue_width),
             wb_latency_(p->wb_latency),
-            is_wb_perfect_(p->is_perfect_mode),
-            global_param_ptr_(getGlobalParams(node))
+            is_wb_perfect_(p->is_perfect_mode)
     {
-        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(WriteBackStage, SendInitCredit_));
+        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(WriteBackStage, Startup_));
         writeback_flush_in.registerConsumerHandler(
                 CREATE_SPARTA_HANDLER_WITH_DATA(WriteBackStage, HandleFlush_, FlushingCriteria));
         preceding_write_back_inst_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA
                                                     (WriteBackStage, AcceptFuncInst_, InstGroupPairPtr));
+    }
+
+    void WriteBackStage::Startup_() {
+        global_param_ptr_ = getGlobalParams(getContainer());
+        allocator_ = getSelfAllocators(getContainer());
 
         for (auto pipe_pair: global_param_ptr_->getWriteBackMap()) {
             inst_queue_map_[pipe_pair.first] = std::deque<InstPtr>();
             write_back_width_map_[pipe_pair.first] = pipe_pair.second;
         }
 
+        SendInitCredit_();
     }
 
     void WriteBackStage::SendInitCredit_() {
         for (auto pipe_pair: write_back_width_map_){
             CreditPairPtr credit_pair_ptr =
-                    sparta::allocate_sparta_shared_pointer<CreditPair>(credit_pair_allocator);
+                    sparta::allocate_sparta_shared_pointer<CreditPair>(*allocator_->credit_pair_allocator);
             credit_pair_ptr->name = pipe_pair.first;
             credit_pair_ptr->credit = pipe_pair.second;
-            preceding_write_back_credit_out.send(credit_pair_ptr);
+            preceding_write_back_credit_out.send(credit_pair_ptr, sparta::Clock::Cycle(1));
         }
     }
 
@@ -43,7 +48,7 @@ namespace TimingModel {
         ILOG(getName() << " is flushed");
         for (auto& inst_pair: inst_queue_map_) {
             CreditPairPtr credit_pair_ptr =
-                    sparta::allocate_sparta_shared_pointer<CreditPair>(credit_pair_allocator);
+                    sparta::allocate_sparta_shared_pointer<CreditPair>(*allocator_->credit_pair_allocator);
             credit_pair_ptr->name = getName();
             credit_pair_ptr->credit = inst_pair.second.size();
             preceding_write_back_credit_out.send(credit_pair_ptr);
@@ -63,10 +68,11 @@ namespace TimingModel {
 
     void WriteBackStage::ArbitrateInst_() {
         uint64_t produce_num = issue_num_;
-        InstGroupPtr inst_group_ptr_tmp = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
+        InstGroupPtr inst_group_ptr_tmp =
+                sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);
         for (auto& inst_pair: inst_queue_map_) {
             CreditPairPtr credit_pair_ptr =
-                    sparta::allocate_sparta_shared_pointer<CreditPair>(credit_pair_allocator);
+                    sparta::allocate_sparta_shared_pointer<CreditPair>(*allocator_->credit_pair_allocator);
             credit_pair_ptr->name = getName();
             uint32_t consume_per_entry = 0;
             for (auto inst_ptr: inst_pair.second) {

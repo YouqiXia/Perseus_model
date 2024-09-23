@@ -22,11 +22,16 @@ namespace TimingModel {
 
         write_back_func_credit_in.registerConsumerHandler(
                 CREATE_SPARTA_HANDLER_WITH_DATA(PerfectFu, AcceptCredit_, CreditPairPtr));
-        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(PerfectFu, SendInitCredit_));
+        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(PerfectFu, Startup_));
+    }
+
+    void PerfectFu::Startup_() {
+        allocator_ = getSelfAllocators(getContainer());
+        SendInitCredit_();
     }
 
     void PerfectFu::SendInitCredit_() {
-        func_rs_credit_out.send(alu_depth_);
+        func_rs_credit_out.send(alu_depth_, sparta::Clock::Cycle(1));
     }
 
     void PerfectFu::HandleFlush_(const FlushingCriteria& flush_criteria) {
@@ -55,7 +60,7 @@ namespace TimingModel {
 
     void PerfectFu::WriteBack_() {
         InstGroupPairPtr inst_group_tmp_ptr =
-                sparta::allocate_sparta_shared_pointer<InstGroupPair>(inst_group_pair_allocator);
+                sparta::allocate_sparta_shared_pointer<InstGroupPair>(*allocator_->inst_group_pair_allocator);
         inst_group_tmp_ptr->name = getName();
         for (int i = 0; i < alu_width_; i++) {
             if (alu_queue_.empty()) {

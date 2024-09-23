@@ -8,7 +8,8 @@
 
 #include "basic/Inst.hpp"
 #include "basic/PortInterface.hpp"
-#include "basic/GlobalParam.hpp"
+#include "basic/GlobalParamUnit.hpp"
+#include "basic/SelfAllocatorsUnit.hpp"
 
 #include <deque>
 
@@ -30,6 +31,8 @@ namespace TimingModel {
         PerfectFu(sparta::TreeNode* node, const PerfectFuParameter* p);
 
     private:
+        void Startup_();
+
         void Process_(const InstPtr&);
 
         void Allocate_(const InstGroupPtr&);
@@ -72,6 +75,8 @@ namespace TimingModel {
         sparta::SingleCycleUniqueEvent<> write_back_event
             {&unit_event_set_, "write_back_event", CREATE_SPARTA_HANDLER(PerfectFu, WriteBack_)};
 
+    private:
+        SelfAllocatorsUnit* allocator_;
 
     private:
         std::deque<InstPtr> alu_queue_;

@@ -5,9 +5,9 @@
 #include "sparta/ports/SyncPort.hpp"
 #include "sparta/events/UniqueEvent.hpp"
 #include "sparta/ports/DataPort.hpp"
-#include "uncore/MemAccessInfo.hpp"
+#include "../MemAccessInfo.hpp"
 #include "basic/Inst.hpp"
-#include "olympia/OlympiaAllocators.hpp"
+#include "olympia/SelfAllocators.hpp"
 #include "Mshr.hpp"
 #include "TagEntry.hpp"
 #include <stdlib.h>

@@ -4,7 +4,6 @@
 
 #include "DispatchStage.hpp"
 
-
 namespace TimingModel {
     const char* DispatchStage::name = "dispatch_stage";
 
@@ -13,11 +12,10 @@ namespace TimingModel {
             issue_num_(p->issue_width),
             inst_queue_depth_(p->queue_depth),
             scoreboard_("scoreboard", p->phy_reg_num, info_logger_),
-            global_param_ptr_(getGlobalParams(node)),
             inst_queue_()
     {
         // Startup events
-        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(DispatchStage, InitCredit_));
+        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(DispatchStage, Startup_));
 
         // normal ports binding
         rs_dispatch_credit_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA
@@ -35,14 +33,25 @@ namespace TimingModel {
         physical_reg_dispatch_read_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA
             (DispatchStage, ReadFromPhysicalReg_, InstGroupPtr));
 
-        for(auto dispatch_map_pair: global_param_ptr_->getDispatchMap()) {
-            credit_map_[dispatch_map_pair.first] = 0;
-        }
-
         // precedence determination
             // for dispatch itself
             dispatch_pop_events_ >> dispatch_select_events_ >>
             dispatch_scoreboard_events_ >> dispatch_get_operator_events_ >> dispatch_issue_events_;
+    }
+
+    void DispatchStage::Startup_() {
+        global_param_ptr_ = getGlobalParams(getContainer());
+        allocator_ = getSelfAllocators(getContainer());
+
+        for(auto dispatch_map_pair: global_param_ptr_->getDispatchMap()) {
+            credit_map_[dispatch_map_pair.first] = 0;
+        }
+
+        InitCredit_();
+    }
+
+    void DispatchStage::InitCredit_() {
+        dispatch_preceding_credit_out.send(inst_queue_depth_, sparta::Clock::Cycle(1));
     }
 
     void DispatchStage::AllocateInst_(const TimingModel::InstGroupPtr &inst_group_ptr) {
@@ -62,7 +71,8 @@ namespace TimingModel {
 
     void DispatchStage::ReadPhyReg_() {
         ILOG(getName() << " read physical register.");
-        InstGroupPtr inst_group_tmp_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
+        InstGroupPtr inst_group_tmp_ptr =
+                sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);
         for (auto& dispatch_pending_pair : dispatch_pending_queue_) {
             for (auto& inst_ptr: dispatch_pending_pair.second) {
                 inst_group_tmp_ptr->emplace_back(inst_ptr);
@@ -156,14 +166,10 @@ namespace TimingModel {
         inst_queue_.clear();
     }
 
-    void DispatchStage::InitCredit_() {
-        dispatch_preceding_credit_out.send(inst_queue_depth_);
-    }
-
     void DispatchStage::IssueInst_() {
         for (auto& dispatch_pending_pair: dispatch_pending_queue_) {
             InstGroupPairPtr inst_group_tmp_ptr =
-                    sparta::allocate_sparta_shared_pointer<InstGroupPair>(inst_group_pair_allocator);
+                    sparta::allocate_sparta_shared_pointer<InstGroupPair>(*allocator_->inst_group_pair_allocator);
             for (auto& inst_ptr: dispatch_pending_pair.second) {
                 ILOG("issue inst to following: " << inst_ptr);
                 inst_group_tmp_ptr->inst_group.emplace_back(inst_ptr);

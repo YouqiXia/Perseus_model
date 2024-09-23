@@ -11,9 +11,9 @@
 #include "sparta/utils/SpartaSharedPointerAllocator.hpp"
 #include "mavis/OpcodeInfo.h"
 
-#include "olympia/InstArchInfo.hpp"
-#include "olympia/CoreTypes.hpp"
-#include "olympia/MiscUtils.hpp"
+#include "instgen/InstArchInfo.hpp"
+#include "instgen/CoreTypes.hpp"
+#include "instgen/MiscUtils.hpp"
 
 #include <cstdlib>
 #include <ostream>

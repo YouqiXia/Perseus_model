@@ -6,10 +6,10 @@
 #include "sparta/ports/DataPort.hpp"
 #include "sparta/ports/SignalPort.hpp"
 
-// #include "basic/Instruction.hh"
 #include "basic/Inst.hpp"
 #include "basic/InstGroup.hpp"
-#include "olympia/InstGenerator.hpp"
+#include "instgen/InstGenerator.hpp"
+#include "basic/SelfAllocatorsUnit.hpp"
 
 #include <string>
 
@@ -44,6 +44,9 @@ namespace TimingModel {
 
         void RedirectPc(const InstPtr&);
 
+    private:
+        void Startup_();
+
     public:
     // ports
         sparta::DataOutPort<InstGroupPtr> fetch_backend_inst_out
@@ -65,7 +68,14 @@ namespace TimingModel {
     // Events
         sparta::SingleCycleUniqueEvent<> produce_inst_event_
             {&unit_event_set_, "produce_inst", CREATE_SPARTA_HANDLER(PerfectFrontend, ProduceInst)};
-    
+
+        sparta::SingleCycleUniqueEvent<sparta::SchedulingPhase::Trigger> startup_event_
+            {&unit_event_set_, "startup_event", CREATE_SPARTA_HANDLER(PerfectFrontend, Startup_)};
+
+    private:
+        MavisUnit* mavis_ = nullptr;
+        SelfAllocatorsUnit* allocator_;
+
     private:
         const uint64_t issue_num_;
 
@@ -73,11 +83,9 @@ namespace TimingModel {
 
         const bool is_config_;
 
+        const std::string input_file_;
+
         Credit credit_ = 0;
-
-        sparta::TreeNode* node_;
-
-        MavisType* mavis_facade_ = nullptr;
 
         std::unique_ptr<InstGenerator> inst_generator_;
 

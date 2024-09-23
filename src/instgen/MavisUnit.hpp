@@ -19,7 +19,8 @@
 #include "mavis/DecoderTypes.h"
 
 #include "basic/Inst.hpp"
-#include "olympia/InstAllocation.hpp"
+#include "InstAllocation.hpp"
+#include "InstArchInfo.hpp"
 
 // To reduce compile time and binary bloat, foward declare Mavis
 template<typename InstType,
@@ -82,19 +83,25 @@ namespace TimingModel
         }
 
     private:
+        void Startup_();
 
         //! Mavis Instruction ID's that we want to use in Olympia
         static inline mavis::InstUIDList mavis_uid_list_ {
             { "nop",             MAVIS_UID_NOP },
                 };
 
-        const std::string          pseudo_file_path_; ///< Path to olympia pseudo ISA/uArch JSON files
+        const std::string          isa_file_path_;
+        const std::string          uarch_file_path_;
+        const std::string          pseudo_file_path_;
+        const std::string          uarch_overrides_json_;
+        std::vector<std::string>   uarch_overrides_;
+        sparta::TreeNode * node_;
         std::unique_ptr<MavisType> mavis_facade_;     ///< Mavis facade object
     };
 
     using MavisFactoy = sparta::ResourceFactory<MavisUnit,
                                                 MavisUnit::MavisParameters>;
 
-    MavisType *getMavis(sparta::TreeNode *);
+    MavisUnit *getMavis(sparta::TreeNode *);
 
 } // namespace olympia

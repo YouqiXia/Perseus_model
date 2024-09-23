@@ -8,7 +8,7 @@
 #include "ReservationStation.hpp"
 
 namespace TimingModel {
-    ReservationStation::ReStationEntryAllocator re_station_entry_allocator {3000, 2500};
+    ReservationStation::ReStationEntryAllocator re_station_entry_allocator {300000, 250000};
 
     const char *ReservationStation::name = "reservation_station";
 
@@ -21,7 +21,7 @@ namespace TimingModel {
             rs_dependency_table_(p->phy_reg_num),
             reservation_station_()
     {
-        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(ReservationStation, InitCredit_));
+        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(ReservationStation, Startup_));
         reservation_flush_in.registerConsumerHandler
                 (CREATE_SPARTA_HANDLER_WITH_DATA(ReservationStation, HandleFlush_, FlushingCriteria));
         preceding_reservation_inst_in.registerConsumerHandler
@@ -34,6 +34,18 @@ namespace TimingModel {
         sparta::GlobalOrderingPoint(node, "rs_allocate_forwarding") >> forwarding_reservation_inst_in;
     }
 
+    void ReservationStation::Startup_() {
+        allocator_ = getSelfAllocators(getContainer());
+        InitCredit_();
+    }
+
+    void ReservationStation::InitCredit_() {
+        CreditPairPtr rs_credit_ptr_tmp =
+                sparta::allocate_sparta_shared_pointer<CreditPair>(*allocator_->credit_pair_allocator);
+        rs_credit_ptr_tmp->name = getName();
+        rs_credit_ptr_tmp->credit = rs_depth_;
+        reservation_preceding_credit_out.send(rs_credit_ptr_tmp, sparta::Clock::Cycle(1));
+    }
 
     void ReservationStation::AcceptCredit_(const TimingModel::Credit &credit) {
         credit_ += credit;
@@ -47,19 +59,11 @@ namespace TimingModel {
 
         credit_ = 0;
         CreditPairPtr rs_credit_ptr_tmp =
-                sparta::allocate_sparta_shared_pointer<CreditPair>(credit_pair_allocator);
+                sparta::allocate_sparta_shared_pointer<CreditPair>(*allocator_->credit_pair_allocator);
         rs_credit_ptr_tmp->name = getName();
         rs_credit_ptr_tmp->credit = rs_depth_;
         reservation_preceding_credit_out.send(rs_credit_ptr_tmp, sparta::Clock::Cycle(1));
         reservation_station_.clear();
-    }
-
-    void ReservationStation::InitCredit_() {
-        CreditPairPtr rs_credit_ptr_tmp =
-                sparta::allocate_sparta_shared_pointer<CreditPair>(credit_pair_allocator);
-        rs_credit_ptr_tmp->name = getName();
-        rs_credit_ptr_tmp->credit = rs_depth_;
-        reservation_preceding_credit_out.send(rs_credit_ptr_tmp);
     }
 
     void ReservationStation::AllocateReStation(const TimingModel::InstGroupPairPtr &inst_group_pair_ptr) {
@@ -117,7 +121,8 @@ namespace TimingModel {
             return;
         }
         // in-order passing
-        InstGroupPtr inst_group_tmp_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
+        InstGroupPtr inst_group_tmp_ptr =
+                sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);
         uint64_t produce_num = std::min(credit_, issue_num_);
         uint64_t consume_num = 0;
         for (auto &rs_entry: reservation_station_) {
@@ -140,7 +145,7 @@ namespace TimingModel {
         }
 
         CreditPairPtr rs_credit_ptr_tmp =
-                sparta::allocate_sparta_shared_pointer<CreditPair>(credit_pair_allocator);
+                sparta::allocate_sparta_shared_pointer<CreditPair>(*allocator_->credit_pair_allocator);
         rs_credit_ptr_tmp->name = getName();
         rs_credit_ptr_tmp->credit = consume_num;
         for (auto &inst_ptr: *inst_group_tmp_ptr) {

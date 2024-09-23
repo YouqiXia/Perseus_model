@@ -40,8 +40,8 @@ namespace TimingModel
     private:
         InstVector insts_;
     };
-    extern sparta::SpartaSharedPointerAllocator<InstGroup> instgroup_allocator;
     using InstGroupPtr = sparta::SpartaSharedPointer<InstGroup>;
+    using InstGroupAllocator = sparta::SpartaSharedPointerAllocator<InstGroup>;
 
     inline std::ostream & operator<<(std::ostream & os, const InstGroup & inst_grp) {
         std::string next = "";

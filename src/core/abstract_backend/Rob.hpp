@@ -18,6 +18,7 @@
 
 #include "basic/Inst.hpp"
 #include "basic/InstGroup.hpp"
+#include "basic/SelfAllocatorsUnit.hpp"
 
 #include "resources/LoopQueue.hpp"
 
@@ -53,6 +54,8 @@ namespace TimingModel {
         ~Rob();
 
     private:
+        void Startup_();
+
         void HandleFlush_(const FlushingCriteria&);
 
         void Finish_(const InstGroupPtr&);
@@ -104,6 +107,8 @@ namespace TimingModel {
         /* events */
         sparta::SingleCycleUniqueEvent<> commit_event
                 {&unit_event_set_, "commit_event", CREATE_SPARTA_HANDLER(Rob, Commit_)};
+    private:
+        SelfAllocatorsUnit* allocator_;
 
     private:
         youqixia::resources::LoopQueue<RobEntry> rob_;

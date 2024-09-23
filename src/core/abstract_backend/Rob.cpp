@@ -28,7 +28,7 @@ namespace TimingModel {
              num_insts_to_retire_(p->num_insts_to_retire),
              ipc_(&stat_ipc_)
     {
-        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Rob, InitCredit_));
+        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Rob, Startup_));
         rob_flush_in.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(Rob, HandleFlush_, FlushingCriteria));
         preceding_rob_inst_in.registerConsumerHandler
@@ -50,8 +50,13 @@ namespace TimingModel {
                   << std::endl;
     }
 
+    void Rob::Startup_() {
+        allocator_ = getSelfAllocators(getContainer());
+        InitCredit_();
+    }
+
     void Rob::InitCredit_() {
-        rob_preceding_credit_out.send(rob_depth_);
+        rob_preceding_credit_out.send(rob_depth_, sparta::Clock::Cycle(1));
     }
 
     void Rob::HandleFlush_(const TimingModel::FlushingCriteria &flush_criteria) {
@@ -83,7 +88,8 @@ namespace TimingModel {
             return;
         }
         if (rob_.front().inst_ptr->getFuType() == FuncType::STU && !rob_.front().waked_up) {
-            InstGroupPtr inst_group_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
+            InstGroupPtr inst_group_ptr =
+                    sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);
             rob_.front().waked_up = true;
             ILOG("rob wakeup: " << rob_.front().inst_ptr);
             inst_group_ptr->emplace_back(rob_.front().inst_ptr);
@@ -92,8 +98,10 @@ namespace TimingModel {
     }
 
     void Rob::Commit_() {
-        InstGroupPtr inst_group_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
-        InstGroupPtr inst_bpu_group_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
+        InstGroupPtr inst_group_ptr =
+                sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);
+        InstGroupPtr inst_bpu_group_ptr =
+                sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);
         uint64_t issue_num = std::min(issue_width_, uint64_t(rob_.size()));
         bool do_flush = false;
         while(issue_num > 0) {

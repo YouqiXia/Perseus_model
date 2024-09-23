@@ -11,6 +11,8 @@
 
 #include "basic/Inst.hpp"
 #include "basic/InstGroup.hpp"
+#include "basic/SelfAllocatorsUnit.hpp"
+
 #include "Freelist.hpp"
 #include "RenamingTable.hpp"
 
@@ -38,6 +40,8 @@ public:
     ~RenamingStage() = default;
 
 private:
+    void Startup_();
+
     void AcceptRobCredit_(const Credit&);
 
     void AcceptDispatchCredit_(const Credit&);
@@ -109,29 +113,32 @@ private:
         sparta::SingleCycleUniqueEvent<> rename_event
             {&unit_event_set_, "rename_event", CREATE_SPARTA_HANDLER(RenamingStage, RenameInst_)};
 
-private:
-    std::deque<InstPtr> renaming_stage_queue_;
+    private:
+        SelfAllocatorsUnit* allocator_;
 
-    Freelist free_list_;
+    private:
+        std::deque<InstPtr> renaming_stage_queue_;
 
-    RenamingTable renaming_table_;
+        Freelist free_list_;
 
-    const uint64_t issue_width_;
+        RenamingTable renaming_table_;
 
-    const uint64_t renaming_stage_queue_depth_;
+        const uint64_t issue_width_;
 
-    const bool is_perfect_lsu_;
+        const uint64_t renaming_stage_queue_depth_;
 
-    Credit physical_reg_credit_;
+        const bool is_perfect_lsu_;
 
-    Credit dispatch_credit_ = 0;
+        Credit physical_reg_credit_;
 
-    Credit rob_credit_ = 0;
+        Credit dispatch_credit_ = 0;
 
-    Credit ldq_credit_ = 0;
+        Credit rob_credit_ = 0;
 
-    Credit stq_credit_ = 0;
+        Credit ldq_credit_ = 0;
 
-};
+        Credit stq_credit_ = 0;
+
+    };
 
 }

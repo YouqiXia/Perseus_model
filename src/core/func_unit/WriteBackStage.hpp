@@ -15,7 +15,8 @@
 #include "basic/Inst.hpp"
 #include "basic/InstGroup.hpp"
 #include "basic/PortInterface.hpp"
-#include "basic/GlobalParam.hpp"
+#include "basic/GlobalParamUnit.hpp"
+#include "basic/SelfAllocatorsUnit.hpp"
 
 namespace TimingModel {
 
@@ -39,6 +40,8 @@ namespace TimingModel {
         ~WriteBackStage() {}
 
     private:
+        void Startup_();
+
         void HandleFlush_(const FlushingCriteria&);
 
         void AcceptFuncInst_(const InstGroupPairPtr&);
@@ -65,13 +68,14 @@ namespace TimingModel {
         // events
         sparta::SingleCycleUniqueEvent<> arbitrate_inst_event
                 {&unit_event_set_, "arbitrate_inst_event", CREATE_SPARTA_HANDLER(WriteBackStage, ArbitrateInst_)};
-
+    private:
+        GlobalParamUnit* global_param_ptr_ = nullptr;
+        SelfAllocatorsUnit* allocator_;
+        
     private:
         uint64_t issue_num_;
 
         bool is_wb_perfect_;
-
-        GlobalParam* global_param_ptr_ = nullptr;
 
         uint64_t wb_latency_;
 

@@ -19,7 +19,7 @@ namespace TimingModel {
         physical_reg_credit_(p->phy_reg_num),
         free_list_("free_list", p->phy_reg_num, node->getClock(), &unit_stat_set_)
     {
-        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(RenamingStage, InitCredit_));
+        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(RenamingStage, Startup_));
         renaming_flush_in.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(RenamingStage, HandleFlush_, FlushingCriteria));
         preceding_renaming_inst_in.registerConsumerHandler
@@ -36,6 +36,15 @@ namespace TimingModel {
            (CREATE_SPARTA_HANDLER_WITH_DATA(RenamingStage, AcceptLsuAllocateIdx, InstGroupPtr));
         Rob_cmt_inst_in.registerConsumerHandler
             (CREATE_SPARTA_HANDLER_WITH_DATA(RenamingStage, RobCommit_, InstGroupPtr));
+    }
+
+    void RenamingStage::Startup_() {
+        allocator_ = getSelfAllocators(getContainer());
+        InitCredit_();
+    }
+
+    void RenamingStage::InitCredit_() {
+        renaming_preceding_credit_out.send(renaming_stage_queue_depth_, sparta::Clock::Cycle(1));
     }
 
     void RenamingStage::AcceptRobCredit_(const Credit& credit) {
@@ -71,10 +80,6 @@ namespace TimingModel {
     }
 
     void RenamingStage::AcceptLsuAllocateIdx(const InstGroupPtr &inst_ptr) {}
-
-    void RenamingStage::InitCredit_() {
-        renaming_preceding_credit_out.send(renaming_stage_queue_depth_);
-    }
 
     void RenamingStage::AllocateInst_(const InstGroupPtr& inst_group_ptr) {
         for (auto& inst_ptr: *inst_group_ptr) {
@@ -119,8 +124,10 @@ namespace TimingModel {
         }
         produce_inst_num = std::min<uint64_t>(produce_inst_num, issue_width_);
 
-        InstGroupPtr inst_group_tmp_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
-        InstGroupPtr inst_lsu_group_tmp_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
+        InstGroupPtr inst_group_tmp_ptr =
+                sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);
+        InstGroupPtr inst_lsu_group_tmp_ptr =
+                sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);
 
         if (produce_inst_num == 0) {
             return;

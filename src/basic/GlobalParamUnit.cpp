@@ -2,19 +2,19 @@
 // Created by yzhang on 9/12/24.
 //
 
-#include "GlobalParam.hpp"
+#include "GlobalParamUnit.hpp"
 
 namespace TimingModel {
 
-    const char* GlobalParam::name = "global_param";
+    const char* GlobalParamUnit::name = "global_param";
 
-    GlobalParam::GlobalParam(sparta::TreeNode *node, const TimingModel::GlobalParam::GlobalParameter *p) :
+    GlobalParamUnit::GlobalParamUnit(sparta::TreeNode *node, const TimingModel::GlobalParamUnit::GlobalParameter *p) :
             sparta::Unit(node) {
         ParseDispatchMap_(p);
         ParseWriteBackMap_(p);
     }
 
-    void GlobalParam::ParseDispatchMap_(const TimingModel::GlobalParam::GlobalParameter *p) {
+    void GlobalParamUnit::ParseDispatchMap_(const TimingModel::GlobalParamUnit::GlobalParameter *p) {
         enum class State {NAME, WIDTH, FU_TYPE};
         State state = State::NAME;
         std::set<FuncType> func_types;
@@ -44,7 +44,7 @@ namespace TimingModel {
         }
     }
 
-    void GlobalParam::ParseWriteBackMap_(const TimingModel::GlobalParam::GlobalParameter *p) {
+    void GlobalParamUnit::ParseWriteBackMap_(const TimingModel::GlobalParamUnit::GlobalParameter *p) {
         enum class State {NAME, WIDTH};
         State state = State::NAME;
         std::string following_unit_name;
@@ -68,11 +68,11 @@ namespace TimingModel {
         }
     }
 
-    GlobalParam* getGlobalParams(sparta::TreeNode *node) {
-        GlobalParam * global_param = nullptr;
+    GlobalParamUnit* getGlobalParams(sparta::TreeNode *node) {
+        GlobalParamUnit * global_param = nullptr;
         if (node) {
-            if (node->hasChild(GlobalParam::name)) {
-                global_param = node->getChild(GlobalParam::name)->getResourceAs<GlobalParam>();
+            if (node->hasChild(GlobalParamUnit::name)) {
+                global_param = node->getChild(GlobalParamUnit::name)->getResourceAs<GlobalParamUnit>();
             } else {
                 return getGlobalParams(node->getParent());
             }

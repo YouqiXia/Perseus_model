@@ -5,12 +5,7 @@
 #include <memory>
 #include <cstdint>
 
-#include "olympia/OlympiaAllocators.hpp"
-
 namespace TimingModel {
-
-    // third party units
-    std::unique_ptr<OlympiaAllocators> global_allocators;
 
     // Simulation
     Simulation::Simulation(sparta::Scheduler& Sched,
@@ -34,14 +29,6 @@ namespace TimingModel {
     }
 
     void Simulation::buildTree_() {
-
-        global_allocators = std::make_unique<OlympiaAllocators>(getRoot());
-//        getRoot()->addExtensionFactory(TimingModel::TopoExtensions::name,
-//                                        [&]()->sparta::TreeNode::ExtensionsBase * {return new TimingModel::TopoExtensions();});
-//        auto module_topo = TimingModel::getCommonTopology(getRoot(), "processor");
-
-
-        buildInfoTopology(json_config_["hierarchy"], getRoot());
         buildHierarchicalTopology_(json_config_["hierarchy"], getRoot());
     }
 
@@ -57,8 +44,8 @@ namespace TimingModel {
     void Simulation::buildHierarchicalTopology_(const nlohmann::json &json, sparta::TreeNode* parent) {
         if (json.is_object()) {
             for (auto it = json.begin(); it != json.end(); ++it) {
-                if (it.key() == "info") {
-                    continue;
+                if (it.key() == "info" || it.key() == "root") {
+                    buildHierarchicalTopology_(it.value(), parent);
                 } else {
                     auto *node = new sparta::TreeNode(parent, it.key(), "hierarchy node");
                     to_delete_.emplace_back(node);
@@ -69,56 +56,9 @@ namespace TimingModel {
             for (const auto &units_topo: json) { // units_map
                 for (auto units_pair = units_topo.begin();
                      units_pair != units_topo.end(); ++units_pair) { // unit type - unit name pair
-                    for (auto units_instance = units_pair.value().begin();
-                         units_instance != units_pair.value().end(); ++units_instance) { // instance name - params pair
-                        const std::string instance_name = units_instance.key();
-                        auto node = new sparta::ResourceTreeNode(parent,
-                                                                 instance_name,
-                                                                 sparta::TreeNode::GROUP_NAME_NONE,
-                                                                 sparta::TreeNode::GROUP_IDX_NONE,
-                                                                 instance_name,
-                                                                 resource_map_factory_[units_pair.key()]);
-                        to_delete_.emplace_back(node);
-                        for (auto params_pair = units_instance.value().begin();
-                             params_pair != units_instance.value().end(); ++params_pair) {// params name - params data
-                            if (params_pair.value().is_array()) {
-                                if (!params_pair.value().empty()) {
-                                    node->getParameterSet()->getParameter(params_pair.key())->
-                                            setValueFromStringVector(
-                                            params_pair.value().get < std::vector < std::string >> ());
-                                }
-                            } else if (params_pair.value().is_string()) {
-                                node->getParameterSet()->getParameter(params_pair.key())->
-                                        setValueFromString(params_pair.value().get<std::string>());
-                            } else {
-                                node->getParameterSet()->getParameter(params_pair.key())->
-                                        setValueFromString(params_pair.value().dump());
-                            }
-                        }
-                        if (units_pair.key().compare("perfect_frontend") == 0) {
-                            node->getParameterSet()->getParameter("input_file")->setValueFromString(workload_);
-                            node->getParameterSet()->getParameter("is_config")->setValueFromString("false");
-                            if (is_elf_workload_) {
-                                node->getParameterSet()->getParameter("insn_gen_type")->setValueFromString("spike");
-                            }
-                        }
+                    if (units_pair.value() == SelfAllocatorsUnit::name) {
+                        continue;
                     }
-                }
-            }
-        }
-    }
-
-    void Simulation::buildInfoTopology(const nlohmann::json &json, sparta::TreeNode* parent) {
-        if (json.is_object()) {
-            for (auto it = json.begin(); it != json.end(); ++it) {
-                if (it.key() == "info") {
-                    buildHierarchicalTopology_(it.value(), parent);
-                }
-            }
-        } else if (json.is_array()) {
-            for (const auto &units_topo: json) { // units_map
-                for (auto units_pair = units_topo.begin();
-                     units_pair != units_topo.end(); ++units_pair) { // unit type - unit name pair
                     for (auto units_instance = units_pair.value().begin();
                          units_instance != units_pair.value().end(); ++units_instance) { // instance name - params pair
                         const std::string instance_name = units_instance.key();

@@ -9,8 +9,8 @@
 
 #include "sparta/simulation/ResourceFactory.hpp"
 
-#include "olympia/MavisUnit.hpp"
-#include "basic/GlobalParam.hpp"
+#include "instgen/MavisUnit.hpp"
+#include "basic/GlobalParamUnit.hpp"
 
 #include "core/perfect_frontend/PerfectFrontend.hpp"
 
@@ -24,11 +24,6 @@
 #include "core/func_unit/PerfectFu.hpp"
 #include "core/func_unit/WriteBackStage.hpp"
 
-#include "uncore/cache/BaseCache.hpp"
-#include "uncore/memory/AbstractMemory.hpp"
-#include "uncore/memory/DRAMsim3.hpp"
-
-
 namespace TimingModel {
     class ResourceMapFactory {
     private:
@@ -38,14 +33,18 @@ namespace TimingModel {
     public:
         ResourceMapFactory() {
             // Resource Factory
+            // allocators
+            RegisterResource_(TimingModel::SelfAllocatorsUnit::name ,
+                              new sparta::ResourceFactory<TimingModel::SelfAllocatorsUnit,
+                                      TimingModel::SelfAllocatorsUnit::SelfAllocatorParameter>);
             // mavis
             RegisterResource_(TimingModel::MavisUnit::name ,
                              new MavisFactoy);
 
             // Global param
-            RegisterResource_(TimingModel::GlobalParam::name ,
-                              new sparta::ResourceFactory<TimingModel::GlobalParam,
-                                      TimingModel::GlobalParam::GlobalParameter>);
+            RegisterResource_(TimingModel::GlobalParamUnit::name ,
+                              new sparta::ResourceFactory<TimingModel::GlobalParamUnit,
+                                      TimingModel::GlobalParamUnit::GlobalParameter>);
 
             // Frontend
             RegisterResource_(TimingModel::PerfectFrontend::name ,
@@ -81,18 +80,6 @@ namespace TimingModel {
             RegisterResource_(TimingModel::PerfectFu::name ,
                               new sparta::ResourceFactory<TimingModel::PerfectFu,
                                       TimingModel::PerfectFu::PerfectFuParameter>);
-
-//            RegisterResource_(TimingModel::LSUShell::name ,
-//                             new sparta::ResourceFactory<TimingModel::LSUShell,
-//                                     TimingModel::LSUShell::LSUShellParameter>);
-
-//            RegisterResource_(TimingModel::AGU::name ,
-//                             new sparta::ResourceFactory<TimingModel::AGU,
-//                                     TimingModel::AGU::AGUParameter>);
-
-//            RegisterResource_(TimingModel::LSQ::name ,
-//                             new sparta::ResourceFactory<TimingModel::LSQ,
-//                                     TimingModel::LSQ::LSQParameter>);
 
             RegisterResource_(TimingModel::WriteBackStage::name ,
                              new sparta::ResourceFactory<TimingModel::WriteBackStage,

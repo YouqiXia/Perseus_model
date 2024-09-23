@@ -12,18 +12,11 @@ namespace TimingModel {
         sparta::Unit(node),
         is_speculation_(p->is_speculation),
         is_config_(p->is_config),
-        node_(node),
+        input_file_(p->input_file),
         issue_num_(p->issue_width),
-        mavis_facade_(getMavis(node)),
         insn_gen_type_(p->insn_gen_type)
     {
-        if (!is_config_) {
-            if (insn_gen_type_.compare("spike") == 0){
-                inst_generator_ = InstGenerator::createGenerator(mavis_facade_, p->input_file);
-            }else if (insn_gen_type_.compare("trace") == 0){
-                inst_generator_ = InstGenerator::createGenerator(mavis_facade_, p->input_file, false);
-            }
-        }
+        sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(PerfectFrontend, Startup_));
 
         backend_fetch_credit_in.registerConsumerHandler(
                 CREATE_SPARTA_HANDLER_WITH_DATA(PerfectFrontend, AcceptCredit, Credit));
@@ -33,6 +26,23 @@ namespace TimingModel {
                 CREATE_SPARTA_HANDLER_WITH_DATA(PerfectFrontend, BranchCommit, InstGroupPtr));
         backend_redirect_pc_inst_in.registerConsumerHandler(
                 CREATE_SPARTA_HANDLER_WITH_DATA(PerfectFrontend, RedirectPc, InstPtr));
+    }
+
+    void PerfectFrontend::Startup_() {
+        mavis_ = getMavis(getContainer());
+        if (mavis_->getFacade() == nullptr) {
+            startup_event_.schedule(sparta::Clock::Cycle(1));
+            return;
+        }
+        allocator_ = getSelfAllocators(getContainer());
+
+        if (!is_config_) {
+            if (insn_gen_type_.compare("spike") == 0){
+                inst_generator_ = InstGenerator::createGenerator(mavis_->getFacade(), input_file_);
+            }else if (insn_gen_type_.compare("trace") == 0){
+                inst_generator_ = InstGenerator::createGenerator(mavis_->getFacade(), input_file_, false);
+            }
+        }
     }
 
     void PerfectFrontend::AcceptCredit(const Credit& credit) {
@@ -69,7 +79,8 @@ namespace TimingModel {
 
     void PerfectFrontend::ProduceInst() {
         uint64_t produce_num = std::min(issue_num_, credit_);
-        InstGroupPtr inst_group_ptr = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
+        InstGroupPtr inst_group_ptr =
+                sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);
         if (!produce_num) { 
             return; 
         }

@@ -17,6 +17,7 @@
 #include "basic/Inst.hpp"
 #include "basic/InstGroup.hpp"
 #include "basic/PortInterface.hpp"
+#include "basic/SelfAllocatorsUnit.hpp"
 
 namespace TimingModel {
 
@@ -85,6 +86,8 @@ namespace TimingModel {
         ReservationStation(sparta::TreeNode* node, const ReservationStationParameter* p);
 
     private:
+        void Startup_();
+
         void HandleFlush_(const FlushingCriteria&);
 
         void InitCredit_();
@@ -129,6 +132,8 @@ namespace TimingModel {
 
         sparta::SingleCycleUniqueEvent<> pop_event
                 {&unit_event_set_, "pop_event", CREATE_SPARTA_HANDLER(ReservationStation, PopInst_)};
+    private:
+        SelfAllocatorsUnit* allocator_;
 
     private:
         uint64_t issue_num_;

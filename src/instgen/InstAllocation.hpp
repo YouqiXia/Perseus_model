@@ -28,10 +28,10 @@ namespace TimingModel
     public:
         ~InstPtrAllocator() {
             // For debug
-            std::cout << "Inst Allocator: "
-                      << inst_allocator_.getNumAllocated()
-                      << " Inst objects allocated/created"
-                      << std::endl;
+//            std::cout << "Inst Allocator: "
+//                      << inst_allocator_.getNumAllocated()
+//                      << " Inst objects allocated/created"
+//                      << std::endl;
 
         }
 

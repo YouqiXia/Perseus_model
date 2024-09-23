@@ -21,7 +21,6 @@ namespace TimingModel {
 
     using CreditPairPtr = sparta::SpartaSharedPointer<CreditPair>;
     using CreditPairAllocator = sparta::SpartaSharedPointerAllocator<CreditPair>;
-    extern CreditPairAllocator    credit_pair_allocator;
 
     struct InstGroupPair {
         std::string name;
@@ -30,7 +29,6 @@ namespace TimingModel {
 
     using InstGroupPairPtr = sparta::SpartaSharedPointer<InstGroupPair>;
     using InstGroupPairAllocator = sparta::SpartaSharedPointerAllocator<InstGroupPair>;
-    extern InstGroupPairAllocator inst_group_pair_allocator;
 }
 
 #endif //MODEL_PORTINTERFACE_HPP

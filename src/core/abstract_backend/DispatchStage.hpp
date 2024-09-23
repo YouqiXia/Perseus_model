@@ -16,7 +16,8 @@
 #include "basic/Inst.hpp"
 #include "basic/InstGroup.hpp"
 #include "basic/PortInterface.hpp"
-#include "basic/GlobalParam.hpp"
+#include "basic/GlobalParamUnit.hpp"
+#include "basic/SelfAllocatorsUnit.hpp"
 
 #include "Scoreboard.hpp"
 
@@ -46,6 +47,8 @@ namespace TimingModel {
         DispatchStage(sparta::TreeNode *node, const DispatchStageParameter *p);
 
     private:
+        void Startup_();
+
         void HandleFlush_(const FlushingCriteria&);
 
         void InitCredit_();
@@ -120,11 +123,13 @@ namespace TimingModel {
             sparta::SingleCycleUniqueEvent<> dispatch_get_operator_events_
                 {&unit_event_set_, "dispatch_get_operator_events_", CREATE_SPARTA_HANDLER(DispatchStage, ReadPhyReg_)};
     private:
+        GlobalParamUnit* global_param_ptr_ = nullptr;
+        SelfAllocatorsUnit* allocator_;
+
+    private:
         uint64_t issue_num_;
 
-        std::map<std::string, Credit> credit_map_;
-
-        GlobalParam* global_param_ptr_ = nullptr;
+        std::unordered_map<std::string, Credit> credit_map_;
 
         Scoreboard scoreboard_;
 
@@ -132,7 +137,7 @@ namespace TimingModel {
 
         std::deque<IssueQueueEntryPtr> inst_queue_;
 
-        std::map<std::string, std::vector<InstPtr>> dispatch_pending_queue_;
+        std::unordered_map<std::string, std::vector<InstPtr>> dispatch_pending_queue_;
     };
 
 }

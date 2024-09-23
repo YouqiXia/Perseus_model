@@ -6,7 +6,7 @@
 
 #include <string>
 
-#include "olympia/OlympiaAllocators.hpp"
+#include "basic/SelfAllocatorsUnit.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
 #include "sparta/utils/Utils.hpp"
 #include "basic/Instruction.hpp"
