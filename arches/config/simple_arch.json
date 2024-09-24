@@ -29,7 +29,7 @@
                         "dispatch_map": [
                             "reservation_station_0",
                             "|",
-                            "1",
+                            "4",
                             "|",
                             "ALU",
                             "BRU",
@@ -43,6 +43,40 @@
                         ],
                         "write_back_map": [
                             "perfect_fu_0",
+                            "|",
+                            "4",
+                            "|"
+                        ],
+                        "fu_latency_map": [
+                            "ALU",
+                            "|",
+                            "1",
+                            "|",
+                            "BRU",
+                            "|",
+                            "1",
+                            "|",
+                            "CSR",
+                            "|",
+                            "1",
+                            "|",
+                            "MUL",
+                            "|",
+                            "1",
+                            "|",
+                            "DIV",
+                            "|",
+                            "1",
+                            "|",
+                            "FPU",
+                            "|",
+                            "1",
+                            "|",
+                            "LDU",
+                            "|",
+                            "1",
+                            "|",
+                            "STU",
                             "|",
                             "1",
                             "|"
@@ -72,7 +106,7 @@
                             "issue_width": 4,
                             "isa_reg_num": 32,
                             "queue_depth": 8,
-                            "phy_reg_num": 64,
+                            "phy_reg_num": 128,
                             "is_perfect_lsu": true
                         }
                     }
@@ -81,7 +115,7 @@
                     "dispatch_stage": {
                         "dispatch_stage": {
                             "issue_width": 4,
-                            "phy_reg_num": 64,
+                            "phy_reg_num": 128,
                             "queue_depth": 16
                         }
                     }
@@ -90,7 +124,7 @@
                     "rob": {
                         "rob": {
                             "issue_width": 4,
-                            "queue_depth": 32,
+                            "queue_depth": 128,
                             "retire_heartbeat": 10000,
                             "num_insts_to_retire": 0
                         }
@@ -99,16 +133,16 @@
                 {
                     "physical_regfile": {
                         "physical_regfile": {
-                            "phy_reg_num": 64
+                            "phy_reg_num": 128
                         }
                     }
                 },
                 {
                     "reservation_station": {
                         "reservation_station_0": {
-                            "issue_width": 1,
-                            "queue_depth": 4,
-                            "phy_reg_num": 64
+                            "issue_width": 4,
+                            "queue_depth": 100,
+                            "phy_reg_num": 128
                         }
                     }
                 }
@@ -117,8 +151,8 @@
                 {
                     "perfect_fu": {
                         "perfect_fu_0": {
-                            "issue_width": 1,
-                            "queue_depth": 1
+                            "issue_width": 4,
+                            "queue_depth": 4
                         }
                     }
                 },

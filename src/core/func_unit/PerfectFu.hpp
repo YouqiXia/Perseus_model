@@ -37,6 +37,8 @@ namespace TimingModel {
 
         void Allocate_(const InstGroupPtr&);
 
+        void Allocate_delay_(const InstPtr&);
+
         void SendInitCredit_();
 
         void HandleFlush_(const FlushingCriteria&);
@@ -75,8 +77,13 @@ namespace TimingModel {
         sparta::SingleCycleUniqueEvent<> write_back_event
             {&unit_event_set_, "write_back_event", CREATE_SPARTA_HANDLER(PerfectFu, WriteBack_)};
 
+        sparta::PayloadEvent<InstPtr> allocate_event
+            {&unit_event_set_, "allocate_event", CREATE_SPARTA_HANDLER_WITH_DATA(PerfectFu, Allocate_delay_, InstPtr)};
+
+
     private:
         SelfAllocatorsUnit* allocator_;
+        GlobalParamUnit::FuLatencyMap fu_latency_map_;
 
     private:
         std::deque<InstPtr> alu_queue_;

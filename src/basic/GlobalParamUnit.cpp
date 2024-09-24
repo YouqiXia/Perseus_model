@@ -12,6 +12,7 @@ namespace TimingModel {
             sparta::Unit(node) {
         ParseDispatchMap_(p);
         ParseWriteBackMap_(p);
+        ParseFuLatencyMap_(p);
     }
 
     void GlobalParamUnit::ParseDispatchMap_(const TimingModel::GlobalParamUnit::GlobalParameter *p) {
@@ -63,6 +64,29 @@ namespace TimingModel {
                 } else {
                    width = std::atoi(dispatch_map_info.c_str());
                 //    width = std::stoi(dispatch_map_info);
+                }
+            }
+        }
+    }
+
+    void GlobalParamUnit::ParseFuLatencyMap_(const TimingModel::GlobalParamUnit::GlobalParameter *p) {
+        enum class State {FU_TYPE, LATENCY};
+        State state = State::FU_TYPE;
+        FuncType fu_type;
+        uint32_t latency = 0;
+        for (std::string fu_latency_info: p->fu_latency_map) {
+            if (fu_latency_info == "|") {
+                if (state == State::FU_TYPE) {
+                    state = State::LATENCY;
+                } else {
+                    fu_latency_map_[fu_type] = latency;
+                    state = State::FU_TYPE;
+                }
+            } else {
+                if (state == State::FU_TYPE) {
+                    fu_type = stringToFuncType(fu_latency_info);
+                } else {
+                    latency = std::atoi(fu_latency_info.c_str());
                 }
             }
         }

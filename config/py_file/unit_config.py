@@ -149,6 +149,43 @@ class Config:
         self.instances[unitlib.units.global_param][unitlib.units.global_param]\
             [unitlib.params.global_param.write_back_map] = write_back_map
             
+        fu_latency_map = []
+        fu_latency_map.append(unitlib.func_type.ALU)
+        fu_latency_map.append("|")
+        fu_latency_map.append("1")
+        fu_latency_map.append("|")
+        fu_latency_map.append(unitlib.func_type.BRU)
+        fu_latency_map.append("|")
+        fu_latency_map.append("1")
+        fu_latency_map.append("|")
+        fu_latency_map.append(unitlib.func_type.CSR)
+        fu_latency_map.append("|")
+        fu_latency_map.append("1")
+        fu_latency_map.append("|")
+        fu_latency_map.append(unitlib.func_type.MUL)
+        fu_latency_map.append("|")
+        fu_latency_map.append("1")
+        fu_latency_map.append("|")
+        fu_latency_map.append(unitlib.func_type.DIV)
+        fu_latency_map.append("|")
+        fu_latency_map.append("1")
+        fu_latency_map.append("|")
+        fu_latency_map.append(unitlib.func_type.FPU)
+        fu_latency_map.append("|")
+        fu_latency_map.append("1")
+        fu_latency_map.append("|")
+        fu_latency_map.append(unitlib.func_type.LDU)
+        fu_latency_map.append("|")
+        fu_latency_map.append("1")
+        fu_latency_map.append("|")
+        fu_latency_map.append(unitlib.func_type.STU)
+        fu_latency_map.append("|")
+        fu_latency_map.append("1")
+        fu_latency_map.append("|")
+        
+        self.instances[unitlib.units.global_param][unitlib.units.global_param]\
+            [unitlib.params.global_param.fu_latency_map] = fu_latency_map
+            
         return
 
     def gen_units_map_json(self):

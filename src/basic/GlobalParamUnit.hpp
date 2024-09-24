@@ -55,11 +55,14 @@ namespace TimingModel {
                   std::vector<std::string>({"following_unit_name", "|", "bandwidth", "|", "fu_type_n", "|"}), "the dispatch map to multiple following units")
             PARAMETER(std::vector<std::string>, write_back_map,
                   std::vector<std::string>({"following_unit_name", "|", "bandwidth", "|"}), "the write map from multiple following units")
+            PARAMETER(std::vector<std::string>, fu_latency_map,
+                      std::vector<std::string>({"fu_type", "|", "latency", "|"}), "the latency map for each fu")
 
     };
         typedef std::map<std::string, std::set<FuncType>> DispatchMap;
         typedef std::map<std::string, uint32_t> DispatchIssueWidthMap;
         typedef std::map<std::string, uint32_t> WriteBackMap;
+        typedef std::unordered_map<FuncType, uint32_t> FuLatencyMap;
 
         static const char* name;
 
@@ -73,15 +76,20 @@ namespace TimingModel {
 
         WriteBackMap& getWriteBackMap() { return write_back_map_; };
 
+        FuLatencyMap& getLatencyMap() { return fu_latency_map_; };
+
     private:
         void ParseDispatchMap_(const TimingModel::GlobalParamUnit::GlobalParameter *p);
 
         void ParseWriteBackMap_(const TimingModel::GlobalParamUnit::GlobalParameter *p);
 
+        void ParseFuLatencyMap_(const TimingModel::GlobalParamUnit::GlobalParameter *p);
+
     private:
         DispatchMap dispatch_following_map_;
         DispatchIssueWidthMap dispatch_issue_width_map_;
         WriteBackMap write_back_map_;
+        FuLatencyMap fu_latency_map_;
     };
 
     GlobalParamUnit* getGlobalParams(sparta::TreeNode *);

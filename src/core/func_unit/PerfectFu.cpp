@@ -27,6 +27,7 @@ namespace TimingModel {
 
     void PerfectFu::Startup_() {
         allocator_ = getSelfAllocators(getContainer());
+        fu_latency_map_ = getGlobalParams(getContainer())->getLatencyMap();
         SendInitCredit_();
     }
 
@@ -52,9 +53,14 @@ namespace TimingModel {
 
     void PerfectFu::Allocate_(const TimingModel::InstGroupPtr &inst_group_ptr) {
         for (auto& inst_ptr: *inst_group_ptr) {
-            ILOG("get instruction: " << inst_ptr);
-            alu_queue_.push_back(inst_ptr);
+            allocate_event.preparePayload(inst_ptr)->
+                schedule(sparta::Clock::Cycle(fu_latency_map_[inst_ptr->getFuType()]) - 1);
         }
+    }
+
+    void PerfectFu::Allocate_delay_(const TimingModel::InstPtr &inst_ptr) {
+        ILOG("get instruction: " << inst_ptr);
+        alu_queue_.push_back(inst_ptr);
         write_back_event.schedule(0);
     }
 
