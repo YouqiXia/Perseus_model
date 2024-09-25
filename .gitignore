@@ -7,6 +7,7 @@ traces/elf_test/test/*
 !traces/elf_test/test/*.elf
 lib/stubs
 lib/python
+config/auto_sim/log
 
 [Rr]elease
 [Dd]ebug

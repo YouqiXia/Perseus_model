@@ -18,6 +18,7 @@
 #include "basic/InstGroup.hpp"
 #include "basic/PortInterface.hpp"
 #include "basic/SelfAllocatorsUnit.hpp"
+#include "simulation/PmuUnit.hpp"
 
 namespace TimingModel {
 
@@ -102,6 +103,12 @@ namespace TimingModel {
 
         void PopInst_();
 
+        void PmuMonitor_();
+
+        void SizeUp() { ++size_; }
+
+        void SizeDown() { --size_; }
+
     private:
         // ports
         // flush
@@ -132,10 +139,17 @@ namespace TimingModel {
 
         sparta::SingleCycleUniqueEvent<> pop_event
                 {&unit_event_set_, "pop_event", CREATE_SPARTA_HANDLER(ReservationStation, PopInst_)};
-    private:
-        SelfAllocatorsUnit* allocator_;
+
+        sparta::SingleCycleUniqueEvent<sparta::SchedulingPhase::PostTick> pmu_event
+                {&unit_event_set_, "pmu_event", CREATE_SPARTA_HANDLER(ReservationStation, PmuMonitor_)};
 
     private:
+        SelfAllocatorsUnit* allocator_;
+        PmuUnit* pmu_;
+
+    private:
+        size_t size_ = 0;
+
         uint64_t issue_num_;
         uint64_t rs_depth_;
 

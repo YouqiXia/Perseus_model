@@ -20,6 +20,8 @@
 #include "basic/InstGroup.hpp"
 #include "basic/SelfAllocatorsUnit.hpp"
 
+#include "simulation/PmuUnit.hpp"
+
 #include "resources/LoopQueue.hpp"
 
 namespace TimingModel {
@@ -35,6 +37,7 @@ namespace TimingModel {
             PARAMETER(uint32_t, issue_width, 4, "the issuing bandwidth in a cycle")
             PARAMETER(uint32_t, queue_depth, 32, "the number of isa register file")
             PARAMETER(uint32_t, retire_heartbeat, 10000, "the number of isa register file")
+            PARAMETER(uint32_t, detect_period, 1000, "the number of isa register file")
             PARAMETER(uint32_t, num_insts_to_retire, 0,
                       "Number of instructions to retire after which simulation will be "
                       "terminated. 0 means simulation will run until end of testcase")
@@ -55,6 +58,8 @@ namespace TimingModel {
 
     private:
         void Startup_();
+
+        void PmuMonitor_();
 
         void HandleFlush_(const FlushingCriteria&);
 
@@ -107,8 +112,12 @@ namespace TimingModel {
         /* events */
         sparta::SingleCycleUniqueEvent<> commit_event
                 {&unit_event_set_, "commit_event", CREATE_SPARTA_HANDLER(Rob, Commit_)};
+
+        sparta::SingleCycleUniqueEvent<sparta::SchedulingPhase::PostTick> pmu_event
+                {&unit_event_set_, "pmu_event", CREATE_SPARTA_HANDLER(Rob, PmuMonitor_)};
     private:
         SelfAllocatorsUnit* allocator_;
+        PmuUnit* pmu_;
 
     private:
         youqixia::resources::LoopQueue<RobEntry> rob_;
@@ -121,6 +130,8 @@ namespace TimingModel {
 
         const uint64_t retire_heartbeat_;
 
+        const uint64_t detect_period_;
+
         const uint32_t num_insts_to_retire_; // parameter from ilimit
 
         uint64_t times_ = 0;
@@ -132,6 +143,7 @@ namespace TimingModel {
         Credit credit_ = 0;
 
         uint64_t stall_cycle_count_ = 0;
+        uint64_t empty_cycle_count_ = 0;
 
     };
 

@@ -16,6 +16,7 @@ namespace TimingModel {
              rob_depth_(p->queue_depth),
              rob_(p->queue_depth),
              retire_heartbeat_(p->retire_heartbeat),
+             detect_period_(p->detect_period),
              stat_ipc_(&unit_stat_set_,
                        "ipc",
                        "Instructions retired per cycle",
@@ -52,11 +53,30 @@ namespace TimingModel {
 
     void Rob::Startup_() {
         allocator_ = getSelfAllocators(getContainer());
+        pmu_ = getPmuUnit(getContainer());
         InitCredit_();
+        if (pmu_->IsPmuOn()) {
+            pmu_event.schedule(sparta::Clock::Cycle(1));
+        }
     }
 
     void Rob::InitCredit_() {
         rob_preceding_credit_out.send(rob_depth_, sparta::Clock::Cycle(1));
+    }
+
+    void Rob::PmuMonitor_() {
+        if (!pmu_->IsPmuOn()) {
+            return;
+        }
+
+        if (rob_.empty()) {
+            empty_cycle_count_++;
+        }
+
+        if (empty_cycle_count_ > 500) {
+            pmu_->TurnOff();
+        }
+        pmu_event.schedule(sparta::Clock::Cycle(1));
     }
 
     void Rob::HandleFlush_(const TimingModel::FlushingCriteria &flush_criteria) {
@@ -74,6 +94,7 @@ namespace TimingModel {
             ILOG("get inst from preceding: " << inst_ptr);
         }
         commit_event.schedule(1);
+        pmu_->TurnOn();
     }
 
     void Rob::Finish_(const TimingModel::InstGroupPtr &inst_group_ptr) {
@@ -116,6 +137,7 @@ namespace TimingModel {
             inst_group_ptr->emplace_back(rob_.front().inst_ptr);
             rob_.front().inst_ptr->clearCommitInfo();
             stall_cycle_count_ = 0;
+            empty_cycle_count_ = 0;
 
             if (rob_.front().inst_ptr->getFuType() == FuncType::BRU) {
                 inst_bpu_group_ptr->emplace_back(rob_.front().inst_ptr);
@@ -146,7 +168,7 @@ namespace TimingModel {
             rob_preceding_credit_out.send(commit_num, sparta::Clock::Cycle(1));
         } else {
             stall_cycle_count_++;
-            sparta_assert(stall_cycle_count_ < 1000, "commit stall: " << rob_.front().inst_ptr);
+            sparta_assert(stall_cycle_count_ < detect_period_, "commit stall: " << rob_.front().inst_ptr);
         }
 
 

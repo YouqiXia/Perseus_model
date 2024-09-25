@@ -168,6 +168,13 @@
                         ]
                     }
                 }
+            },
+            {
+                "pmu": {
+                    "pmu": {
+                        "turn_on": true
+                    }
+                }
             }
         ],
         "core0": {
@@ -211,6 +218,7 @@
                             "issue_width": 6,
                             "queue_depth": 160000,
                             "retire_heartbeat": 100000,
+                            "detect_period": 1000,
                             "num_insts_to_retire": 0
                         }
                     }
