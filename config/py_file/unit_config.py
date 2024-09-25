@@ -82,6 +82,7 @@ class Config:
         hierarchy["info"].append(self.gen_units_pair(unitlib.units.self_allocators, is_gen_static_units))
         hierarchy["info"].append(self.gen_units_pair(unitlib.units.mavis, is_gen_static_units))
         hierarchy["info"].append(self.gen_units_pair(unitlib.units.global_param, is_gen_static_units))
+        hierarchy["info"].append(self.gen_units_pair(unitlib.units.pmu, is_gen_static_units))
     
         hierarchy["core0"]["frontend"].append(self.gen_units_pair(unitlib.units.perfect_frontend, is_gen_static_units))
         

@@ -32,13 +32,15 @@ namespace TimingModel {
                 (CREATE_SPARTA_HANDLER_WITH_DATA(ReservationStation, GetForwardingData, InstGroupPtr));
         preceding_reservation_inst_in >> sparta::GlobalOrderingPoint(node, "rs_allocate_forwarding");
         sparta::GlobalOrderingPoint(node, "rs_allocate_forwarding") >> forwarding_reservation_inst_in;
-        perf_event >> pop_event >> passing_event;
     }
 
     void ReservationStation::Startup_() {
         allocator_ = getSelfAllocators(getContainer());
+        pmu_ = getPmuUnit(getContainer());
         InitCredit_();
-        perf_monitor_ = getPmuUnit(getContainer());
+        if (pmu_->IsPmuOn()) {
+            pmu_event.schedule(sparta::Clock::Cycle(1));
+        }
     }
 
     void ReservationStation::InitCredit_() {
@@ -47,6 +49,18 @@ namespace TimingModel {
         rs_credit_ptr_tmp->name = getName();
         rs_credit_ptr_tmp->credit = rs_depth_;
         reservation_preceding_credit_out.send(rs_credit_ptr_tmp, sparta::Clock::Cycle(1));
+    }
+
+    void ReservationStation::PmuMonitor_() {
+        if (pmu_->IsPmuOn()) {
+            pmu_event.schedule(sparta::Clock::Cycle(1));
+        }
+
+        if (reservation_station_.size() == rs_depth_) {
+            pmu_->Monitor(getName(), "rs full", 1);
+        }
+
+        pmu_->Monitor(getName(), "rs size", size_);
     }
 
     void ReservationStation::AcceptCredit_(const TimingModel::Credit &credit) {
@@ -86,12 +100,12 @@ namespace TimingModel {
                 tmp_restation_entry->rs2_valid = true;
 
             }
+            SizeUp();
             rs_dependency_table_.Allocate(tmp_restation_entry);
             reservation_station_.emplace_back(tmp_restation_entry);
         }
 
         pop_event.schedule(sparta::Clock::Cycle(1));
-        perf_event.schedule(sparta::Clock::Cycle(0));
         passing_event.schedule(sparta::Clock::Cycle(0));
     }
 
@@ -144,6 +158,7 @@ namespace TimingModel {
                 inst_group_tmp_ptr->emplace_back(rs_entry->inst_ptr);
                 rs_entry->is_issued = true;
                 consume_num++;
+                SizeDown();
             }
         }
 
@@ -167,15 +182,5 @@ namespace TimingModel {
             passing_event.schedule(sparta::Clock::Cycle(1));
         }
 
-    }
-
-    void ReservationStation::PerfMonitor_() {
-        if (reservation_station_.size() == rs_depth_) {
-            perf_monitor_->Monitor(getName(), "rs full", 1);
-        }
-
-        if (!reservation_station_.empty()) {
-            perf_event.schedule(sparta::Clock::Cycle(1));
-        }
-    }
+            }
 }

@@ -90,6 +90,13 @@
                         ]
                     }
                 }
+            },
+            {
+                "pmu": {
+                    "pmu": {
+                        "turn_on": true
+                    }
+                }
             }
         ],
         "core0": {
@@ -132,7 +139,8 @@
                         "rob": {
                             "issue_width": 4,
                             "queue_depth": 128,
-                            "retire_heartbeat": 10000,
+                            "retire_heartbeat": 100000,
+                            "detect_period": 1000,
                             "num_insts_to_retire": 0
                         }
                     }
@@ -148,7 +156,7 @@
                     "reservation_station": {
                         "reservation_station_0": {
                             "issue_width": 4,
-                            "queue_depth": 100,
+                            "queue_depth": 128,
                             "phy_reg_num": 128
                         }
                     }
@@ -159,7 +167,7 @@
                     "perfect_fu": {
                         "perfect_fu_0": {
                             "issue_width": 4,
-                            "queue_depth": 4
+                            "queue_depth": 8
                         }
                     }
                 },

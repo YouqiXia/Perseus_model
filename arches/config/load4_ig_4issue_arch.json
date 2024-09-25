@@ -29,7 +29,7 @@
                         "dispatch_map": [
                             "reservation_station_0",
                             "|",
-                            "6",
+                            "4",
                             "|",
                             "ALU",
                             "BRU",
@@ -44,7 +44,7 @@
                         "write_back_map": [
                             "perfect_fu_0",
                             "|",
-                            "6",
+                            "4",
                             "|"
                         ],
                         "fu_latency_map": [
@@ -74,7 +74,7 @@
                             "|",
                             "LDU",
                             "|",
-                            "1",
+                            "4",
                             "|",
                             "STU",
                             "|",
@@ -97,7 +97,7 @@
                 {
                     "perfect_frontend": {
                         "perfect_frontend": {
-                            "issue_width": 6,
+                            "issue_width": 4,
                             "is_config": true,
                             "input_file": "",
                             "insn_gen_type": "trace",
@@ -110,7 +110,7 @@
                 {
                     "renaming_stage": {
                         "renaming_stage": {
-                            "issue_width": 6,
+                            "issue_width": 4,
                             "isa_reg_num": 32,
                             "queue_depth": 20,
                             "phy_reg_num": 150000,
@@ -121,7 +121,7 @@
                 {
                     "dispatch_stage": {
                         "dispatch_stage": {
-                            "issue_width": 6,
+                            "issue_width": 4,
                             "phy_reg_num": 150000,
                             "queue_depth": 32
                         }
@@ -130,7 +130,7 @@
                 {
                     "rob": {
                         "rob": {
-                            "issue_width": 6,
+                            "issue_width": 4,
                             "queue_depth": 160000,
                             "retire_heartbeat": 100000,
                             "detect_period": 1000,
@@ -148,7 +148,7 @@
                 {
                     "reservation_station": {
                         "reservation_station_0": {
-                            "issue_width": 6,
+                            "issue_width": 4,
                             "queue_depth": 100000,
                             "phy_reg_num": 150000
                         }
@@ -159,15 +159,15 @@
                 {
                     "perfect_fu": {
                         "perfect_fu_0": {
-                            "issue_width": 6,
-                            "queue_depth": 12
+                            "issue_width": 4,
+                            "queue_depth": 100
                         }
                     }
                 },
                 {
                     "write_back_stage": {
                         "write_back_stage": {
-                            "issue_width": 6,
+                            "issue_width": 4,
                             "wb_latency": 1,
                             "is_perfect_mode": false
                         }
@@ -188,14 +188,14 @@
     "instances": {
         "write_back_stage": {
             "write_back_stage": {
-                "issue_width": 6,
+                "issue_width": 4,
                 "wb_latency": 1,
                 "is_perfect_mode": false
             }
         },
         "rob": {
             "rob": {
-                "issue_width": 6,
+                "issue_width": 4,
                 "queue_depth": 32,
                 "retire_heartbeat": 10000,
                 "num_insts_to_retire": 0
@@ -210,7 +210,7 @@
         },
         "renaming_stage": {
             "renaming_stage": {
-                "issue_width": 6,
+                "issue_width": 4,
                 "isa_reg_num": 32,
                 "queue_depth": 8,
                 "phy_reg_num": 150000,
@@ -230,7 +230,7 @@
         },
         "perfect_frontend": {
             "perfect_frontend": {
-                "issue_width": 6,
+                "issue_width": 4,
                 "is_config": true,
                 "input_file": "",
                 "insn_gen_type": "trace",
@@ -251,7 +251,7 @@
         },
         "dispatch_stage": {
             "dispatch_stage": {
-                "issue_width": 6,
+                "issue_width": 4,
                 "phy_reg_num": 150000,
                 "queue_depth": 16
             }

@@ -32,14 +32,18 @@ namespace TimingModel {
 
         ~PmuUnit();
 
-        void Monitor(std::string instance_name, std::string perf_stat, int64_t num);
+        bool IsPmuOn() { return pmu_on_; }
 
-        bool pmu_on;
+        void TurnOn() { pmu_on_ = true; }
+
+        void TurnOff() { pmu_on_ = false; }
+
+        void Monitor(std::string instance_name, std::string perf_stat, uint64_t num);
+
+    private:
+        bool pmu_on_;
+
         std::unordered_map<std::string, uint64_t> performance_map_;
-
-        sparta::StatisticDef        stat_cycles_;
-
-        sparta::StatisticInstance   cycles_;
     };
 
     PmuUnit* getPmuUnit(sparta::TreeNode *node);

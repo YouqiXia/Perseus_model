@@ -103,7 +103,11 @@ namespace TimingModel {
 
         void PopInst_();
 
-        void PerfMonitor_();
+        void PmuMonitor_();
+
+        void SizeUp() { ++size_; }
+
+        void SizeDown() { --size_; }
 
     private:
         // ports
@@ -135,16 +139,17 @@ namespace TimingModel {
 
         sparta::SingleCycleUniqueEvent<> pop_event
                 {&unit_event_set_, "pop_event", CREATE_SPARTA_HANDLER(ReservationStation, PopInst_)};
-        
-        sparta::SingleCycleUniqueEvent<> perf_event
-                {&unit_event_set_, "perf_event", CREATE_SPARTA_HANDLER(ReservationStation, PerfMonitor_)};
+
+        sparta::SingleCycleUniqueEvent<sparta::SchedulingPhase::PostTick> pmu_event
+                {&unit_event_set_, "pmu_event", CREATE_SPARTA_HANDLER(ReservationStation, PmuMonitor_)};
 
     private:
         SelfAllocatorsUnit* allocator_;
-
-        PmuUnit* perf_monitor_;
+        PmuUnit* pmu_;
 
     private:
+        size_t size_ = 0;
+
         uint64_t issue_num_;
         uint64_t rs_depth_;
 

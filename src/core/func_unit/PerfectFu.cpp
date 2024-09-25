@@ -54,14 +54,14 @@ namespace TimingModel {
     void PerfectFu::Allocate_(const TimingModel::InstGroupPtr &inst_group_ptr) {
         for (auto& inst_ptr: *inst_group_ptr) {
             allocate_event.preparePayload(inst_ptr)->
-                schedule(sparta::Clock::Cycle(fu_latency_map_[inst_ptr->getFuType()]) - 1);
+                schedule(sparta::Clock::Cycle(fu_latency_map_[inst_ptr->getFuType()] - 1));
         }
     }
 
     void PerfectFu::Allocate_delay_(const TimingModel::InstPtr &inst_ptr) {
         ILOG("get instruction: " << inst_ptr);
         alu_queue_.push_back(inst_ptr);
-        write_back_event.schedule(0);
+        write_back_event.schedule(1);
     }
 
     void PerfectFu::WriteBack_() {
@@ -73,16 +73,21 @@ namespace TimingModel {
                 break;
             }
             inst_group_tmp_ptr->inst_group.emplace_back(alu_queue_.front());
-            ILOG("write back instruction: " << alu_queue_.front());
+            ILOG("write back: " << alu_queue_.front());
             alu_queue_.pop_front();
         }
 
         if (!inst_group_tmp_ptr->inst_group.empty()) {
             func_following_finish_out.send(inst_group_tmp_ptr);
+            ILOG("size after updating: " << alu_queue_.size());
         }
 
         if (!inst_group_tmp_ptr->inst_group.empty()) {
             func_rs_credit_out.send(inst_group_tmp_ptr->inst_group.size());
+        }
+
+        if (alu_queue_.size() != 0) {
+            write_back_event.schedule(sparta::Clock::Cycle(1));
         }
     }
 
