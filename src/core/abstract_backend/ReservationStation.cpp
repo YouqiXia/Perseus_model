@@ -32,11 +32,13 @@ namespace TimingModel {
                 (CREATE_SPARTA_HANDLER_WITH_DATA(ReservationStation, GetForwardingData, InstGroupPtr));
         preceding_reservation_inst_in >> sparta::GlobalOrderingPoint(node, "rs_allocate_forwarding");
         sparta::GlobalOrderingPoint(node, "rs_allocate_forwarding") >> forwarding_reservation_inst_in;
+        perf_event >> pop_event >> passing_event;
     }
 
     void ReservationStation::Startup_() {
         allocator_ = getSelfAllocators(getContainer());
         InitCredit_();
+        perf_monitor_ = getPmuUnit(getContainer());
     }
 
     void ReservationStation::InitCredit_() {
@@ -89,6 +91,7 @@ namespace TimingModel {
         }
 
         pop_event.schedule(sparta::Clock::Cycle(1));
+        perf_event.schedule(sparta::Clock::Cycle(0));
         passing_event.schedule(sparta::Clock::Cycle(0));
     }
 
@@ -164,5 +167,15 @@ namespace TimingModel {
             passing_event.schedule(sparta::Clock::Cycle(1));
         }
 
+    }
+
+    void ReservationStation::PerfMonitor_() {
+        if (reservation_station_.size() == rs_depth_) {
+            perf_monitor_->Monitor(getName(), "rs full", 1);
+        }
+
+        if (!reservation_station_.empty()) {
+            perf_event.schedule(sparta::Clock::Cycle(1));
+        }
     }
 }

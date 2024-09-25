@@ -37,6 +37,12 @@ namespace TimingModel {
             RegisterResource_(TimingModel::SelfAllocatorsUnit::name ,
                               new sparta::ResourceFactory<TimingModel::SelfAllocatorsUnit,
                                       TimingModel::SelfAllocatorsUnit::SelfAllocatorParameter>);
+
+            // pmu
+            RegisterResource_(TimingModel::PmuUnit::name ,
+                              new sparta::ResourceFactory<TimingModel::PmuUnit,
+                                      TimingModel::PmuUnit::PmuUnitParam>);
+
             // mavis
             RegisterResource_(TimingModel::MavisUnit::name ,
                              new MavisFactoy);

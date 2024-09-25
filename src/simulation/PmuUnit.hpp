@@ -10,6 +10,10 @@
 
 #include "sparta/simulation/TreeNode.hpp"
 
+#include "sparta/statistics/Counter.hpp"
+#include "sparta/statistics/StatisticDef.hpp"
+#include "sparta/statistics/StatisticInstance.hpp"
+
 namespace TimingModel {
 
     class PmuUnit : public sparta::Unit {
@@ -19,16 +23,26 @@ namespace TimingModel {
             PmuUnitParam(sparta::TreeNode *n) :
                     sparta::ParameterSet(n) {}
 
-            PARAMETER(bool, turn_on, false, "description")
-
+            PARAMETER(bool, turn_on, false, "turn on the pmu")
         };
 
         static constexpr char name[] = "pmu";
 
         PmuUnit(sparta::TreeNode *node, const PmuUnitParam *p);
 
-        ~PmuUnit() = default;
+        ~PmuUnit();
+
+        void Monitor(std::string instance_name, std::string perf_stat, int64_t num);
+
+        bool pmu_on;
+        std::unordered_map<std::string, uint64_t> performance_map_;
+
+        sparta::StatisticDef        stat_cycles_;
+
+        sparta::StatisticInstance   cycles_;
     };
+
+    PmuUnit* getPmuUnit(sparta::TreeNode *node);
 
 }
 #endif //PERSEUS_PMUUNIT_HPP
