@@ -23,6 +23,9 @@ namespace TimingModel {
         write_back_func_credit_in.registerConsumerHandler(
                 CREATE_SPARTA_HANDLER_WITH_DATA(PerfectFu, AcceptCredit_, CreditPairPtr));
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(PerfectFu, Startup_));
+
+        // FIXME the correctness of event scheduling need to be detected by unit test
+        allocate_event >> write_back_event;
     }
 
     void PerfectFu::Startup_() {

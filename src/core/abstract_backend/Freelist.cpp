@@ -60,4 +60,8 @@ namespace TimingModel {
         free_list_idx_vector_ = free_list_idx_vector_backup_;
     }
 
+    uint64_t Freelist::Size() {
+        return free_list_.size();
+    }
+
 }

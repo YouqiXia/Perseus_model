@@ -25,6 +25,7 @@ namespace TimingModel {
     void WriteBackStage::Startup_() {
         global_param_ptr_ = getGlobalParams(getContainer());
         allocator_ = getSelfAllocators(getContainer());
+        pmu_ = getPmuUnit(getContainer());
 
         for (auto pipe_pair: global_param_ptr_->getWriteBackMap()) {
             inst_queue_map_[pipe_pair.first] = std::deque<InstPtr>();
@@ -67,6 +68,7 @@ namespace TimingModel {
     }
 
     void WriteBackStage::ArbitrateInst_() {
+        pmu_->Monitor(getName(), "event", 1);
         uint64_t produce_num = issue_num_;
         InstGroupPtr inst_group_ptr_tmp =
                 sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);

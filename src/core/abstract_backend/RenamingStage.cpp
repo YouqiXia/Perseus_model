@@ -40,7 +40,11 @@ namespace TimingModel {
 
     void RenamingStage::Startup_() {
         allocator_ = getSelfAllocators(getContainer());
+        pmu_ = getPmuUnit(getContainer());
         InitCredit_();
+        if (pmu_->IsPmuOn()) {
+            pmu_event.schedule(sparta::Clock::Cycle(1));
+        }
     }
 
     void RenamingStage::InitCredit_() {
@@ -56,7 +60,6 @@ namespace TimingModel {
     }
 
     void RenamingStage::AcceptDispatchCredit_(const Credit& credit) {
-        uint64_t dispatch_max_credit_ = std::max(credit, dispatch_max_credit_);
         dispatch_credit_ += credit;
 
         ILOG("RenamingStage get dispatch credits: " << credit << ", total dispatch_credit_ = " << dispatch_credit_);
@@ -110,6 +113,7 @@ namespace TimingModel {
     }
 
     void RenamingStage::RenameInst_() {
+        pmu_->Monitor(getName(), "event", 1);
         if (renaming_stage_queue_.empty()) {
             return;
         }
@@ -209,5 +213,22 @@ namespace TimingModel {
             }
             renaming_table_.GetBackup(inst_ptr->getIsaRd()) = inst_ptr->getPhyRd();
         }
+    }
+
+    void RenamingStage::PmuMonitor_() {
+        if (pmu_->IsPmuOn()) {
+            pmu_event.schedule(sparta::Clock::Cycle(1));
+        }
+
+        if (free_list_.IsEmpty()) {
+            pmu_->Monitor(getName(), "phy reg full", 1);
+        }
+
+        if (renaming_stage_queue_.empty()) {
+            pmu_->Monitor(getName(), "queue empty", 1);
+        }
+
+        pmu_->Monitor(getName(), "phy reg size", physical_reg_credit_ - free_list_.Size());
+        pmu_->Monitor(getName(), "phy reg max", physical_reg_credit_ - free_list_.Size(), PmuUnit::Mode::MAX);
     }
 }

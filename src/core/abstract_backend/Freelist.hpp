@@ -33,6 +33,8 @@ namespace TimingModel {
 
         void RollBack();
 
+        size_t Size();
+
     private:
         std::deque<uint64_t> free_list_;
 

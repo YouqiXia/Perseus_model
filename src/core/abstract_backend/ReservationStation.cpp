@@ -56,11 +56,16 @@ namespace TimingModel {
             pmu_event.schedule(sparta::Clock::Cycle(1));
         }
 
-        if (reservation_station_.size() == rs_depth_) {
+        if (size_ == rs_depth_) {
             pmu_->Monitor(getName(), "rs full", 1);
         }
 
+        if (reservation_station_.empty()) {
+            pmu_->Monitor(getName(), "rs empty", 1);
+        }
+
         pmu_->Monitor(getName(), "rs size", size_);
+        pmu_->Monitor(getName(), "rs max", size_, PmuUnit::Mode::MAX);
     }
 
     void ReservationStation::AcceptCredit_(const TimingModel::Credit &credit) {
@@ -134,6 +139,7 @@ namespace TimingModel {
     }
 
     void ReservationStation::PassingInst() {
+        pmu_->Monitor(getName(), "event", 1);
         if (reservation_station_.empty()) {
             return;
         }

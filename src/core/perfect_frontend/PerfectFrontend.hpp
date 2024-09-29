@@ -10,6 +10,7 @@
 #include "basic/InstGroup.hpp"
 #include "instgen/InstGenerator.hpp"
 #include "basic/SelfAllocatorsUnit.hpp"
+#include "simulation/PmuUnit.hpp"
 
 #include <string>
 
@@ -75,6 +76,7 @@ namespace TimingModel {
     private:
         MavisUnit* mavis_ = nullptr;
         SelfAllocatorsUnit* allocator_;
+        PmuUnit* pmu_;
 
     private:
         const uint64_t issue_num_;

@@ -17,6 +17,7 @@
 #include "basic/PortInterface.hpp"
 #include "basic/GlobalParamUnit.hpp"
 #include "basic/SelfAllocatorsUnit.hpp"
+#include "simulation/PmuUnit.hpp"
 
 namespace TimingModel {
 
@@ -71,6 +72,7 @@ namespace TimingModel {
     private:
         GlobalParamUnit* global_param_ptr_ = nullptr;
         SelfAllocatorsUnit* allocator_;
+        PmuUnit* pmu_;
         
     private:
         uint64_t issue_num_;

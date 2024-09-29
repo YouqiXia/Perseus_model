@@ -13,13 +13,6 @@
                 }
             },
             {
-                "pmu": {
-                    "pmu": {
-                        "turn_on": true
-                    }
-                }
-            },
-            {
                 "mavis": {
                     "mavis": {
                         "isa_file_path": "mavis_isa_files",

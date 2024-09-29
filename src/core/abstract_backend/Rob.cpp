@@ -71,11 +71,20 @@ namespace TimingModel {
 
         if (rob_.empty()) {
             empty_cycle_count_++;
+            pmu_->Monitor(getName(), "rob empty", 1);
         }
 
         if (empty_cycle_count_ > 500) {
             pmu_->TurnOff();
         }
+
+        if (rob_.size() == rob_depth_) {
+            pmu_->Monitor(getName(), "rob full", 1);
+        }
+
+        pmu_->Monitor(getName(), "rob size", rob_.size());
+        pmu_->Monitor(getName(), "rob max", rob_.size(), PmuUnit::Mode::MAX);
+
         pmu_event.schedule(sparta::Clock::Cycle(1));
     }
 
@@ -119,6 +128,7 @@ namespace TimingModel {
     }
 
     void Rob::Commit_() {
+        pmu_->Monitor(getName(), "event", 1);
         InstGroupPtr inst_group_ptr =
                 sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);
         InstGroupPtr inst_bpu_group_ptr =
@@ -172,7 +182,7 @@ namespace TimingModel {
         }
 
 
-        ILOG(getName() << " commit instructions: " << commit_num << " , remaining: " << rob_.size());
+        ILOG(getName() << " commit instructions: " << commit_num << " , remaining: " << rob_.size() << "front inst is: " << rob_.front().inst_ptr);
 
         num_retired_ += commit_num;
 

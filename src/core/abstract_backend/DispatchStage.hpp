@@ -21,6 +21,8 @@
 
 #include "Scoreboard.hpp"
 
+#include "simulation/PmuUnit.hpp"
+
 namespace TimingModel {
 
     class DispatchStage : public sparta::Unit {
@@ -73,6 +75,8 @@ namespace TimingModel {
 
         void PopIssueQueue_();
 
+        void PmuMonitor_();
+
     private:
         // ports
         
@@ -122,9 +126,14 @@ namespace TimingModel {
 
             sparta::SingleCycleUniqueEvent<> dispatch_get_operator_events_
                 {&unit_event_set_, "dispatch_get_operator_events_", CREATE_SPARTA_HANDLER(DispatchStage, ReadPhyReg_)};
+
+            sparta::SingleCycleUniqueEvent<sparta::SchedulingPhase::PostTick> pmu_event
+                {&unit_event_set_, "pmu_event", CREATE_SPARTA_HANDLER(DispatchStage, PmuMonitor_)};
+
     private:
         GlobalParamUnit* global_param_ptr_ = nullptr;
         SelfAllocatorsUnit* allocator_;
+        PmuUnit* pmu_;
 
     private:
         uint64_t issue_num_;

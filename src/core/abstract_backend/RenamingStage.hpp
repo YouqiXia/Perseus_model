@@ -16,6 +16,8 @@
 #include "Freelist.hpp"
 #include "RenamingTable.hpp"
 
+#include "simulation/PmuUnit.hpp"
+
 namespace TimingModel {
 
 class RenamingStage : public sparta::Unit {
@@ -68,6 +70,8 @@ private:
 
     void FlushCredit_();
 
+    void PmuMonitor_();
+
 private:
     // ports
         // flush
@@ -113,8 +117,12 @@ private:
         sparta::SingleCycleUniqueEvent<> rename_event
             {&unit_event_set_, "rename_event", CREATE_SPARTA_HANDLER(RenamingStage, RenameInst_)};
 
+        sparta::SingleCycleUniqueEvent<sparta::SchedulingPhase::PostTick> pmu_event
+                {&unit_event_set_, "pmu_event", CREATE_SPARTA_HANDLER(RenamingStage, PmuMonitor_)};
+
     private:
         SelfAllocatorsUnit* allocator_;
+        PmuUnit* pmu_;
 
     private:
         std::deque<InstPtr> renaming_stage_queue_;

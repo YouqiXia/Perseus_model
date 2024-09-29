@@ -35,6 +35,7 @@ namespace TimingModel {
             return;
         }
         allocator_ = getSelfAllocators(getContainer());
+        pmu_ = getPmuUnit(getContainer());
 
         if (!is_config_) {
             if (insn_gen_type_.compare("spike") == 0){
@@ -78,6 +79,7 @@ namespace TimingModel {
     }
 
     void PerfectFrontend::ProduceInst() {
+        pmu_->Monitor(getName(), "event", 1);
         uint64_t produce_num = std::min(issue_num_, credit_);
         InstGroupPtr inst_group_ptr =
                 sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);

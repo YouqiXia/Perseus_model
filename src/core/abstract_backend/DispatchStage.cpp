@@ -42,12 +42,17 @@ namespace TimingModel {
     void DispatchStage::Startup_() {
         global_param_ptr_ = getGlobalParams(getContainer());
         allocator_ = getSelfAllocators(getContainer());
+        pmu_ = getPmuUnit(getContainer());
 
         for(auto dispatch_map_pair: global_param_ptr_->getDispatchMap()) {
             credit_map_[dispatch_map_pair.first] = 0;
         }
 
         InitCredit_();
+
+        if (pmu_->IsPmuOn()) {
+            pmu_event.schedule(sparta::Clock::Cycle(1));
+        }
     }
 
     void DispatchStage::InitCredit_() {
@@ -167,6 +172,7 @@ namespace TimingModel {
     }
 
     void DispatchStage::IssueInst_() {
+        pmu_->Monitor(getName(), "event", 1);
         for (auto& dispatch_pending_pair: dispatch_pending_queue_) {
             InstGroupPairPtr inst_group_tmp_ptr =
                     sparta::allocate_sparta_shared_pointer<InstGroupPair>(*allocator_->inst_group_pair_allocator);
@@ -208,6 +214,30 @@ namespace TimingModel {
         credit_map_.at(credit_pair_ptr->name) += credit_pair_ptr->credit;
         ILOG("accept credits from " << credit_pair_ptr->name << " , credits is " << credit_pair_ptr->credit <<
             " updated credits is: " << credit_map_.at(credit_pair_ptr->name));
+    }
+
+    void DispatchStage::PmuMonitor_() {
+        if (pmu_->IsPmuOn()) {
+            pmu_event.schedule(sparta::Clock::Cycle(1));
+        }
+
+        for (auto& credit_pair: credit_map_) {
+            pmu_->AllocateHardenParam(credit_pair.first, credit_pair.second);
+
+            pmu_->Monitor(credit_pair.first, "rs size real", 
+                pmu_->GetHardenParam(credit_pair.first)-credit_pair.second);
+
+            pmu_->Monitor(credit_pair.first, "rs max real", 
+                pmu_->GetHardenParam(credit_pair.first)-credit_pair.second, PmuUnit::Mode::MAX);
+
+            if (credit_pair.second == 0) {
+                pmu_->Monitor(credit_pair.first, "rs full real", 1);
+            }
+
+            if (credit_pair.second == pmu_->GetHardenParam(credit_pair.first)) {
+                pmu_->Monitor(credit_pair.first, "rs empty real", 1);
+            }
+        }
     }
 
 }
