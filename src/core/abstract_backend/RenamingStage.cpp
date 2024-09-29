@@ -56,6 +56,7 @@ namespace TimingModel {
     }
 
     void RenamingStage::AcceptDispatchCredit_(const Credit& credit) {
+        uint64_t dispatch_max_credit_ = std::max(credit, dispatch_max_credit_);
         dispatch_credit_ += credit;
 
         ILOG("RenamingStage get dispatch credits: " << credit << ", total dispatch_credit_ = " << dispatch_credit_);
@@ -87,7 +88,7 @@ namespace TimingModel {
             renaming_stage_queue_.push_back(inst_ptr);
         }
 
-        rename_event.schedule(sparta::Clock::Cycle(1));
+        rename_event.schedule(sparta::Clock::Cycle(0));
     }
 
     void RenamingStage::FlushCredit_() {

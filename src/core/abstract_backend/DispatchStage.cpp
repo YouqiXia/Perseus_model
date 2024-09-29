@@ -65,7 +65,7 @@ namespace TimingModel {
             inst_queue_.push_back(issue_entry_ptr_tmp);
         }
 
-        dispatch_select_events_.schedule(1);
+        dispatch_select_events_.schedule(0);
         dispatch_pop_events_.schedule(1);
     }
 

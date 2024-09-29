@@ -61,7 +61,7 @@ namespace TimingModel {
     void PerfectFu::Allocate_delay_(const TimingModel::InstPtr &inst_ptr) {
         ILOG("get instruction: " << inst_ptr);
         alu_queue_.push_back(inst_ptr);
-        write_back_event.schedule(1);
+        write_back_event.schedule(0);
     }
 
     void PerfectFu::WriteBack_() {
