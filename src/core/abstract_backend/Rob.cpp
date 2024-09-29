@@ -93,7 +93,7 @@ namespace TimingModel {
             inst_ptr->setRobTag(rob_.push(rob_entry).getIndex());
             ILOG("get inst from preceding: " << inst_ptr);
         }
-        commit_event.schedule(1);
+        commit_event.schedule(0);
         pmu_->TurnOn();
     }
 
