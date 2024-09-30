@@ -36,16 +36,6 @@ namespace TimingModel {
             PARAMETER(uint64_t, phy_reg_num, 64, "the issuing bandwidth in a cycle")
         };
 
-        struct ReStationEntry {
-            InstPtr inst_ptr;
-            bool rs1_valid = false;
-            bool rs2_valid = false;
-            bool is_issued = false;
-        };
-
-        using ReStationEntryPtr = sparta::SpartaSharedPointer<ReStationEntry>;
-        using ReStationEntryAllocator = sparta::SpartaSharedPointerAllocator<ReStationEntry>;
-
         class ReservationTable {
         public:
             ReservationTable(PhyRegId_t phy_reg_num) :

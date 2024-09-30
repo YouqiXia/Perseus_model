@@ -71,10 +71,18 @@ namespace TimingModel {
         InstGroupPairPtr inst_group_tmp_ptr =
                 sparta::allocate_sparta_shared_pointer<InstGroupPair>(*allocator_->inst_group_pair_allocator);
         inst_group_tmp_ptr->name = getName();
+        uint64_t produce_num = std::min(credit_, alu_width_);
         for (int i = 0; i < alu_width_; i++) {
             if (alu_queue_.empty()) {
                 break;
             }
+
+            if (!produce_num) {
+                break;
+            }
+
+            --credit_;
+            --produce_num;
             inst_group_tmp_ptr->inst_group.emplace_back(alu_queue_.front());
             ILOG("write back: " << alu_queue_.front());
             alu_queue_.pop_front();

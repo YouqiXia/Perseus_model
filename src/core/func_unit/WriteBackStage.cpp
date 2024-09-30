@@ -75,7 +75,7 @@ namespace TimingModel {
         for (auto& inst_pair: inst_queue_map_) {
             CreditPairPtr credit_pair_ptr =
                     sparta::allocate_sparta_shared_pointer<CreditPair>(*allocator_->credit_pair_allocator);
-            credit_pair_ptr->name = getName();
+            credit_pair_ptr->name = inst_pair.first;
             credit_pair_ptr->credit = 0;
             uint32_t consume_per_entry = 0;
             for (auto inst_ptr: inst_pair.second) {

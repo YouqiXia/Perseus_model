@@ -14,8 +14,18 @@
 
 namespace TimingModel
 {
+    // reservation station
+    struct ReStationEntry {
+        InstPtr inst_ptr;
+        bool rs1_valid = false;
+        bool rs2_valid = false;
+        bool is_issued = false;
+    };
+    using ReStationEntryPtr = sparta::SpartaSharedPointer<ReStationEntry>;
+    using ReStationEntryAllocator = sparta::SpartaSharedPointerAllocator<ReStationEntry>;
+
     /*!
-     * \class OlympiaAllocators
+     * \class SelfAllocators
      * \brief A TreeNode that is actually a functional resource
      *        containing memory allocators
      */
@@ -48,6 +58,7 @@ namespace TimingModel
         InstGroupAllocator*     instgroup_allocator;
         CreditPairAllocator*    credit_pair_allocator;
         InstGroupPairAllocator* inst_group_pair_allocator;
+        ReStationEntryAllocator* re_station_entry_allocator;
     };
 
     SelfAllocatorsUnit* getSelfAllocators(sparta::TreeNode *node);

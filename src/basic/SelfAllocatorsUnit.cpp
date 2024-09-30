@@ -10,6 +10,7 @@ namespace TimingModel {
     std::unique_ptr<InstGroupAllocator>     instgroup_allocator;
     std::unique_ptr<CreditPairAllocator>    credit_pair_allocator;
     std::unique_ptr<InstGroupPairAllocator> inst_group_pair_allocator;
+    std::unique_ptr<ReStationEntryAllocator> re_station_entry_allocator;
 
     SelfAllocatorsUnit::SelfAllocatorsUnit(sparta::TreeNode *node, const SelfAllocatorParameter* p) :
         sparta::Unit(node)
@@ -19,11 +20,13 @@ namespace TimingModel {
         TimingModel::instgroup_allocator.reset(new InstGroupAllocator{p->inst_group_max_num, p->inst_group_max_num/5*4});
         TimingModel::credit_pair_allocator.reset(new CreditPairAllocator{p->credit_pair_max_num, p->credit_pair_max_num/5*4});
         TimingModel::inst_group_pair_allocator.reset(new InstGroupPairAllocator{p->inst_group_pair_max_num, p->inst_group_pair_max_num/5*4});
+        TimingModel::re_station_entry_allocator.reset(new ReStationEntryAllocator{p->inst_max_num, p->inst_max_num/5*4});
         inst_allocator = TimingModel::inst_allocator.get();
         inst_arch_info_allocator = TimingModel::inst_arch_info_allocator.get();
         instgroup_allocator = TimingModel::instgroup_allocator.get();
         credit_pair_allocator = TimingModel::credit_pair_allocator.get();
         inst_group_pair_allocator = TimingModel::inst_group_pair_allocator.get();
+        re_station_entry_allocator = TimingModel::re_station_entry_allocator.get();
     }
 
     SelfAllocatorsUnit* getSelfAllocators(sparta::TreeNode *node)  {

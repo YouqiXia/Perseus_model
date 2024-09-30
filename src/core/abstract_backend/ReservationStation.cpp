@@ -8,7 +8,6 @@
 #include "ReservationStation.hpp"
 
 namespace TimingModel {
-    ReservationStation::ReStationEntryAllocator re_station_entry_allocator {300000, 250000};
 
     const char *ReservationStation::name = "reservation_station";
 
@@ -96,7 +95,7 @@ namespace TimingModel {
         for (auto& inst_ptr: *inst_group_ptr) {
             ILOG("get insn from preceding: " << inst_ptr);
             ReStationEntryPtr tmp_restation_entry =
-                    sparta::allocate_sparta_shared_pointer<ReStationEntry>(re_station_entry_allocator);
+                    sparta::allocate_sparta_shared_pointer<ReStationEntry>(*allocator_->re_station_entry_allocator);
             tmp_restation_entry->inst_ptr = inst_ptr;
             if (!inst_ptr->getIsRs1Forward()) {
                 tmp_restation_entry->rs1_valid = true;
