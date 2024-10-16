@@ -115,11 +115,38 @@ namespace TimingModel {
     }
 
     void DispatchStage::SelectInst_() {
+        if (pmu_->IsPmuOn()) {
+            pmu_event.cancel();
+            pmu_event.schedule(sparta::Clock::Cycle(1));
+        }
+        pmu_->Monitor(getName(), "1 event", 1);
+
         uint64_t produce_max = issue_num_;
         uint64_t produce_num = 0;
 
         for (auto &func_pair: global_param_ptr_->getDispatchMap()) {
             uint32_t issue_width_per_pipe = global_param_ptr_->getDispatchIssueWidthMap().at(func_pair.first);
+            size_t size_ = 0;
+            for (auto &issue_entry_ptr: inst_queue_) {
+                if (func_pair.second.find(issue_entry_ptr->inst_ptr->getFuType()) != func_pair.second.end()) {
+                    size_++;
+                }
+            }
+            if (size_ < issue_width_per_pipe) {
+                pmu_->Monitor(getName(), "3 "+func_pair.first+" queue loss", issue_width_per_pipe-size_);
+            }
+            if (size_ == 0) {
+                pmu_->Monitor(getName(), "4 "+func_pair.first+" queue empty", 1);
+                continue;
+            }
+
+            uint64_t produce_max_per_pipe = std::min<uint64_t>(size_, issue_width_per_pipe);
+            if (credit_map_.at(func_pair.first) < produce_max_per_pipe) {
+                pmu_->Monitor(getName(), "5 "+func_pair.first+" rs loss", produce_max_per_pipe-credit_map_.at(func_pair.first));
+            }
+            if (credit_map_.at(func_pair.first) == 0) {
+                pmu_->Monitor(getName(), "6 "+func_pair.first+" rs full", 1);
+            }
             if (!credit_map_.at(func_pair.first)) {
                 continue;
             }
@@ -143,6 +170,8 @@ namespace TimingModel {
 
                 ILOG(getName() << " Instruction Select: " << issue_entry_ptr->inst_ptr);
                 --produce_max;
+                // sparta assert needed here
+                
                 ++produce_num;
                 --issue_width_per_pipe;
                 dispatch_pending_queue_[func_pair.first].emplace_back(issue_entry_ptr->inst_ptr);
@@ -151,6 +180,7 @@ namespace TimingModel {
                 issue_entry_ptr->is_issued = true;
             }
         }
+        pmu_->Monitor(getName(), "7 total loss", issue_num_-produce_num);
 
         if (produce_num) {
             dispatch_preceding_credit_out.send(produce_num, sparta::Clock::Cycle(1));
@@ -172,7 +202,6 @@ namespace TimingModel {
     }
 
     void DispatchStage::IssueInst_() {
-        pmu_->Monitor(getName(), "event", 1);
         for (auto& dispatch_pending_pair: dispatch_pending_queue_) {
             InstGroupPairPtr inst_group_tmp_ptr =
                     sparta::allocate_sparta_shared_pointer<InstGroupPair>(*allocator_->inst_group_pair_allocator);
@@ -217,25 +246,19 @@ namespace TimingModel {
     }
 
     void DispatchStage::PmuMonitor_() {
-        if (pmu_->IsPmuOn()) {
-            pmu_event.schedule(sparta::Clock::Cycle(1));
+        if (!pmu_->IsPmuOn()) {
+            return;
         }
+        pmu_->Monitor(getName(), "2 pmu event", 1);
+        pmu_event.schedule(sparta::Clock::Cycle(1));
 
-        for (auto& credit_pair: credit_map_) {
-            pmu_->AllocateHardenParam(credit_pair.first, credit_pair.second);
+        pmu_->Monitor(getName(), "7 total loss", issue_num_);
 
-            pmu_->Monitor(credit_pair.first, "rs size real", 
-                pmu_->GetHardenParam(credit_pair.first)-credit_pair.second);
-
-            pmu_->Monitor(credit_pair.first, "rs max real", 
-                pmu_->GetHardenParam(credit_pair.first)-credit_pair.second, PmuUnit::Mode::MAX);
-
-            if (credit_pair.second == 0) {
-                pmu_->Monitor(credit_pair.first, "rs full real", 1);
-            }
-
-            if (credit_pair.second == pmu_->GetHardenParam(credit_pair.first)) {
-                pmu_->Monitor(credit_pair.first, "rs empty real", 1);
+        if (inst_queue_.empty()) {
+            for (auto &func_pair: global_param_ptr_->getDispatchMap()) {
+                uint32_t issue_width_per_pipe = global_param_ptr_->getDispatchIssueWidthMap().at(func_pair.first);
+                pmu_->Monitor(getName(), "3 "+func_pair.first+" queue loss", issue_width_per_pipe);
+                pmu_->Monitor(getName(), "4 "+func_pair.first+" queue empty", 1);
             }
         }
     }

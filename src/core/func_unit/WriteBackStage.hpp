@@ -51,6 +51,8 @@ namespace TimingModel {
 
         void ArbitrateInst_();
 
+        void PmuMonitor_();
+
     private:
         // ports
         sparta::DataOutPort<InstGroupPtr> write_back_following_port_out
@@ -69,6 +71,9 @@ namespace TimingModel {
         // events
         sparta::SingleCycleUniqueEvent<> arbitrate_inst_event
                 {&unit_event_set_, "arbitrate_inst_event", CREATE_SPARTA_HANDLER(WriteBackStage, ArbitrateInst_)};
+        sparta::SingleCycleUniqueEvent<sparta::SchedulingPhase::PostTick> pmu_event
+                {&unit_event_set_, "pmu_event", CREATE_SPARTA_HANDLER(WriteBackStage, PmuMonitor_)};
+
     private:
         GlobalParamUnit* global_param_ptr_ = nullptr;
         SelfAllocatorsUnit* allocator_;

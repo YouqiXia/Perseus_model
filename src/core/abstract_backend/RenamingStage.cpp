@@ -113,36 +113,71 @@ namespace TimingModel {
     }
 
     void RenamingStage::RenameInst_() {
-        pmu_->Monitor(getName(), "event", 1);
+        if (pmu_->IsPmuOn()) {
+            pmu_event.cancel();
+            pmu_event.schedule(sparta::Clock::Cycle(1));
+        }
+        pmu_->Monitor(getName(), "01 event", 1);
+
+        if (renaming_stage_queue_.size() < issue_width_) {
+            pmu_->Monitor(getName(), "03 queue loss", issue_width_-renaming_stage_queue_.size());
+        }
         if (renaming_stage_queue_.empty()) {
+            pmu_->Monitor(getName(), "04 queue empty", 1);
+            pmu_->Monitor(getName(), "14 total loss", issue_width_);
             return;
         }
 
-        if (free_list_.IsEmpty()) {
-            rename_event.schedule(sparta::Clock::Cycle(1));
-            return;
-        }
+        uint64_t produce_num_max = std::min<uint64_t>(renaming_stage_queue_.size(), issue_width_);
+
         uint64_t produce_inst_num = std::min<uint64_t>(dispatch_credit_, rob_credit_);
         if (!is_perfect_lsu_) {
             produce_inst_num = std::min<uint64_t>(produce_inst_num, ldq_credit_);
             produce_inst_num = std::min<uint64_t>(produce_inst_num, stq_credit_);
         }
-        produce_inst_num = std::min<uint64_t>(produce_inst_num, issue_width_);
+
+        if (produce_inst_num < produce_num_max) {
+            pmu_->Monitor(getName(), "11 total credit loss", produce_num_max-produce_inst_num);
+            if (rob_credit_ < produce_num_max) {
+                pmu_->Monitor(getName(), "05 rob loss", produce_num_max-rob_credit_);
+            }
+            if (rob_credit_ == 0) {
+                pmu_->Monitor(getName(), "06 rob full", 1);
+            }
+            if (dispatch_credit_ < produce_num_max) {
+                pmu_->Monitor(getName(), "07 dispatch loss", produce_num_max-dispatch_credit_);
+            }
+            if (dispatch_credit_ == 0) {
+                pmu_->Monitor(getName(), "08 dispatch full", 1);
+            }
+            if (ldq_credit_ < produce_num_max && !is_perfect_lsu_) {
+                pmu_->Monitor(getName(), "09 ldq loss", produce_num_max-ldq_credit_);
+            }
+            if (stq_credit_ < produce_num_max && !is_perfect_lsu_) {
+                pmu_->Monitor(getName(), "10 stq loss", produce_num_max-stq_credit_);
+            }
+        }
+
+        if (produce_inst_num == 0) {
+            pmu_->Monitor(getName(), "14 total loss", produce_num_max);
+            return;
+        }
+
+        produce_inst_num = std::min<uint64_t>(produce_inst_num, produce_num_max);
 
         InstGroupPtr inst_group_tmp_ptr =
                 sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);
         InstGroupPtr inst_lsu_group_tmp_ptr =
                 sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);
 
-        if (produce_inst_num == 0) {
-            return;
-        }
-
         while(produce_inst_num--) {
-            if (renaming_stage_queue_.empty() || free_list_.IsEmpty()) {
+            auto inst_tmp_ptr = renaming_stage_queue_.front();
+            if (inst_tmp_ptr->getIsaRd() && free_list_.IsEmpty()) {
+                rename_event.schedule(sparta::Clock::Cycle(1));
+                pmu_->Monitor(getName(), "12 freelist loss", produce_inst_num+1);
+                pmu_->Monitor(getName(), "13 freelist empty", 1);
                 break;
             }
-            auto inst_tmp_ptr = renaming_stage_queue_.front();
             RenameInstImp_(inst_tmp_ptr);
             inst_group_tmp_ptr->emplace_back(inst_tmp_ptr);
             ILOG("send insn to following: " << inst_tmp_ptr);
@@ -160,9 +195,13 @@ namespace TimingModel {
             }
         }
 
+        pmu_->Monitor(getName(), "14 total loss", issue_width_-inst_group_tmp_ptr->size());
+
         uint64_t whole_credit_ = std::min(dispatch_credit_, rob_credit_);
-        whole_credit_ = std::min(whole_credit_, ldq_credit_);
-        whole_credit_ = std::min(whole_credit_, stq_credit_);
+        if (!is_perfect_lsu_) {
+            whole_credit_ = std::min(whole_credit_, ldq_credit_);
+            whole_credit_ = std::min(whole_credit_, stq_credit_);
+        }
 
         if (!renaming_stage_queue_.empty() && whole_credit_ > 0) {
             rename_event.schedule(sparta::Clock::Cycle(1));
@@ -216,19 +255,54 @@ namespace TimingModel {
     }
 
     void RenamingStage::PmuMonitor_() {
-        if (pmu_->IsPmuOn()) {
-            pmu_event.schedule(sparta::Clock::Cycle(1));
+        if (!pmu_->IsPmuOn()) {
+            return;
         }
-
-        if (free_list_.IsEmpty()) {
-            pmu_->Monitor(getName(), "phy reg full", 1);
+        if (pmu_->IsTurnOffNextCycle()) {
+            pmu_->TurnOff();
+            return;
         }
+        pmu_->Monitor(getName(), "02 pmu event", 1);
+        pmu_event.schedule(sparta::Clock::Cycle(1));
 
+        pmu_->Monitor(getName(), "14 total loss", issue_width_);
+
+        if (renaming_stage_queue_.size() < issue_width_) {
+            pmu_->Monitor(getName(), "03 queue loss", issue_width_-renaming_stage_queue_.size());
+        }
         if (renaming_stage_queue_.empty()) {
-            pmu_->Monitor(getName(), "queue empty", 1);
+            pmu_->Monitor(getName(), "04 queue empty", 1);
+            return;
         }
 
-        pmu_->Monitor(getName(), "phy reg size", physical_reg_credit_ - free_list_.Size());
-        pmu_->Monitor(getName(), "phy reg max", physical_reg_credit_ - free_list_.Size(), PmuUnit::Mode::MAX);
+        uint64_t produce_num_max = std::min<uint64_t>(renaming_stage_queue_.size(), issue_width_);
+
+        uint64_t produce_inst_num = std::min<uint64_t>(dispatch_credit_, rob_credit_);
+        if (!is_perfect_lsu_) {
+            produce_inst_num = std::min<uint64_t>(produce_inst_num, ldq_credit_);
+            produce_inst_num = std::min<uint64_t>(produce_inst_num, stq_credit_);
+        }
+
+        if (produce_inst_num < produce_num_max) {
+            pmu_->Monitor(getName(), "11 total credit loss", produce_num_max-produce_inst_num);
+            if (rob_credit_ < produce_num_max) {
+                pmu_->Monitor(getName(), "05 rob loss", produce_num_max-rob_credit_);
+            }
+            if (rob_credit_ == 0) {
+                pmu_->Monitor(getName(), "06 rob full", 1);
+            }
+            if (dispatch_credit_ < produce_num_max) {
+                pmu_->Monitor(getName(), "07 dispatch loss", produce_num_max-dispatch_credit_);
+            }
+            if (dispatch_credit_ == 0) {
+                pmu_->Monitor(getName(), "08 dispatch full", 1);
+            }
+            if (ldq_credit_ < produce_num_max && !is_perfect_lsu_) {
+                pmu_->Monitor(getName(), "09 ldq loss", produce_num_max-ldq_credit_);
+            }
+            if (stq_credit_ < produce_num_max && !is_perfect_lsu_) {
+                pmu_->Monitor(getName(), "10 stq loss", produce_num_max-stq_credit_);
+            }
+        }
     }
 }

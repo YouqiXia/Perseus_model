@@ -28,21 +28,21 @@ namespace TimingModel {
 
         static constexpr char name[] = "pmu";
 
-        enum class Mode { MAX };
-
         PmuUnit(sparta::TreeNode *node, const PmuUnitParam *p);
 
         ~PmuUnit();
 
         bool IsPmuOn() { return pmu_on_; }
 
-        void TurnOn() { pmu_on_ = true; }
+        bool IsTurnOffNextCycle() { return pmu_end_; }
+
+        void TurnOn() { pmu_end_ = false; }
+
+        void TurnOffNextCycle() { pmu_end_ = true; }
 
         void TurnOff() { pmu_on_ = false; }
 
         void Monitor(std::string instance_name, std::string perf_stat, uint64_t num);
-
-        void Monitor(std::string instance_name, std::string perf_stat, uint64_t num, Mode mode);
 
         void AllocateHardenParam(std::string instance_name, uint64_t num);
 
@@ -50,6 +50,7 @@ namespace TimingModel {
 
     private:
         bool pmu_on_;
+        bool pmu_end_ = true;
 
         std::map<std::string, uint64_t> performance_map_;
 

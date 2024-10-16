@@ -48,6 +48,8 @@ namespace TimingModel {
     private:
         void Startup_();
 
+        void PmuMonitor_();
+
     public:
     // ports
         sparta::DataOutPort<InstGroupPtr> fetch_backend_inst_out
@@ -72,6 +74,9 @@ namespace TimingModel {
 
         sparta::SingleCycleUniqueEvent<sparta::SchedulingPhase::Trigger> startup_event_
             {&unit_event_set_, "startup_event", CREATE_SPARTA_HANDLER(PerfectFrontend, Startup_)};
+
+        sparta::SingleCycleUniqueEvent<sparta::SchedulingPhase::PostTick> pmu_event
+            {&unit_event_set_, "pmu_event", CREATE_SPARTA_HANDLER(PerfectFrontend, PmuMonitor_)};
 
     private:
         MavisUnit* mavis_ = nullptr;

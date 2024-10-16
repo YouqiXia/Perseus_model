@@ -56,36 +56,13 @@ namespace TimingModel {
         pmu_ = getPmuUnit(getContainer());
         InitCredit_();
         if (pmu_->IsPmuOn()) {
+            pmu_->TurnOn();
             pmu_event.schedule(sparta::Clock::Cycle(1));
         }
     }
 
     void Rob::InitCredit_() {
         rob_preceding_credit_out.send(rob_depth_, sparta::Clock::Cycle(1));
-    }
-
-    void Rob::PmuMonitor_() {
-        if (!pmu_->IsPmuOn()) {
-            return;
-        }
-
-        if (rob_.empty()) {
-            empty_cycle_count_++;
-            pmu_->Monitor(getName(), "rob empty", 1);
-        }
-
-        if (empty_cycle_count_ > 500) {
-            pmu_->TurnOff();
-        }
-
-        if (rob_.size() == rob_depth_) {
-            pmu_->Monitor(getName(), "rob full", 1);
-        }
-
-        pmu_->Monitor(getName(), "rob size", rob_.size());
-        pmu_->Monitor(getName(), "rob max", rob_.size(), PmuUnit::Mode::MAX);
-
-        pmu_event.schedule(sparta::Clock::Cycle(1));
     }
 
     void Rob::HandleFlush_(const TimingModel::FlushingCriteria &flush_criteria) {
@@ -103,7 +80,6 @@ namespace TimingModel {
             ILOG("get inst from preceding: " << inst_ptr);
         }
         commit_event.schedule(0);
-        pmu_->TurnOn();
     }
 
     void Rob::Finish_(const TimingModel::InstGroupPtr &inst_group_ptr) {
@@ -128,7 +104,19 @@ namespace TimingModel {
     }
 
     void Rob::Commit_() {
-        pmu_->Monitor(getName(), "event", 1);
+        if (pmu_->IsPmuOn()) {
+            pmu_event.cancel();
+            pmu_event.schedule(sparta::Clock::Cycle(1));
+        }
+        pmu_->Monitor(getName(), "1 event", 1);
+
+        if (rob_.size() < issue_width_) {
+            pmu_->Monitor(getName(), "3 queue loss", issue_width_-rob_.size());
+        }
+        if (rob_.size() == 0) {
+            pmu_->Monitor(getName(), "4 queue empty", 1);
+        }
+
         InstGroupPtr inst_group_ptr =
                 sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);
         InstGroupPtr inst_bpu_group_ptr =
@@ -136,11 +124,8 @@ namespace TimingModel {
         uint64_t issue_num = std::min(issue_width_, uint64_t(rob_.size()));
         bool do_flush = false;
         while(issue_num > 0) {
-            if (rob_.empty()) {
-                break;
-            }
-
             if (!rob_.front().finish) {
+                pmu_->Monitor(getName(), "5 unfinished loss", issue_num);
                 break;
             }
 
@@ -156,6 +141,7 @@ namespace TimingModel {
             if (rob_.front().inst_ptr->getIsMissPrediction()) {
                 do_flush = true;
                 rob_redirect_pc_inst_out.send(rob_.front().inst_ptr);
+                pmu_->Monitor(getName(), "6 flush loss", issue_num);
                 break;
             }
 
@@ -173,6 +159,8 @@ namespace TimingModel {
         }
 
         uint64_t commit_num = inst_group_ptr->size();
+
+        pmu_->Monitor(getName(), "7 total loss", issue_width_-commit_num);
 
         if (commit_num) {
             rob_preceding_credit_out.send(commit_num, sparta::Clock::Cycle(1));
@@ -209,4 +197,23 @@ namespace TimingModel {
         }
     }
 
+    void Rob::PmuMonitor_() {
+        if (!pmu_->IsPmuOn()) {
+            return;
+        }
+        pmu_->Monitor(getName(), "2 pmu event", 1);
+        pmu_event.schedule(sparta::Clock::Cycle(1));
+
+        pmu_->Monitor(getName(), "7 total loss", issue_width_);
+
+        if (rob_.empty()) {
+            empty_cycle_count_++;
+            pmu_->Monitor(getName(), "3 queue loss", issue_width_);
+            pmu_->Monitor(getName(), "4 queue empty", 1);
+        }
+
+        if (empty_cycle_count_ > 500) {
+            pmu_->TurnOffNextCycle();
+        }
+    }
 }

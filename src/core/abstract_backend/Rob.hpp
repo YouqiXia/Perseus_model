@@ -59,8 +59,6 @@ namespace TimingModel {
     private:
         void Startup_();
 
-        void PmuMonitor_();
-
         void HandleFlush_(const FlushingCriteria&);
 
         void Finish_(const InstGroupPtr&);
@@ -72,6 +70,8 @@ namespace TimingModel {
         void InitCredit_();
 
         void Commit_();
+
+        void PmuMonitor_();
 
     private:
         /* ports */

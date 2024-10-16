@@ -33,6 +33,10 @@ namespace TimingModel {
         }
 
         SendInitCredit_();
+
+        if (pmu_->IsPmuOn()) {
+            pmu_event.schedule(sparta::Clock::Cycle(1));
+        }
     }
 
     void WriteBackStage::SendInitCredit_() {
@@ -68,8 +72,27 @@ namespace TimingModel {
     }
 
     void WriteBackStage::ArbitrateInst_() {
-        pmu_->Monitor(getName(), "event", 1);
-        uint64_t produce_num = issue_num_;
+        if (pmu_->IsPmuOn()) {
+            pmu_event.cancel();
+            pmu_event.schedule(sparta::Clock::Cycle(1));
+        }
+        pmu_->Monitor(getName(), "1 event", 1);
+
+        size_t queue_size_ = 0;
+        for (auto& inst_pair: inst_queue_map_) {
+                queue_size_ += inst_pair.second.size();
+            }
+        if (queue_size_ < issue_num_) {
+            pmu_->Monitor(getName(), "3 queue loss", issue_num_-queue_size_);
+        }
+        if (queue_size_ == 0) {
+            pmu_->Monitor(getName(), "4 queue empty", 1);
+            pmu_->Monitor(getName(), "5 total loss", issue_num_);
+            return;
+        }
+
+        uint64_t produce_num = std::min<uint64_t>(queue_size_, issue_num_);
+        uint64_t consume_num = 0;
         InstGroupPtr inst_group_ptr_tmp =
                 sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);
         for (auto& inst_pair: inst_queue_map_) {
@@ -86,6 +109,7 @@ namespace TimingModel {
                 ILOG(getName() << " arbitrate instructions: " << inst_ptr);
                 --produce_num;
                 consume_per_entry++;
+                consume_num++;
                 credit_pair_ptr->credit++;
             }
 
@@ -94,6 +118,7 @@ namespace TimingModel {
             }
             preceding_write_back_credit_out.send(credit_pair_ptr);
         }
+        pmu_->Monitor(getName(), "5 total loss", issue_num_-consume_num);
 
         if (!inst_group_ptr_tmp->empty()) {
             write_back_following_port_out.send(inst_group_ptr_tmp);
@@ -113,4 +138,15 @@ namespace TimingModel {
         }
     }
 
+    void WriteBackStage::PmuMonitor_() {
+        if (!pmu_->IsPmuOn()) {
+            return;
+        }
+        pmu_->Monitor(getName(), "2 pmu event", 1);
+        pmu_event.schedule(sparta::Clock::Cycle(1));
+
+        pmu_->Monitor(getName(), "5 total loss", issue_num_);
+        pmu_->Monitor(getName(), "3 queue loss", issue_num_);
+        pmu_->Monitor(getName(), "4 queue empty", 1);
+    }
 }

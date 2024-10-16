@@ -44,6 +44,10 @@ namespace TimingModel {
                 inst_generator_ = InstGenerator::createGenerator(mavis_->getFacade(), input_file_, false);
             }
         }
+
+        if (pmu_->IsPmuOn()) {
+            pmu_event.schedule(sparta::Clock::Cycle(1));
+        }
     }
 
     void PerfectFrontend::AcceptCredit(const Credit& credit) {
@@ -79,7 +83,16 @@ namespace TimingModel {
     }
 
     void PerfectFrontend::ProduceInst() {
-        pmu_->Monitor(getName(), "event", 1);
+        if (pmu_->IsPmuOn()) {
+            pmu_event.cancel();
+            pmu_event.schedule(sparta::Clock::Cycle(1));
+        }
+        pmu_->Monitor(getName(), "1 event", 1);
+
+        if (credit_ < issue_num_) {
+            pmu_->Monitor(getName(), "3 backend loss", issue_num_-credit_);
+        }
+        
         uint64_t produce_num = std::min(issue_num_, credit_);
         InstGroupPtr inst_group_ptr =
                 sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);
@@ -129,6 +142,8 @@ namespace TimingModel {
             inst_group_ptr->emplace_back(dinst);
             --credit_;
         }
+        pmu_->Monitor(getName(), "5 total loss", issue_num_-inst_group_ptr->size());
+        pmu_->Monitor(getName(), "4 frontend loss", produce_num+1);
 
         if (credit_ && (false == inst_generator_->isDone())) {
             produce_inst_event_.schedule(1);
@@ -136,4 +151,19 @@ namespace TimingModel {
         fetch_backend_inst_out.send(inst_group_ptr);
     }
 
+    void PerfectFrontend::PmuMonitor_() {
+        if (!pmu_->IsPmuOn()) {
+            return;
+        }
+        pmu_->Monitor(getName(), "2 pmu event", 1);
+        pmu_event.schedule(sparta::Clock::Cycle(1));
+
+        pmu_->Monitor(getName(), "5 total loss", issue_num_);
+
+        if (!credit_) {
+            pmu_->Monitor(getName(), "3 backend loss", issue_num_);
+        } else {
+            pmu_->Monitor(getName(), "4 frontend loss", issue_num_);
+        }
+    }
 }

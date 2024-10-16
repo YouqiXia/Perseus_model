@@ -50,28 +50,11 @@ namespace TimingModel {
         reservation_preceding_credit_out.send(rs_credit_ptr_tmp, sparta::Clock::Cycle(1));
     }
 
-    void ReservationStation::PmuMonitor_() {
-        if (pmu_->IsPmuOn()) {
-            pmu_event.schedule(sparta::Clock::Cycle(1));
-        }
-
-        if (size_ == rs_depth_) {
-            pmu_->Monitor(getName(), "rs full", 1);
-        }
-
-        if (reservation_station_.empty()) {
-            pmu_->Monitor(getName(), "rs empty", 1);
-        }
-
-        pmu_->Monitor(getName(), "rs size", size_);
-        pmu_->Monitor(getName(), "rs max", size_, PmuUnit::Mode::MAX);
-    }
-
     void ReservationStation::AcceptCredit_(const TimingModel::Credit &credit) {
         credit_ += credit;
         ILOG(getName() << " accept credits: " << credit << ", updated credits: " << credit_);
 
-        passing_event.schedule(sparta::Clock::Cycle(1));
+        passing_event.schedule(sparta::Clock::Cycle(0));
     }
 
     void ReservationStation::HandleFlush_(const TimingModel::FlushingCriteria &flush_criteria) {
@@ -84,6 +67,7 @@ namespace TimingModel {
         rs_credit_ptr_tmp->credit = rs_depth_;
         reservation_preceding_credit_out.send(rs_credit_ptr_tmp, sparta::Clock::Cycle(1));
         reservation_station_.clear();
+        size_ = 0;
     }
 
     void ReservationStation::AllocateReStation(const TimingModel::InstGroupPairPtr &inst_group_pair_ptr) {
@@ -138,14 +122,30 @@ namespace TimingModel {
     }
 
     void ReservationStation::PassingInst() {
-        pmu_->Monitor(getName(), "event", 1);
-        if (reservation_station_.empty()) {
-            return;
+        if (pmu_->IsPmuOn()) {
+            pmu_event.cancel();
+            pmu_event.schedule(sparta::Clock::Cycle(1));
+        }
+        pmu_->Monitor(getName(), "1 event", 1);
+
+        if (size_ < issue_num_) {
+            pmu_->Monitor(getName(), "3 queue loss", issue_num_-size_);
+        }
+        if (size_ == 0) {
+            pmu_->Monitor(getName(), "4 queue empty", 1);
         }
         // in-order passing
+        uint64_t produce_num_max = std::min<uint64_t>(size_, issue_num_);
+        if (credit_ < produce_num_max) {
+            pmu_->Monitor(getName(), "5 fu loss", produce_num_max-credit_);
+        }
+        if (credit_ == 0) {
+            pmu_->Monitor(getName(), "6 fu full", 1);
+        }
+
         InstGroupPtr inst_group_tmp_ptr =
                 sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);
-        uint64_t produce_num = std::min(credit_, issue_num_);
+        uint64_t produce_num = std::min(credit_, produce_num_max);
         uint64_t consume_num = 0;
         for (auto &rs_entry: reservation_station_) {
             if (produce_num == 0) {
@@ -166,6 +166,8 @@ namespace TimingModel {
                 SizeDown();
             }
         }
+        pmu_->Monitor(getName(), "7 operand loss", produce_num);
+        pmu_->Monitor(getName(), "8 total loss", issue_num_-consume_num);
 
         CreditPairPtr rs_credit_ptr_tmp =
                 sparta::allocate_sparta_shared_pointer<CreditPair>(*allocator_->credit_pair_allocator);
@@ -186,6 +188,27 @@ namespace TimingModel {
         if (!reservation_station_.empty() && credit_ > 0) {
             passing_event.schedule(sparta::Clock::Cycle(1));
         }
+    }
 
-            }
+    void ReservationStation::PmuMonitor_() {
+        if (!pmu_->IsPmuOn()) {
+            return;
+        }
+        pmu_->Monitor(getName(), "2 pmu event", 1);
+        pmu_event.schedule(sparta::Clock::Cycle(1));
+
+        pmu_->Monitor(getName(), "8 total loss", issue_num_);
+
+        if (size_ < issue_num_) {
+            pmu_->Monitor(getName(), "3 queue loss", issue_num_-size_);
+        }
+        if (size_ == 0) {
+            pmu_->Monitor(getName(), "4 queue empty", 1);
+            return;
+        }
+
+        uint64_t produce_num_max = std::min<uint64_t>(size_, issue_num_);
+        pmu_->Monitor(getName(), "5 fu loss", produce_num_max);
+        pmu_->Monitor(getName(), "6 fu full", 1);
+    }
 }

@@ -10,6 +10,7 @@
 #include "basic/PortInterface.hpp"
 #include "basic/GlobalParamUnit.hpp"
 #include "basic/SelfAllocatorsUnit.hpp"
+#include "simulation/PmuUnit.hpp"
 
 #include <deque>
 
@@ -49,6 +50,11 @@ namespace TimingModel {
 
         void DummyFunc_(const InstGroupPtr&) {}
 
+        void PmuMonitor_();
+        
+        void SizeUp() { ++size_; }
+
+        void SizeDown() { --size_; }
 
     private:
     /* ports */
@@ -80,19 +86,25 @@ namespace TimingModel {
         sparta::PayloadEvent<InstPtr> allocate_event
             {&unit_event_set_, "allocate_event", CREATE_SPARTA_HANDLER_WITH_DATA(PerfectFu, Allocate_delay_, InstPtr)};
 
+        sparta::SingleCycleUniqueEvent<sparta::SchedulingPhase::PostTick> pmu_event
+                {&unit_event_set_, "pmu_event", CREATE_SPARTA_HANDLER(PerfectFu, PmuMonitor_)};
+
 
     private:
         SelfAllocatorsUnit* allocator_;
+        PmuUnit* pmu_;
         GlobalParamUnit::FuLatencyMap fu_latency_map_;
 
     private:
         std::deque<InstPtr> alu_queue_;
 
+        size_t size_ = 0;
+
         const uint32_t alu_depth_;
 
         const uint32_t alu_width_;
 
-        uint32_t credit_ = 0;
+        Credit credit_ = 0;
     };
 
 }
