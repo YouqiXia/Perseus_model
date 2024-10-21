@@ -160,7 +160,7 @@
                     "perfect_fu": {
                         "perfect_fu_0": {
                             "issue_width": 4,
-                            "queue_depth": 8
+                            "queue_depth": 20
                         }
                     }
                 },
