@@ -31,7 +31,6 @@ namespace TimingModel {
 
             PARAMETER(uint64_t, issue_width, 4, "the issuing bandwidth in a cycle")
             PARAMETER(uint64_t, wb_latency, 1, "write back latency")
-            PARAMETER(bool, is_perfect_mode, false, "write back latency")
         };
 
         static const char* name;
@@ -81,8 +80,6 @@ namespace TimingModel {
         
     private:
         uint64_t issue_num_;
-
-        bool is_wb_perfect_;
 
         uint64_t wb_latency_;
 

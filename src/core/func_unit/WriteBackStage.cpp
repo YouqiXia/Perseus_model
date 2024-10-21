@@ -12,8 +12,7 @@ namespace TimingModel {
                                    const TimingModel::WriteBackStage::WriteBackStageParameter *p) :
             sparta::Unit(node),
             issue_num_(p->issue_width),
-            wb_latency_(p->wb_latency),
-            is_wb_perfect_(p->is_perfect_mode)
+            wb_latency_(p->wb_latency)
     {
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(WriteBackStage, Startup_));
         writeback_flush_in.registerConsumerHandler(

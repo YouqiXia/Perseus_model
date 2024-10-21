@@ -14,7 +14,7 @@ First download and build the [Spike](https://github.com/riscv-software-src/riscv
     cd thirdparty/riscv-isa-sim/
     ./build.sh
 
-Then Download and install submodules. The first is pybind11, and tag global to install head file of pybind11 in your .local/ 
+Then Download and install submodules. The first is pybind11, add \[global\] tag to install head file of pybind11 in your .local/ 
 and make sure .local/ is in your PATH
     
     pip install pybind11[global]
