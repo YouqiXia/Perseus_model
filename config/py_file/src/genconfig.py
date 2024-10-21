@@ -90,7 +90,7 @@ if __name__ == "__main__":
     config = Config(units_ = units,
                     factory_ = factory)
     config.gen_units_map_json()
-    config.gen_demo_topo_json()
+    # config.gen_demo_topo_json()
     config.gen_topo_json()
     config.gen_all_topo_json()
 

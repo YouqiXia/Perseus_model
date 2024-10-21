@@ -18,6 +18,7 @@ Then Download and install submodules. The first is pybind11, add \[global\] tag 
 and make sure .local/ is in your PATH
     
     pip install pybind11[global]
+    pip install pybind11-stubgen
 
 We assume that the [Sparta](https://github.com/sparcians/map) environment variable is set to install path.
 
