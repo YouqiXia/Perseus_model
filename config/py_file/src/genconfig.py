@@ -1,12 +1,14 @@
 import unitlib
 import json
 import os
+import subprocess
 
 from simple_arch.simple_arch_factory import SimpleConfigFactory as Factory
 
 class Config:
     def __init__(self, units_, factory_):
         self.units = units_
+        self.factory = factory_
         self._gen_arch(factory_)
         pass
     
@@ -84,15 +86,23 @@ class Config:
             with open(f"{folder_name}/{file_name}.json", "w") as file :
                 json.dump(topology, file)
 
+def test():
+    model = "../../../cmake-build-debug/model"
+    json_file = "../topology.json"
+    trace_file = "../../../traces/dhry_riscv.zstf"
+    command = f"{model} --json {json_file} --workload {trace_file}"
+    subprocess.run(command, shell=True)
+
 if __name__ == "__main__":
     units = unitlib.UnitsSet()
-    factory = Factory()
+    factory = Factory() 
     config = Config(units_ = units,
                     factory_ = factory)
     config.gen_units_map_json()
-    # config.gen_demo_topo_json()
+    config.gen_demo_topo_json()
     config.gen_topo_json()
     config.gen_all_topo_json()
+    test()
 
 
 
