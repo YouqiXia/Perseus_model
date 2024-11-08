@@ -63,7 +63,7 @@ namespace TimingModel {
     void PerfectFu::Allocate_(const TimingModel::InstGroupPtr &inst_group_ptr) {
         for (auto& inst_ptr: *inst_group_ptr) {
             allocate_event.preparePayload(inst_ptr)->
-                schedule(sparta::Clock::Cycle(fu_latency_map_[inst_ptr->getFuType()] - 1));
+                schedule(sparta::Clock::Cycle(inst_ptr->getExecuteTime() - 1));
             SizeUp();
         }
     }
@@ -79,20 +79,20 @@ namespace TimingModel {
             pmu_event.cancel();
             pmu_event.schedule(sparta::Clock::Cycle(1));
         }
-        pmu_->Monitor(getName(), "1 event", 1);
+        pmu_->Monitor(getName(), "event", 1);
 
         if (size_ < alu_width_) {
-            pmu_->Monitor(getName(), "3 queue loss", alu_width_-size_);
+            pmu_->Monitor(getName(), "queue loss", alu_width_-size_);
         }
         if (size_ == 0) {
-            pmu_->Monitor(getName(), "4 queue empty", 1);
-            pmu_->Monitor(getName(), "8 total loss", alu_width_);
+            pmu_->Monitor(getName(), "queue empty", 1);
+            pmu_->Monitor(getName(), "total loss", alu_width_);
             return;
         }
 
         uint64_t produce_num_max = std::min<uint64_t>(size_, alu_width_);
         if (credit_ < produce_num_max) {
-            pmu_->Monitor(getName(), "5 writeback loss", produce_num_max-credit_);
+            pmu_->Monitor(getName(), "writeback loss", produce_num_max-credit_);
         }
 
         InstGroupPairPtr inst_group_tmp_ptr =
@@ -111,15 +111,15 @@ namespace TimingModel {
             --credit_;
             --produce_num;
             if (alu_queue_.front()->getFuType() == FuncType::LDU) {
-                pmu_->Monitor(getName(), "7 load num", 1);
+                pmu_->Monitor(getName(), "load num", 1);
             }
             inst_group_tmp_ptr->inst_group.emplace_back(alu_queue_.front());
             ILOG("write back: " << alu_queue_.front());
             alu_queue_.pop_front();
             SizeDown();
         }
-        pmu_->Monitor(getName(), "6 latency loss", produce_num);
-        pmu_->Monitor(getName(), "8 total loss", alu_width_-inst_group_tmp_ptr->inst_group.size());
+        pmu_->Monitor(getName(), "latency loss", produce_num);
+        pmu_->Monitor(getName(), "total loss", alu_width_-inst_group_tmp_ptr->inst_group.size());
 
         if (!inst_group_tmp_ptr->inst_group.empty()) {
             func_following_finish_out.send(inst_group_tmp_ptr);
@@ -141,23 +141,23 @@ namespace TimingModel {
         if (!pmu_->IsPmuOn()) {
             return;
         }
-        pmu_->Monitor(getName(), "2 pmu event", 1);
+        pmu_->Monitor(getName(), "pmu event", 1);
         pmu_event.schedule(sparta::Clock::Cycle(1));
 
-        pmu_->Monitor(getName(), "8 total loss", alu_width_);
+        pmu_->Monitor(getName(), "total loss", alu_width_);
 
         if (size_ < alu_width_) {
-            pmu_->Monitor(getName(), "3 queue loss", alu_width_-size_);
+            pmu_->Monitor(getName(), "queue loss", alu_width_-size_);
         }
         if (size_ == 0) {
-            pmu_->Monitor(getName(), "4 queue empty", 1);
+            pmu_->Monitor(getName(), "queue empty", 1);
             return;
         }
 
         uint64_t produce_num_max = std::min<uint64_t>(size_, alu_width_);
         if (credit_ < produce_num_max) {
-            pmu_->Monitor(getName(), "5 writeback loss", produce_num_max-credit_);
+            pmu_->Monitor(getName(), "writeback loss", produce_num_max-credit_);
         }
-        pmu_->Monitor(getName(), "6 latency loss", std::min(produce_num_max, credit_));
+        pmu_->Monitor(getName(), "latency loss", std::min(produce_num_max, credit_));
     }
 }

@@ -119,7 +119,7 @@ namespace TimingModel {
             pmu_event.cancel();
             pmu_event.schedule(sparta::Clock::Cycle(1));
         }
-        pmu_->Monitor(getName(), "1 event", 1);
+        pmu_->Monitor(getName(), "event", 1);
 
         uint64_t produce_max = issue_num_;
         uint64_t produce_num = 0;
@@ -133,19 +133,19 @@ namespace TimingModel {
                 }
             }
             if (size_ < issue_width_per_pipe) {
-                pmu_->Monitor(getName(), "3 "+func_pair.first+" queue loss", issue_width_per_pipe-size_);
+                pmu_->Monitor(getName(), func_pair.first+" queue loss", issue_width_per_pipe-size_);
             }
             if (size_ == 0) {
-                pmu_->Monitor(getName(), "4 "+func_pair.first+" queue empty", 1);
+                pmu_->Monitor(getName(), func_pair.first+" queue empty", 1);
                 continue;
             }
 
             uint64_t produce_max_per_pipe = std::min<uint64_t>(size_, issue_width_per_pipe);
             if (credit_map_.at(func_pair.first) < produce_max_per_pipe) {
-                pmu_->Monitor(getName(), "5 "+func_pair.first+" rs loss", produce_max_per_pipe-credit_map_.at(func_pair.first));
+                pmu_->Monitor(getName(), func_pair.first+" rs loss", produce_max_per_pipe-credit_map_.at(func_pair.first));
             }
             if (credit_map_.at(func_pair.first) == 0) {
-                pmu_->Monitor(getName(), "6 "+func_pair.first+" rs full", 1);
+                pmu_->Monitor(getName(), func_pair.first+" rs full", 1);
             }
             if (!credit_map_.at(func_pair.first)) {
                 continue;
@@ -180,7 +180,7 @@ namespace TimingModel {
                 issue_entry_ptr->is_issued = true;
             }
         }
-        pmu_->Monitor(getName(), "7 total loss", issue_num_-produce_num);
+        pmu_->Monitor(getName(), "total loss", issue_num_-produce_num);
 
         if (produce_num) {
             dispatch_preceding_credit_out.send(produce_num, sparta::Clock::Cycle(1));
@@ -249,16 +249,16 @@ namespace TimingModel {
         if (!pmu_->IsPmuOn()) {
             return;
         }
-        pmu_->Monitor(getName(), "2 pmu event", 1);
+        pmu_->Monitor(getName(), "pmu event", 1);
         pmu_event.schedule(sparta::Clock::Cycle(1));
 
-        pmu_->Monitor(getName(), "7 total loss", issue_num_);
+        pmu_->Monitor(getName(), "total loss", issue_num_);
 
         if (inst_queue_.empty()) {
             for (auto &func_pair: global_param_ptr_->getDispatchMap()) {
                 uint32_t issue_width_per_pipe = global_param_ptr_->getDispatchIssueWidthMap().at(func_pair.first);
-                pmu_->Monitor(getName(), "3 "+func_pair.first+" queue loss", issue_width_per_pipe);
-                pmu_->Monitor(getName(), "4 "+func_pair.first+" queue empty", 1);
+                pmu_->Monitor(getName(), func_pair.first+" queue loss", issue_width_per_pipe);
+                pmu_->Monitor(getName(), func_pair.first+" queue empty", 1);
             }
         }
     }

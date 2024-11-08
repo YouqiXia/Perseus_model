@@ -126,21 +126,21 @@ namespace TimingModel {
             pmu_event.cancel();
             pmu_event.schedule(sparta::Clock::Cycle(1));
         }
-        pmu_->Monitor(getName(), "1 event", 1);
+        pmu_->Monitor(getName(), "event", 1);
 
         if (size_ < issue_num_) {
-            pmu_->Monitor(getName(), "3 queue loss", issue_num_-size_);
+            pmu_->Monitor(getName(), "queue loss", issue_num_-size_);
         }
         if (size_ == 0) {
-            pmu_->Monitor(getName(), "4 queue empty", 1);
+            pmu_->Monitor(getName(), "queue empty", 1);
         }
         // in-order passing
         uint64_t produce_num_max = std::min<uint64_t>(size_, issue_num_);
         if (credit_ < produce_num_max) {
-            pmu_->Monitor(getName(), "5 fu loss", produce_num_max-credit_);
+            pmu_->Monitor(getName(), "fu loss", produce_num_max-credit_);
         }
         if (credit_ == 0) {
-            pmu_->Monitor(getName(), "6 fu full", 1);
+            pmu_->Monitor(getName(), "fu full", 1);
         }
 
         InstGroupPtr inst_group_tmp_ptr =
@@ -166,8 +166,8 @@ namespace TimingModel {
                 SizeDown();
             }
         }
-        pmu_->Monitor(getName(), "7 operand loss", produce_num);
-        pmu_->Monitor(getName(), "8 total loss", issue_num_-consume_num);
+        pmu_->Monitor(getName(), "operand loss", produce_num);
+        pmu_->Monitor(getName(), "total loss", issue_num_-consume_num);
 
         CreditPairPtr rs_credit_ptr_tmp =
                 sparta::allocate_sparta_shared_pointer<CreditPair>(*allocator_->credit_pair_allocator);
@@ -194,21 +194,21 @@ namespace TimingModel {
         if (!pmu_->IsPmuOn()) {
             return;
         }
-        pmu_->Monitor(getName(), "2 pmu event", 1);
+        pmu_->Monitor(getName(), "pmu event", 1);
         pmu_event.schedule(sparta::Clock::Cycle(1));
 
-        pmu_->Monitor(getName(), "8 total loss", issue_num_);
+        pmu_->Monitor(getName(), "total loss", issue_num_);
 
         if (size_ < issue_num_) {
-            pmu_->Monitor(getName(), "3 queue loss", issue_num_-size_);
+            pmu_->Monitor(getName(), "queue loss", issue_num_-size_);
         }
         if (size_ == 0) {
-            pmu_->Monitor(getName(), "4 queue empty", 1);
+            pmu_->Monitor(getName(), "queue empty", 1);
             return;
         }
 
         uint64_t produce_num_max = std::min<uint64_t>(size_, issue_num_);
-        pmu_->Monitor(getName(), "5 fu loss", produce_num_max);
-        pmu_->Monitor(getName(), "6 fu full", 1);
+        pmu_->Monitor(getName(), "fu loss", produce_num_max);
+        pmu_->Monitor(getName(), "fu full", 1);
     }
 }

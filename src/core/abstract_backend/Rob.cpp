@@ -108,13 +108,13 @@ namespace TimingModel {
             pmu_event.cancel();
             pmu_event.schedule(sparta::Clock::Cycle(1));
         }
-        pmu_->Monitor(getName(), "1 event", 1);
+        pmu_->Monitor(getName(), "event", 1);
 
         if (rob_.size() < issue_width_) {
-            pmu_->Monitor(getName(), "3 queue loss", issue_width_-rob_.size());
+            pmu_->Monitor(getName(), "queue loss", issue_width_-rob_.size());
         }
         if (rob_.size() == 0) {
-            pmu_->Monitor(getName(), "4 queue empty", 1);
+            pmu_->Monitor(getName(), "queue empty", 1);
         }
 
         InstGroupPtr inst_group_ptr =
@@ -125,7 +125,7 @@ namespace TimingModel {
         bool do_flush = false;
         while(issue_num > 0) {
             if (!rob_.front().finish) {
-                pmu_->Monitor(getName(), "5 unfinished loss", issue_num);
+                pmu_->Monitor(getName(), "unfinished loss", issue_num);
                 break;
             }
 
@@ -141,7 +141,7 @@ namespace TimingModel {
             if (rob_.front().inst_ptr->getIsMissPrediction()) {
                 do_flush = true;
                 rob_redirect_pc_inst_out.send(rob_.front().inst_ptr);
-                pmu_->Monitor(getName(), "6 flush loss", issue_num);
+                pmu_->Monitor(getName(), "flush loss", issue_num);
                 break;
             }
 
@@ -160,7 +160,7 @@ namespace TimingModel {
 
         uint64_t commit_num = inst_group_ptr->size();
 
-        pmu_->Monitor(getName(), "7 total loss", issue_width_-commit_num);
+        pmu_->Monitor(getName(), "total loss", issue_width_-commit_num);
 
         if (commit_num) {
             rob_preceding_credit_out.send(commit_num, sparta::Clock::Cycle(1));
@@ -201,15 +201,15 @@ namespace TimingModel {
         if (!pmu_->IsPmuOn()) {
             return;
         }
-        pmu_->Monitor(getName(), "2 pmu event", 1);
+        pmu_->Monitor(getName(), "pmu event", 1);
         pmu_event.schedule(sparta::Clock::Cycle(1));
 
-        pmu_->Monitor(getName(), "7 total loss", issue_width_);
+        pmu_->Monitor(getName(), "total loss", issue_width_);
 
         if (rob_.empty()) {
             empty_cycle_count_++;
-            pmu_->Monitor(getName(), "3 queue loss", issue_width_);
-            pmu_->Monitor(getName(), "4 queue empty", 1);
+            pmu_->Monitor(getName(), "queue loss", issue_width_);
+            pmu_->Monitor(getName(), "queue empty", 1);
         }
 
         if (empty_cycle_count_ > 500) {

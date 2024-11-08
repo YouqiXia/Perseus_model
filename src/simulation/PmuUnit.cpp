@@ -16,14 +16,17 @@ namespace TimingModel {
         auto cycles = getClock()->currentCycle();
         std::cout << "Total cycle: " << cycles << std::endl;
         std::cout << "-------------------------------------------------------------" << std::endl;
-        std::cout << std::setw(50) << std::left << "Performance" << "|" 
+        std::cout << std::setw(12) << " " << std::setw(30) << std::left << "Performance" << "|" 
                   << std::right << std::setw(12) << "Total" << " |" 
                   << std::setw(12) << "Average" << std::endl;
         std::cout << "-------------------------------------------------------------" << std::endl;
-        for (auto& performance_pair: performance_map_) {
-            std::cout << std::setw(50) << std::left << performance_pair.first << "|"
-                      << std::right << std::setw(12) << performance_pair.second << " |" 
-                      << std::setw(12) << (double)performance_pair.second / cycles << std::endl;
+        for (auto& instance_map: performance_map_) {
+            std::cout << instance_map.first << ":" << std::endl;
+            for (auto& performance_pair: instance_map.second) {
+                std::cout << std::setw(12) << " " << std::setw(30) << std::left << performance_pair.first << "|"
+                          << std::right << std::setw(12) << performance_pair.second << " |" 
+                          << std::setw(12) << (double)performance_pair.second / cycles << std::endl;
+            }
         }
         std::cout << "================================================================" << std::endl;
     }
@@ -33,21 +36,7 @@ namespace TimingModel {
             return;
         }
 
-        performance_map_[instance_name + ":" + perf_stat] += num;
-    }
-
-    void PmuUnit::AllocateHardenParam(std::string instance_name, uint64_t num) {
-        if (!pmu_on_) {
-            return;
-        }
-        
-        if (harden_param_map_.find(instance_name) == harden_param_map_.end()) {
-            harden_param_map_[instance_name] = num;
-        }
-    }
-
-    uint64_t PmuUnit::GetHardenParam(std::string instance_name) {
-        return harden_param_map_.at(instance_name);
+        performance_map_[instance_name][perf_stat] += num;
     }
 
     PmuUnit* getPmuUnit(sparta::TreeNode *node){

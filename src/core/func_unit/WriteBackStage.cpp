@@ -75,18 +75,18 @@ namespace TimingModel {
             pmu_event.cancel();
             pmu_event.schedule(sparta::Clock::Cycle(1));
         }
-        pmu_->Monitor(getName(), "1 event", 1);
+        pmu_->Monitor(getName(), "event", 1);
 
         size_t queue_size_ = 0;
         for (auto& inst_pair: inst_queue_map_) {
                 queue_size_ += inst_pair.second.size();
             }
         if (queue_size_ < issue_num_) {
-            pmu_->Monitor(getName(), "3 queue loss", issue_num_-queue_size_);
+            pmu_->Monitor(getName(), "queue loss", issue_num_-queue_size_);
         }
         if (queue_size_ == 0) {
-            pmu_->Monitor(getName(), "4 queue empty", 1);
-            pmu_->Monitor(getName(), "5 total loss", issue_num_);
+            pmu_->Monitor(getName(), "queue empty", 1);
+            pmu_->Monitor(getName(), "total loss", issue_num_);
             return;
         }
 
@@ -117,7 +117,7 @@ namespace TimingModel {
             }
             preceding_write_back_credit_out.send(credit_pair_ptr);
         }
-        pmu_->Monitor(getName(), "5 total loss", issue_num_-consume_num);
+        pmu_->Monitor(getName(), "total loss", issue_num_-consume_num);
 
         if (!inst_group_ptr_tmp->empty()) {
             write_back_following_port_out.send(inst_group_ptr_tmp);
@@ -141,11 +141,11 @@ namespace TimingModel {
         if (!pmu_->IsPmuOn()) {
             return;
         }
-        pmu_->Monitor(getName(), "2 pmu event", 1);
+        pmu_->Monitor(getName(), "pmu event", 1);
         pmu_event.schedule(sparta::Clock::Cycle(1));
 
-        pmu_->Monitor(getName(), "5 total loss", issue_num_);
-        pmu_->Monitor(getName(), "3 queue loss", issue_num_);
-        pmu_->Monitor(getName(), "4 queue empty", 1);
+        pmu_->Monitor(getName(), "total loss", issue_num_);
+        pmu_->Monitor(getName(), "queue loss", issue_num_);
+        pmu_->Monitor(getName(), "queue empty", 1);
     }
 }
