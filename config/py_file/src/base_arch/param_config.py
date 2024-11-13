@@ -13,10 +13,10 @@ class ParamConfig:
     def _gen_fu_params(self, hierarchy, instances, arch_config):
         dispatch_map = []
         for (instance_name, param), fu_type_array in \
-            zip(instances[unitlib.units.reservation_station].items(), arch_config.get_dispatch_map()):
-            dispatch_map.append(instance_name)
+            zip(instances[unitlib.units.scheduler].items(), arch_config.get_dispatch_map()):
+            dispatch_map.append(f"{instances['instance_topo']['retable'][instance_name]}")
             dispatch_map.append("|")
-            dispatch_map.append(f"{param[unitlib.params.reservation_station.issue_width]}")
+            dispatch_map.append(f"{param[unitlib.params.scheduler.issue_width]}")
             dispatch_map.append("|")
             dispatch_map = dispatch_map + fu_type_array
             dispatch_map.append("|")
@@ -26,7 +26,7 @@ class ParamConfig:
             
         write_back_map = []
         for instance_name, param in instances[unitlib.units.perfect_fu].items():
-            write_back_map.append(instance_name)
+            write_back_map.append(f"{instances['instance_topo']['retable'][instance_name]}")
             write_back_map.append("|")
             write_back_map.append(f"{param[unitlib.params.perfect_fu.issue_width]}")
             write_back_map.append("|")
@@ -81,13 +81,7 @@ class ParamConfig:
         elif isinstance(map, list):
             for member in map:
                 if isinstance(member, dict) or isinstance(member, list):
-                    if member == unit_name and not find:
-                        find = True
-                        if self._modify_unit_params(member, unit_name, param_name, data, find):
-                            map[key] = data
-                        find = False
-                    else:
-                        self._modify_unit_params(member, unit_name, param_name, data, find)
+                    self._modify_unit_params(member, unit_name, param_name, data, find)
         return
     
     def _modify_instance_param(self, map, instance_name, param_name, data, find = False):

@@ -5,7 +5,9 @@ import copy
 class SimpleParamConfig(param_config.ParamConfig): 
     def gen_params(self, hierarchy, instances, arch_config):
         self._gen_base_params(hierarchy, arch_config)
+        self._gen_perfect_params(hierarchy, arch_config)
         self._gen_fu_params(hierarchy, instances, arch_config)
+        self._gen_rank_params(hierarchy, instances)
         self._pmu(hierarchy = hierarchy,
                   On = True)
         
@@ -23,11 +25,36 @@ class SimpleParamConfig(param_config.ParamConfig):
         
         self._modify_unit_params(hierarchy, unitlib.units.dispatch_stage, unitlib.params.dispatch_stage.queue_depth, 16)
         
-        self._modify_unit_params(hierarchy, unitlib.units.reservation_station, unitlib.params.reservation_station.queue_depth, 128)
+        self._modify_unit_params(hierarchy, unitlib.units.scheduler, unitlib.params.scheduler.queue_depth, 128)
+        # self._modify_unit_params(hierarchy, unitlib.units.scheduler, unitlib.params.scheduler.issue_width, 2)
         
-        self._modify_unit_params(hierarchy, unitlib.units.perfect_fu, unitlib.params.reservation_station.queue_depth, 20)
+        self._modify_unit_params(hierarchy, unitlib.units.physical_regfile, unitlib.params.physical_regfile.latency, 0)
+        
+        # self._modify_unit_params(hierarchy, unitlib.units.perfect_fu, unitlib.params.scheduler.issue_width, 2)
+        self._modify_unit_params(hierarchy, unitlib.units.perfect_fu, unitlib.params.scheduler.queue_depth, 20)
         return hierarchy
+    
+    def _gen_perfect_params(self, hierarchy, arch_config):
+        # global param
+        mem_ptr_num = 3000000
+        self._modify_unit_params(hierarchy, unitlib.units.self_allocators, unitlib.params.self_allocators.inst_max_num, mem_ptr_num)
+        self._modify_unit_params(hierarchy, unitlib.units.self_allocators, unitlib.params.self_allocators.inst_arch_info_max_num, mem_ptr_num)
+        self._modify_unit_params(hierarchy, unitlib.units.self_allocators, unitlib.params.self_allocators.inst_group_pair_max_num, mem_ptr_num)
+        self._modify_unit_params(hierarchy, unitlib.units.self_allocators, unitlib.params.self_allocators.inst_group_max_num, mem_ptr_num)
+        self._modify_unit_params(hierarchy, unitlib.units.self_allocators, unitlib.params.self_allocators.credit_pair_max_num, mem_ptr_num)
+        # unit param
+        self._modify_unit_params(hierarchy, unitlib.units.rob, unitlib.params.rob.queue_depth, int(mem_ptr_num / 2))
+        
+        self._modify_unit_params(hierarchy, unitlib.units.dispatch_stage, unitlib.params.dispatch_stage.queue_depth, 128)
+        
+        self._modify_unit_params(hierarchy, unitlib.units.scheduler, unitlib.params.scheduler.queue_depth, int(mem_ptr_num / 4))
 
+    def _gen_rank_params(self, hierarchy, instances):
+        for unit_name, count_map in instances["instance_topo"]["table"].items():
+            for count, instance_name in count_map.items():
+                self._modify_instance_param(hierarchy, instance_name, "pipe_rank", count)
+        
+        
     def gen_all_exploration_params(self, hierarchy, instances, arch_config):
         # TODO: 改成递归调用
         hierarchy_map = {}
@@ -59,7 +86,7 @@ class SimpleParamConfig(param_config.ParamConfig):
             
                     for scheduler_size in scheduler_size_range:
                         tmp_hierarchy_3 = copy.deepcopy(tmp_hierarchy_2)
-                        self._modify_unit_params(tmp_hierarchy_3, unitlib.units.reservation_station, unitlib.params.reservation_station.queue_depth, scheduler_size)
+                        self._modify_unit_params(tmp_hierarchy_3, unitlib.units.scheduler, unitlib.params.scheduler.queue_depth, scheduler_size)
                         file_name_3 = f"{file_name_2}_rs{scheduler_size}"
                         
                         hierarchy_map[file_name_3] = tmp_hierarchy_3

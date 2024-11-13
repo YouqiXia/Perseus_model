@@ -45,8 +45,8 @@ class Config:
                                       self.config_arch)
         topology = {"hierarchy": self.config_instances.get_hierarchy(),
                     # for debug
-                    # "instances": self.config_instances.get_instances(),
-                    # "unbinding": self.config_ports.get_unbinding_ports(),
+                    "instances": self.config_instances.get_instances(),
+                    "unbinding": self.config_ports.get_unbinding_ports(),
                     #
                     "binding"  : self.config_ports.get_binding_topo()}
         with open("../topology.json", "w") as file :
@@ -89,7 +89,8 @@ class Config:
 def test():
     model = "../../../cmake-build-debug/model"
     json_file = "../topology.json"
-    trace_file = "../../../traces/dhry_riscv.zstf"
+    trace_file = "../../../../traces/602.gcc_s_sp0.zstf"
+    # trace_file = "../../../traces/dhry_riscv.zstf"
     command = f"{model} --json {json_file} --workload {trace_file}"
     subprocess.run(command, shell=True)
 
@@ -101,7 +102,7 @@ if __name__ == "__main__":
     config.gen_units_map_json()
     config.gen_demo_topo_json()
     config.gen_topo_json()
-    config.gen_all_topo_json()
+    # config.gen_all_topo_json()
     test()
 
 

@@ -23,10 +23,11 @@ class SimpleUnitConfig(unit_config.UnitConfig):
         hierarchy["core0"]["frontend"].append(unitlib.units.perfect_frontend)
         
         hierarchy["core0"]["backend"].append(unitlib.units.renaming_stage)
+        hierarchy["core0"]["backend"].append(unitlib.units.busy_table)
         hierarchy["core0"]["backend"].append(unitlib.units.dispatch_stage)
         hierarchy["core0"]["backend"].append(unitlib.units.rob)
         hierarchy["core0"]["backend"].append(unitlib.units.physical_regfile)
-        hierarchy["core0"]["backend"].append(unitlib.units.reservation_station)
+        hierarchy["core0"]["backend"].append(unitlib.units.scheduler)
         
         hierarchy["core0"]["func_units"].append(unitlib.units.perfect_fu)
         hierarchy["core0"]["func_units"].append(unitlib.units.write_back_stage)
