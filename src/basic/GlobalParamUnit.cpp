@@ -19,7 +19,7 @@ namespace TimingModel {
         enum class State {NAME, WIDTH, FU_TYPE};
         State state = State::NAME;
         std::set<FuncType> func_types;
-        std::string following_unit_name;
+        uint64_t pipe_rank;
         uint64_t width = 0;
         for (std::string dispatch_map_info: p->dispatch_map) {
             if (dispatch_map_info == "|") {
@@ -28,14 +28,14 @@ namespace TimingModel {
                 } else if (state == State::WIDTH) {
                     state = State::FU_TYPE;
                 } else {
-                    dispatch_following_map_[following_unit_name] = func_types;
-                    dispatch_issue_width_map_[following_unit_name] = width;
+                    dispatch_following_map_[pipe_rank] = func_types;
+                    dispatch_issue_width_map_[pipe_rank] = width;
                     func_types.clear();
                     state = State::NAME;
                 }
             } else {
                 if (state == State::NAME) {
-                    following_unit_name = dispatch_map_info;
+                    pipe_rank = std::atoi(dispatch_map_info.c_str());
                 } else if (state == State::WIDTH) {
                    width = std::atoi(dispatch_map_info.c_str());
                 } else {
@@ -48,19 +48,19 @@ namespace TimingModel {
     void GlobalParamUnit::ParseWriteBackMap_(const TimingModel::GlobalParamUnit::GlobalParameter *p) {
         enum class State {NAME, WIDTH};
         State state = State::NAME;
-        std::string following_unit_name;
+        uint64_t pipe_rank;
         uint32_t width = 0;
         for (std::string dispatch_map_info: p->write_back_map) {
             if (dispatch_map_info == "|") {
                 if (state == State::NAME) {
                     state = State::WIDTH;
                 } else {
-                    write_back_map_[following_unit_name] = width;
+                    write_back_map_[pipe_rank] = width;
                     state = State::NAME;
                 }
             } else {
                 if (state == State::NAME) {
-                    following_unit_name = dispatch_map_info;
+                    pipe_rank = std::atoi(dispatch_map_info.c_str());
                 } else {
                    width = std::atoi(dispatch_map_info.c_str());
                 //    width = std::stoi(dispatch_map_info);

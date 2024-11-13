@@ -7,6 +7,7 @@ namespace TimingModel {
 
     PerfectFu::PerfectFu(sparta::TreeNode* node, const PerfectFuParameter* p) :
         sparta::Unit(node),
+        pipe_rank_(p->pipe_rank),
         alu_width_(p->issue_width),
         alu_depth_(p->queue_depth),
         alu_queue_()
@@ -39,20 +40,28 @@ namespace TimingModel {
     }
 
     void PerfectFu::SendInitCredit_() {
-        func_rs_credit_out.send(alu_depth_, sparta::Clock::Cycle(1));
+        CreditPairPtr rs_credit_ptr =
+                sparta::allocate_sparta_shared_pointer<CreditPair>(*allocator_->credit_pair_allocator);
+        rs_credit_ptr->pipe_rank = pipe_rank_;
+        rs_credit_ptr->credit = alu_depth_;
+        func_rs_credit_out.send(rs_credit_ptr, sparta::Clock::Cycle(1));
     }
 
     void PerfectFu::HandleFlush_(const FlushingCriteria& flush_criteria) {
         ILOG(getName() << " is flushed");
+        CreditPairPtr rs_credit_ptr =
+                sparta::allocate_sparta_shared_pointer<CreditPair>(*allocator_->credit_pair_allocator);
+        rs_credit_ptr->pipe_rank = pipe_rank_;
+        rs_credit_ptr->credit = alu_queue_.size();
 
-        func_rs_credit_out.send(alu_queue_.size(), sparta::Clock::Cycle(1));
+        func_rs_credit_out.send(rs_credit_ptr, sparta::Clock::Cycle(1));
         alu_queue_.clear();
         allocate_event.cancel();
         size_ = 0;
     }
 
     void PerfectFu::AcceptCredit_(const CreditPairPtr& credit_pair_ptr) {
-        if (credit_pair_ptr->name != getName()) {
+        if (credit_pair_ptr->pipe_rank != pipe_rank_) {
             return;
         }
         credit_ += credit_pair_ptr->credit;
@@ -62,6 +71,9 @@ namespace TimingModel {
 
     void PerfectFu::Allocate_(const TimingModel::InstGroupPtr &inst_group_ptr) {
         for (auto& inst_ptr: *inst_group_ptr) {
+            if (inst_ptr->getPipeRank() != pipe_rank_) {
+                continue;
+            }
             allocate_event.preparePayload(inst_ptr)->
                 schedule(sparta::Clock::Cycle(inst_ptr->getExecuteTime() - 1));
             SizeUp();
@@ -97,7 +109,7 @@ namespace TimingModel {
 
         InstGroupPairPtr inst_group_tmp_ptr =
                 sparta::allocate_sparta_shared_pointer<InstGroupPair>(*allocator_->inst_group_pair_allocator);
-        inst_group_tmp_ptr->name = getName();
+        inst_group_tmp_ptr->pipe_rank = pipe_rank_;
         uint64_t produce_num = std::min(credit_, produce_num_max);
         for (int i = 0; i < alu_width_; i++) {
             if (alu_queue_.empty()) {
@@ -127,7 +139,11 @@ namespace TimingModel {
         }
 
         if (!inst_group_tmp_ptr->inst_group.empty()) {
-            func_rs_credit_out.send(inst_group_tmp_ptr->inst_group.size(), sparta::Clock::Cycle(1));
+            CreditPairPtr rs_credit_ptr =
+                    sparta::allocate_sparta_shared_pointer<CreditPair>(*allocator_->credit_pair_allocator);
+            rs_credit_ptr->pipe_rank = pipe_rank_;
+            rs_credit_ptr->credit = inst_group_tmp_ptr->inst_group.size();
+            func_rs_credit_out.send(rs_credit_ptr, sparta::Clock::Cycle(1));
         }
 
         if (alu_queue_.size() != 0) {

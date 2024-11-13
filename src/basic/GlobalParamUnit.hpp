@@ -59,9 +59,9 @@ namespace TimingModel {
                       std::vector<std::string>({"fu_type", "|", "latency", "|"}), "the latency map for each fu")
 
     };
-        typedef std::map<std::string, std::set<FuncType>> DispatchMap;
-        typedef std::map<std::string, uint32_t> DispatchIssueWidthMap;
-        typedef std::map<std::string, uint32_t> WriteBackMap;
+        typedef std::map<uint64_t, std::set<FuncType>> DispatchMap;
+        typedef std::map<uint64_t, uint32_t> DispatchIssueWidthMap;
+        typedef std::map<uint64_t, uint32_t> WriteBackMap;
         typedef std::unordered_map<FuncType, uint32_t> FuLatencyMap;
 
         static const char* name;

@@ -17,9 +17,10 @@
 #include "core/abstract_backend/RenamingStage.hpp"
 #include "core/abstract_backend/Rob.hpp"
 #include "core/abstract_backend/DispatchStage.hpp"
-#include "core/abstract_backend/PhysicalRegfile.hpp"
-#include "core/abstract_backend/ReservationStation.hpp"
+#include "core/abstract_backend/PhysicalRegfileUnit.hpp"
+#include "core/abstract_backend/SchedulerUnit.hpp"
 #include "core/abstract_backend/FlushManager.hpp"
+#include "core/abstract_backend/BusyTableUnit.hpp"
 
 #include "core/func_unit/PerfectFu.hpp"
 #include "core/func_unit/WriteBackStage.hpp"
@@ -60,6 +61,10 @@ namespace TimingModel {
                              new sparta::ResourceFactory<TimingModel::RenamingStage,
                                      TimingModel::RenamingStage::RenamingParameter>);
 
+            RegisterResource_(TimingModel::BusyTableUnit::name ,
+                              new sparta::ResourceFactory<TimingModel::BusyTableUnit,
+                                      TimingModel::BusyTableUnit::BusyTableParameter>);
+
             RegisterResource_(TimingModel::Rob::name ,
                              new sparta::ResourceFactory<TimingModel::Rob,
                                      TimingModel::Rob::RobParameter>);
@@ -68,13 +73,13 @@ namespace TimingModel {
                              new sparta::ResourceFactory<TimingModel::DispatchStage,
                                      TimingModel::DispatchStage::DispatchStageParameter>);
 
-            RegisterResource_(TimingModel::PhysicalRegfile::name ,
-                             new sparta::ResourceFactory<TimingModel::PhysicalRegfile,
-                                     TimingModel::PhysicalRegfile::PhysicalRegfileParameter>);
+            RegisterResource_(TimingModel::PhysicalRegfileUnit::name ,
+                             new sparta::ResourceFactory<TimingModel::PhysicalRegfileUnit,
+                                     TimingModel::PhysicalRegfileUnit::PhysicalRegfileParameter>);
 
-            RegisterResource_(TimingModel::ReservationStation::name ,
-                             new sparta::ResourceFactory<TimingModel::ReservationStation,
-                                     TimingModel::ReservationStation::ReservationStationParameter>);
+            RegisterResource_(TimingModel::SchedulerUnit::name ,
+                             new sparta::ResourceFactory<TimingModel::SchedulerUnit,
+                                     TimingModel::SchedulerUnit::ReservationStationParameter>);
 
             RegisterResource_(TimingModel::FlushManager::name ,
                              new sparta::ResourceFactory<TimingModel::FlushManager,

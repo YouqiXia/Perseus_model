@@ -15,6 +15,8 @@ typedef uint64_t Addr_t;
 
 typedef uint32_t Inst_t;
 
+typedef uint64_t GroupId_t;
+
 typedef uint16_t CompressedInst_t;
 
 typedef uint8_t  IsaRegId_t;
@@ -140,14 +142,15 @@ struct InstInfo {
     IsaRegId_t   IsaRd  = 0;
     Imm_t        imm    = 0;
 
-    RegType_t    Rs1Type;
-    RegType_t    Rs2Type;
-    RegType_t    RdType;
+    RegType_t    Rs1Type = RegType_t::NONE;
+    RegType_t    Rs2Type = RegType_t::NONE;
+    RegType_t    RdType = RegType_t::NONE;
 
     FuncType     Fu;
     uint8_t      SubOp;
 
     /* Scheduler info */
+    uint64_t     pipe_rank;
     RobIdx_t     RobTag;
     bool         IsRs1Forward = false;
     bool         IsRs2Forward = false;
@@ -158,6 +161,12 @@ struct InstInfo {
     PhyRegId_t   PhyRs2 = 0;
     PhyRegId_t   PhyRd = 0;
     PhyRegId_t   LPhyRd = 0;
+
+    GroupId_t   group_idx;
+    bool is_rs1_cross_group = false;
+    bool is_rs2_cross_group = false;
+
+    std::vector<PhyRegId_t>* last_phy_rds;
 
     /* function unit info */
     xReg_t       Operand1 = 0;

@@ -23,6 +23,7 @@ namespace TimingModel {
                 sparta::ParameterSet(n)
             {}
 
+            PARAMETER(uint64_t, pipe_rank, 0, "the rank of which pipeline the unit is")
             PARAMETER(uint32_t, issue_width, 1, "alu issue width")
             PARAMETER(uint32_t, queue_depth, 1, "alu queue width")
         };
@@ -67,7 +68,7 @@ namespace TimingModel {
         sparta::DataInPort<CreditPairPtr> write_back_func_credit_in
                 {&unit_port_set_, "write_back_func_credit_in", sparta::SchedulingPhase::Tick, 1};
 
-        sparta::DataOutPort<Credit> func_rs_credit_out
+        sparta::DataOutPort<CreditPairPtr> func_rs_credit_out
                 {&unit_port_set_, "func_rs_credit_out"};
 
         sparta::DataOutPort<InstGroupPairPtr> func_following_finish_out
@@ -99,6 +100,8 @@ namespace TimingModel {
         std::deque<InstPtr> alu_queue_;
 
         size_t size_ = 0;
+
+        const uint64_t pipe_rank_;
 
         const uint32_t alu_depth_;
 

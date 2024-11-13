@@ -85,6 +85,7 @@ namespace TimingModel {
     void Rob::Finish_(const TimingModel::InstGroupPtr &inst_group_ptr) {
         for (auto& inst_ptr: *inst_group_ptr) {
             ILOG("rob finish instruction: " << inst_ptr);
+            sparta_assert(rob_.access(inst_ptr->getRobTag()).finish == false, "executing an instruction multiple times");
             rob_.access(inst_ptr->getRobTag()).finish = true;
         }
     }

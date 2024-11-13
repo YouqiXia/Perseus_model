@@ -17,9 +17,7 @@ namespace TimingModel {
     class Freelist {
     public:
         Freelist(const std::string name,
-                 const uint32_t depth,
-                 const sparta::Clock * clk,
-                 sparta::StatisticSet * statset = nullptr);
+                 const uint32_t depth);
 
         bool IsEmpty();
 

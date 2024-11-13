@@ -8,9 +8,7 @@
 namespace TimingModel {
 
     Freelist::Freelist(const std::string name,
-                       const uint32_t depth,
-                       const sparta::Clock * clk,
-                       sparta::StatisticSet * stat_set) :
+                       const uint32_t depth) :
         free_list_(),
         free_list_backup_(),
         free_list_idx_vector_(depth, 0),

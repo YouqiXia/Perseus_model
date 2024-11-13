@@ -15,7 +15,7 @@
 namespace TimingModel {
 
     struct CreditPair {
-        std::string name;
+        uint64_t pipe_rank;
         Credit credit;
     };
 
@@ -23,7 +23,7 @@ namespace TimingModel {
     using CreditPairAllocator = sparta::SpartaSharedPointerAllocator<CreditPair>;
 
     struct InstGroupPair {
-        std::string name;
+        uint64_t pipe_rank;
         std::vector<InstPtr> inst_group;
     };
 

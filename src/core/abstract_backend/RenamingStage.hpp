@@ -41,9 +41,10 @@ public:
 
     ~RenamingStage() = default;
 
-private:
+private: // port binding implementation
     void Startup_();
 
+    // credit
     void AcceptRobCredit_(const Credit&);
 
     void AcceptDispatchCredit_(const Credit&);
@@ -51,24 +52,34 @@ private:
     void AcceptLoadQueueCredit_(const Credit&);
 
     void AcceptStoreQueueCredit_(const Credit&);
-
-    void AcceptLsuAllocateIdx(const InstGroupPtr&);
-
-    void InitCredit_();
+    // credit
 
     void AllocateInst_(const InstGroupPtr&);
 
-    void RenameInst_();
-
     void HandleFlush_(const FlushingCriteria&);
-
-    void RenameInstImp_(const InstPtr&);
-
-    void RollBack_(const InstGroupPtr&);
 
     void RobCommit_(const InstGroupPtr&);
 
-    void FlushCredit_();
+private: // inner implementation
+    void InitCredit_();
+
+    void ProcessInst_();
+
+    uint64_t GetProduceNum_();
+
+    void RenameInst_(uint64_t produce_num,
+                     InstGroupPtr processed_group_ptr,
+                     InstGroupPtr lsu_processed_group_ptr);
+
+    bool RenameInstImp_(const InstPtr&);
+
+    void CheckRegStatus_(InstGroupPtr processed_group_ptr);
+
+    void DataTransfer_(InstGroupPtr processed_group_ptr,
+                       InstGroupPtr lsu_processed_group_ptr);
+
+private: // pmu implementation
+    void PmuBandwidthAcc_(uint64_t produce_num_max, uint64_t produce_num);
 
     void PmuMonitor_();
 
@@ -109,13 +120,13 @@ private:
        sparta::DataInPort<Credit> lsu_renaming_stq_credit_in
            {&unit_port_set_, "lsu_renaming_stq_credit_in", sparta::SchedulingPhase::Tick, 0};
 
-       sparta::DataInPort<InstGroupPtr> lsu_renaming_allocate_in
-           {&unit_port_set_, "lsu_renaming_allocate_in", sparta::SchedulingPhase::Tick, 0};
-
+       // with busy table
+       sparta::DataOutPort<InstGroupPtr> renaming_check_busy_out
+               {&unit_port_set_, "renaming_check_busy_out"};
 
     // events
-        sparta::SingleCycleUniqueEvent<> rename_event
-            {&unit_event_set_, "rename_event", CREATE_SPARTA_HANDLER(RenamingStage, RenameInst_)};
+        sparta::SingleCycleUniqueEvent<> process_event
+            {&unit_event_set_, "process_event", CREATE_SPARTA_HANDLER(RenamingStage, ProcessInst_)};
 
         sparta::SingleCycleUniqueEvent<sparta::SchedulingPhase::PostTick> pmu_event
                 {&unit_event_set_, "pmu_event", CREATE_SPARTA_HANDLER(RenamingStage, PmuMonitor_)};
@@ -129,15 +140,13 @@ private:
 
         Freelist free_list_;
 
-        RenamingTable renaming_table_;
+        RenamingTable<PhyRegId_t> renaming_table_;
 
         const uint64_t issue_width_;
 
         const uint64_t renaming_stage_queue_depth_;
 
         const bool is_perfect_lsu_;
-
-        Credit physical_reg_credit_;
 
         Credit dispatch_credit_ = 0;
 

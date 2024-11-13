@@ -176,6 +176,9 @@ namespace TimingModel
         void setSubOp(uint8_t sub_op) { inst_.SubOp = sub_op; }
         uint8_t getSubOp() const { return inst_.SubOp; }
 
+        void setPipeRank(uint64_t pipe_rank) { inst_.pipe_rank = pipe_rank; }
+        uint64_t getPipeRank() const { return inst_.pipe_rank; }
+
         void setRobTag(uint64_t RobTag) { inst_.RobTag = RobTag; }
         uint64_t getRobTag() const { return inst_.RobTag; }
 
@@ -196,6 +199,18 @@ namespace TimingModel
 
         void setLPhyRd(PhyRegId_t LPhyRd) { inst_.LPhyRd = LPhyRd; }
         uint64_t getLPhyRd() const { return inst_.LPhyRd; }
+
+        void setGroupIdx(PhyRegId_t group_idx) { inst_.group_idx = group_idx; }
+        uint64_t getGroupIdx() const { return inst_.group_idx; }
+
+        void setIsRs1CrossGroup(PhyRegId_t is_rs1_cross_group) { inst_.is_rs1_cross_group = is_rs1_cross_group; }
+        bool isRs1CrossGroup() const { return inst_.is_rs1_cross_group; }
+
+        void setIsRs2CrossGroup(PhyRegId_t is_rs2_cross_group) { inst_.is_rs2_cross_group = is_rs2_cross_group; }
+        bool isRs2CrossGroup() const { return inst_.is_rs2_cross_group; }
+
+        void setLPhyRdVector(std::vector<PhyRegId_t>* last_phy_rds) { inst_.last_phy_rds = last_phy_rds; }
+        std::vector<PhyRegId_t>* getLPhyRdVector() const { return inst_.last_phy_rds; }
 
         void setOperand1(xReg_t Operand1) { inst_.Operand1 = Operand1; }
         xReg_t getOperand1() const { return inst_.Operand1; }

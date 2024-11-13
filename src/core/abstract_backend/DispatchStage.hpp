@@ -33,7 +33,6 @@ namespace TimingModel {
                     sparta::ParameterSet(n) {}
 
             PARAMETER(uint64_t, issue_width, 4, "the issuing bandwidth in a cycle")
-            PARAMETER(uint32_t, phy_reg_num, 64, "the issuing bandwidth in a cycle")
             PARAMETER(uint32_t, queue_depth, 16, "the issuing bandwidth in a cycle")
         };
 
@@ -48,33 +47,31 @@ namespace TimingModel {
 
         DispatchStage(sparta::TreeNode *node, const DispatchStageParameter *p);
 
-    private:
+    private: // port binding implementation
         void Startup_();
 
         void HandleFlush_(const FlushingCriteria&);
 
+        // credit
         void InitCredit_();
 
         void AcceptCredit_(const CreditPairPtr&);
+        // credit
 
         void AllocateInst_(const InstGroupPtr&);
 
-        void CheckRegStatus_();
-
-        void CheckRegStatusImp_(InstPtr&);
-
         void FuncUnitBack_(const InstGroupPtr&);
 
-        void ReadPhyReg_();
+    private: // inner implementation
+        void ProcessInst_();
 
-        void ReadFromPhysicalReg_(const InstGroupPtr&);
-
-        void IssueInst_();
+        void PopDispatchQueue_();
 
         void SelectInst_();
 
-        void PopIssueQueue_();
+        void DispatchInsts_();
 
+    private: // pmu
         void PmuMonitor_();
 
     private:
@@ -112,20 +109,8 @@ namespace TimingModel {
 
 
         // events
-            sparta::SingleCycleUniqueEvent<> dispatch_select_events_
-                {&unit_event_set_, "dispatch_select_events_", CREATE_SPARTA_HANDLER(DispatchStage, SelectInst_)};
-
-            sparta::SingleCycleUniqueEvent<> dispatch_issue_events_
-                {&unit_event_set_, "dispatch_issue_events_", CREATE_SPARTA_HANDLER(DispatchStage, IssueInst_)};
-
-            sparta::SingleCycleUniqueEvent<> dispatch_pop_events_
-                {&unit_event_set_, "dispatch_pop_events_", CREATE_SPARTA_HANDLER(DispatchStage, PopIssueQueue_)};
-
-            sparta::SingleCycleUniqueEvent<> dispatch_scoreboard_events_
-                {&unit_event_set_, "dispatch_scoreboard_events_", CREATE_SPARTA_HANDLER(DispatchStage, CheckRegStatus_)};
-
-            sparta::SingleCycleUniqueEvent<> dispatch_get_operator_events_
-                {&unit_event_set_, "dispatch_get_operator_events_", CREATE_SPARTA_HANDLER(DispatchStage, ReadPhyReg_)};
+            sparta::SingleCycleUniqueEvent<> process_event
+                    {&unit_event_set_, "process_event", CREATE_SPARTA_HANDLER(DispatchStage, ProcessInst_)};
 
             sparta::SingleCycleUniqueEvent<sparta::SchedulingPhase::PostTick> pmu_event
                 {&unit_event_set_, "pmu_event", CREATE_SPARTA_HANDLER(DispatchStage, PmuMonitor_)};
@@ -138,15 +123,13 @@ namespace TimingModel {
     private:
         uint64_t issue_num_;
 
-        std::unordered_map<std::string, Credit> credit_map_;
-
-        Scoreboard scoreboard_;
+        std::unordered_map<uint64_t, Credit> credit_map_;
 
         const uint64_t inst_queue_depth_;
 
         std::deque<IssueQueueEntryPtr> inst_queue_;
 
-        std::unordered_map<std::string, std::vector<InstPtr>> dispatch_pending_queue_;
+        std::unordered_map<uint64_t, std::vector<InstPtr>> dispatch_pending_queue_;
     };
 
 }

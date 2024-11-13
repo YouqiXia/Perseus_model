@@ -11,6 +11,7 @@ namespace TimingModel {
     WriteBackStage::WriteBackStage(sparta::TreeNode *node,
                                    const TimingModel::WriteBackStage::WriteBackStageParameter *p) :
             sparta::Unit(node),
+            pipe_rank_(p->pipe_rank),
             issue_num_(p->issue_width),
             wb_latency_(p->wb_latency)
     {
@@ -42,7 +43,7 @@ namespace TimingModel {
         for (auto pipe_pair: write_back_width_map_){
             CreditPairPtr credit_pair_ptr =
                     sparta::allocate_sparta_shared_pointer<CreditPair>(*allocator_->credit_pair_allocator);
-            credit_pair_ptr->name = pipe_pair.first;
+            credit_pair_ptr->pipe_rank = pipe_pair.first;
             credit_pair_ptr->credit = pipe_pair.second;
             preceding_write_back_credit_out.send(credit_pair_ptr, sparta::Clock::Cycle(1));
         }
@@ -53,7 +54,7 @@ namespace TimingModel {
         for (auto& inst_pair: inst_queue_map_) {
             CreditPairPtr credit_pair_ptr =
                     sparta::allocate_sparta_shared_pointer<CreditPair>(*allocator_->credit_pair_allocator);
-            credit_pair_ptr->name = getName();
+            credit_pair_ptr->pipe_rank = pipe_rank_;
             credit_pair_ptr->credit = inst_pair.second.size();
             preceding_write_back_credit_out.send(credit_pair_ptr);
         }
@@ -62,7 +63,7 @@ namespace TimingModel {
 
     void WriteBackStage::AcceptFuncInst_(const InstGroupPairPtr &inst_group_pair_ptr) {
         auto inst_group_ptr = &inst_group_pair_ptr->inst_group;
-        auto pipe_name = inst_group_pair_ptr->name;
+        auto pipe_name = inst_group_pair_ptr->pipe_rank;
         for (auto& inst_ptr: *inst_group_ptr) {
             ILOG("get instructions: " << inst_ptr);
             inst_queue_map_[pipe_name].emplace_back(inst_ptr);
@@ -97,7 +98,7 @@ namespace TimingModel {
         for (auto& inst_pair: inst_queue_map_) {
             CreditPairPtr credit_pair_ptr =
                     sparta::allocate_sparta_shared_pointer<CreditPair>(*allocator_->credit_pair_allocator);
-            credit_pair_ptr->name = inst_pair.first;
+            credit_pair_ptr->pipe_rank = inst_pair.first;
             credit_pair_ptr->credit = 0;
             uint32_t consume_per_entry = 0;
             for (auto inst_ptr: inst_pair.second) {

@@ -19,9 +19,7 @@ namespace TimingModel {
     class Scoreboard {
     public:
 
-        Scoreboard(const std::string &name,
-                   PhyRegId_t phy_regfile_num,
-                   sparta::log::MessageSource &info_logger);
+        Scoreboard(PhyRegId_t phy_regfile_num);
 
         void Flush();
 

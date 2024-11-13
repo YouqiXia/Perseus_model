@@ -29,6 +29,7 @@ namespace TimingModel {
                     sparta::ParameterSet(n)
             {}
 
+            PARAMETER(uint64_t, pipe_rank, 0, "the rank of which pipeline the unit is")
             PARAMETER(uint64_t, issue_width, 4, "the issuing bandwidth in a cycle")
             PARAMETER(uint64_t, wb_latency, 1, "write back latency")
         };
@@ -79,13 +80,15 @@ namespace TimingModel {
         PmuUnit* pmu_;
         
     private:
-        uint64_t issue_num_;
+        const uint64_t pipe_rank_;
 
-        uint64_t wb_latency_;
+        const uint64_t issue_num_;
 
-        std::map<std::string, std::deque<InstPtr>> inst_queue_map_;
+        const uint64_t wb_latency_;
 
-        std::map<std::string, Credit> write_back_width_map_;
+        std::map<uint64_t , std::deque<InstPtr>> inst_queue_map_;
+
+        std::map<uint64_t , Credit> write_back_width_map_;
     };
 
 }

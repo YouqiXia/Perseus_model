@@ -6,9 +6,7 @@
 
 namespace TimingModel {
 
-    Scoreboard::Scoreboard(const std::string &name,
-                           TimingModel::PhyRegId_t phy_regfile_num,
-                           sparta::log::MessageSource &info_logger) :
+    Scoreboard::Scoreboard(TimingModel::PhyRegId_t phy_regfile_num) :
             score_board_(phy_regfile_num, false),
             phy_regfile_num_(phy_regfile_num)
     {
