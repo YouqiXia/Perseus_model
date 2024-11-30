@@ -1,7 +1,7 @@
 import unitlib
 import base_arch.unit_config as unit_config
 
-class SimpleUnitConfig(unit_config.UnitConfig):
+class UnitConfig(unit_config.UnitConfig):
     def _gen_hierarchy(self, is_gen_static_units):
         hierarchy = {}
         hierarchy["info"] = []

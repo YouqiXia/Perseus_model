@@ -2,7 +2,7 @@ import unitlib
 import base_arch.port_config as port_config
 import numpy as np
 
-class SimplePortConfig(port_config.PortConfig):
+class PortConfig(port_config.PortConfig):
     def _gen_binding_map(self):
         # unitlib.units.scheduler - unitlib.units.perfect_fu
         row = len(self.instances[unitlib.units.scheduler])

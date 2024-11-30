@@ -3,7 +3,8 @@ import json
 import os
 import subprocess
 
-from simple_arch.simple_arch_factory import SimpleConfigFactory as Factory
+from simple_arch.arch_factory import SimpleConfigFactory as Factory
+# from distributed_arch.arch_factory import DistributedConfigFactory as Factory
 
 class Config:
     def __init__(self, units_, factory_):
@@ -89,8 +90,8 @@ class Config:
 def test():
     model = "../../../cmake-build-debug/model"
     json_file = "../topology.json"
-    trace_file = "../../../../traces/602.gcc_s_sp0.zstf"
-    # trace_file = "../../../traces/dhry_riscv.zstf"
+    # trace_file = "../../../../traces/602.gcc_s_sp0.zstf"
+    trace_file = "../../../traces/dhry_riscv.zstf"
     command = f"{model} --json {json_file} --workload {trace_file}"
     subprocess.run(command, shell=True)
 

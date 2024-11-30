@@ -2,10 +2,11 @@ import unitlib
 import base_arch.param_config as param_config
 import copy
 
-class SimpleParamConfig(param_config.ParamConfig): 
+class ParamConfig(param_config.ParamConfig): 
     def gen_params(self, hierarchy, instances, arch_config):
         self._gen_base_params(hierarchy, arch_config)
         self._gen_perfect_params(hierarchy, arch_config)
+        self._modify_config_params(arch_config)
         self._gen_fu_params(hierarchy, instances, arch_config)
         self._gen_rank_params(hierarchy, instances)
         self._pmu(hierarchy = hierarchy,
@@ -17,21 +18,24 @@ class SimpleParamConfig(param_config.ParamConfig):
         
     def _gen_base_params(self, hierarchy, arch_config):
         # global param
-        self._modify_param(hierarchy, "issue_width", 4)
-        self._modify_param(hierarchy, "phy_reg_num", 128)
+        issue_width = 8
+        self._modify_param(hierarchy, "issue_width", issue_width)
+        self._modify_param(hierarchy, "queue_depth", 2 * issue_width)
+        self._modify_param(hierarchy, "phy_reg_num", 32 * issue_width)
         # unit param
-        self._modify_unit_params(hierarchy, unitlib.units.rob, unitlib.params.rob.queue_depth, 128)
+        self._modify_unit_params(hierarchy, unitlib.units.rob, unitlib.params.rob.queue_depth, 32 * issue_width)
         self._modify_unit_params(hierarchy, unitlib.units.rob, unitlib.params.rob.retire_heartbeat, 100000)
         
-        self._modify_unit_params(hierarchy, unitlib.units.dispatch_stage, unitlib.params.dispatch_stage.queue_depth, 16)
+        self._modify_unit_params(hierarchy, unitlib.units.dispatch_stage, unitlib.params.dispatch_stage.queue_depth, 32)
         
-        self._modify_unit_params(hierarchy, unitlib.units.scheduler, unitlib.params.scheduler.queue_depth, 128)
-        # self._modify_unit_params(hierarchy, unitlib.units.scheduler, unitlib.params.scheduler.issue_width, 2)
+        self._modify_unit_params(hierarchy, unitlib.units.scheduler, unitlib.params.scheduler.queue_depth, 32 * issue_width)
+        self._modify_unit_params(hierarchy, unitlib.units.scheduler, unitlib.params.scheduler.issue_width, int(issue_width/len(arch_config.dispatch_map)))
         
         self._modify_unit_params(hierarchy, unitlib.units.physical_regfile, unitlib.params.physical_regfile.latency, 0)
         
         # self._modify_unit_params(hierarchy, unitlib.units.perfect_fu, unitlib.params.scheduler.issue_width, 2)
-        self._modify_unit_params(hierarchy, unitlib.units.perfect_fu, unitlib.params.scheduler.queue_depth, 20)
+        self._modify_unit_params(hierarchy, unitlib.units.perfect_fu, unitlib.params.scheduler.queue_depth, 40)
+        self._modify_unit_params(hierarchy, unitlib.units.perfect_fu, unitlib.params.scheduler.issue_width, int(issue_width/len(arch_config.dispatch_map)))
         return hierarchy
     
     def _gen_perfect_params(self, hierarchy, arch_config):
@@ -42,12 +46,30 @@ class SimpleParamConfig(param_config.ParamConfig):
         self._modify_unit_params(hierarchy, unitlib.units.self_allocators, unitlib.params.self_allocators.inst_group_pair_max_num, mem_ptr_num)
         self._modify_unit_params(hierarchy, unitlib.units.self_allocators, unitlib.params.self_allocators.inst_group_max_num, mem_ptr_num)
         self._modify_unit_params(hierarchy, unitlib.units.self_allocators, unitlib.params.self_allocators.credit_pair_max_num, mem_ptr_num)
+        
+        self._modify_param(hierarchy, "phy_reg_num", int(mem_ptr_num / 2))
         # unit param
+        
         self._modify_unit_params(hierarchy, unitlib.units.rob, unitlib.params.rob.queue_depth, int(mem_ptr_num / 2))
         
         self._modify_unit_params(hierarchy, unitlib.units.dispatch_stage, unitlib.params.dispatch_stage.queue_depth, 128)
         
         self._modify_unit_params(hierarchy, unitlib.units.scheduler, unitlib.params.scheduler.queue_depth, int(mem_ptr_num / 4))
+        
+        # infinite issue
+        # issue_width = 1000
+        
+        # self._modify_unit_params(hierarchy, unitlib.units.rob, unitlib.params.rob.retire_heartbeat, 1000)
+        
+        # self._modify_param(hierarchy, "issue_width", issue_width)
+        # self._modify_unit_params(hierarchy, unitlib.units.dispatch_stage, unitlib.params.dispatch_stage.queue_depth, issue_width * 5)
+        # self._modify_unit_params(hierarchy, unitlib.units.renaming_stage, unitlib.params.renaming_stage.queue_depth, issue_width * 2)
+        # self._modify_unit_params(hierarchy, unitlib.units.physical_regfile, unitlib.params.physical_regfile.queue_depth, issue_width * 2)
+        # self._modify_unit_params(hierarchy, unitlib.units.perfect_fu, unitlib.params.perfect_fu.queue_depth, issue_width * 2)
+        
+    def _modify_config_params(self, arch_config):
+        arch_config.fu_latency[unitlib.func_type.LDU] = 4
+    
 
     def _gen_rank_params(self, hierarchy, instances):
         for unit_name, count_map in instances["instance_topo"]["table"].items():

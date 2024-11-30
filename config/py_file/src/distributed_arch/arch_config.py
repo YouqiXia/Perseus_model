@@ -1,7 +1,7 @@
 import unitlib
-import base_arch.arch_config as arch_config
+import base_arch.arch_config
 
-class SimpleArchConfig(arch_config.ArchConfig):
+class ArchConfig(base_arch.arch_config.ArchConfig):
     def __init__(self):
         self.fu_latency = {unitlib.func_type.ALU: 1,
                            unitlib.func_type.BRU: 1,
@@ -22,13 +22,20 @@ class SimpleArchConfig(arch_config.ArchConfig):
                          unitlib.func_type.LDU,
                          unitlib.func_type.STU]
         
-        self.dispatch_map = [full_fu_array]
+        self.dispatch_map = [full_fu_array.copy(),
+                             full_fu_array.copy(),
+                             full_fu_array.copy(),
+                             full_fu_array.copy(),
+                             full_fu_array.copy(),
+                             full_fu_array.copy(),
+                             full_fu_array.copy(),
+                             full_fu_array.copy()]
         
         # the number of pipeline after disptach stage
         self.dispatch_path_num = len(self.dispatch_map)
 
     def get_arch_name(self):
-        return "simple_arch"
+        return "distributed_arch"
 
     def modify_fu_latency(self, fu_type, latency):
         self.fu_latency[fu_type] = latency

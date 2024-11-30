@@ -1,7 +1,7 @@
 import unitlib
 import base_arch.instance_config as instance_config
 
-class SimpleInstanceConfig(instance_config.InstanceConfig):
+class InstanceConfig(instance_config.InstanceConfig):
     def _gen_instance(self, units_map):
         multi_instance = [unitlib.units.scheduler, unitlib.units.perfect_fu]
         instances = {}
