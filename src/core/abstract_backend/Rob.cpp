@@ -170,7 +170,7 @@ namespace TimingModel {
             sparta_assert(stall_cycle_count_ < detect_period_, "commit stall: " << rob_.front().inst_ptr);
         }
 
-        if (!rob_.size()) {
+        if (!rob_.empty()) {
             ILOG(getName() << " commit instructions: " << commit_num << " , remaining: " << rob_.size() << "front inst is: " << rob_.front().inst_ptr);
         } else {
             ILOG(getName() << " commit instructions: " << commit_num << " , remaining: " << rob_.size());

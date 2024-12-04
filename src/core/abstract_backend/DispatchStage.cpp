@@ -62,7 +62,7 @@ namespace TimingModel {
             inst_queue_.push_back(issue_entry_ptr_tmp);
         }
 
-        process_event.schedule(1);
+        process_event.schedule(0);
     }
 
     void DispatchStage::ProcessInst_() {

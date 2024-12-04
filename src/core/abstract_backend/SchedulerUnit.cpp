@@ -15,9 +15,11 @@ namespace TimingModel {
                                  const TimingModel::SchedulerUnit::ReservationStationParameter *p) :
             sparta::Unit(node),
             pipe_rank_(p->pipe_rank),
+            wakeup_latency_(p->wakeup_latency),
+            is_spec_wakeup_(p->is_spec_wakeup),
             issue_num_(p->issue_width),
             rs_depth_(p->queue_depth),
-            rs_dependency_table_(p->phy_reg_num),
+            dependency_table_(p->phy_reg_num),
             issue_window_()
     {
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(SchedulerUnit, Startup_));
@@ -29,11 +31,16 @@ namespace TimingModel {
                 (CREATE_SPARTA_HANDLER_WITH_DATA(SchedulerUnit, AcceptCredit_, CreditPairPtr));
         forwarding_scheduler_inst_in.registerConsumerHandler
                 (CREATE_SPARTA_HANDLER_WITH_DATA(SchedulerUnit, GetForwardingData, InstGroupPtr));
+        spec_wake_up_in.registerConsumerHandler
+                (CREATE_SPARTA_HANDLER_WITH_DATA(SchedulerUnit, SpecWakeup_, InstGroupPtr));
         preceding_scheduler_inst_in >> sparta::GlobalOrderingPoint(node, "rs_allocate_forwarding");
         sparta::GlobalOrderingPoint(node, "rs_allocate_forwarding") >> forwarding_scheduler_inst_in;
+        sparta::GlobalOrderingPoint(node, "rs_allocate_forwarding") >> spec_wake_up_in;
     }
 
     void SchedulerUnit::Startup_() {
+        global_param_ptr_ = getGlobalParams(getContainer());
+        fu_latency_map_ = &global_param_ptr_->getLatencyMap();
         allocator_ = getSelfAllocators(getContainer());
         pmu_ = getPmuUnit(getContainer());
         InitCredit_();
@@ -89,11 +96,30 @@ namespace TimingModel {
             }
             if (!inst_ptr->getIsRs2Forward()) {
                 tmp_restation_entry->rs2_valid = true;
-
             }
+
+            if (is_spec_wakeup_) {
+                if (inst_ptr->getRs1SpecWakeupTag() > 1) {
+                    auto idx = inst_ptr->getPhyRs1();
+                    sparta_assert(latency_table_.count(idx) == 1, "speculative wakeup");
+                    sparta_assert(latency_table_[idx] == inst_ptr->getRs1SpecWakeupTag() - 1, "speculative wakeup");
+                } else if (inst_ptr->getRs1SpecWakeupTag() == 1) {
+                    tmp_restation_entry->rs1_spec_wakeup = true;
+                }
+
+                if (inst_ptr->getRs2SpecWakeupTag() > 1) {
+                    auto idx = inst_ptr->getPhyRs2();
+                    sparta_assert(latency_table_.count(idx) == 1, "speculative wakeup");
+                    sparta_assert(latency_table_[idx] == inst_ptr->getRs2SpecWakeupTag() - 1, "speculative wakeup");
+                } else if (inst_ptr->getRs2SpecWakeupTag() == 1) {
+                    tmp_restation_entry->rs2_spec_wakeup = true;
+                }
+            }
+
             SizeUp_();
-            rs_dependency_table_.Allocate(tmp_restation_entry);
+            dependency_table_.Allocate(tmp_restation_entry);
             issue_window_.emplace_back(tmp_restation_entry);
+            inst_ptr->setWindowEntry(tmp_restation_entry.get());
         }
 
         process_event.schedule(sparta::Clock::Cycle(0));
@@ -102,7 +128,7 @@ namespace TimingModel {
     void SchedulerUnit::GetForwardingData(const TimingModel::InstGroupPtr &forwarding_inst_group_ptr) {
         for (auto& forwarding_inst_ptr: *forwarding_inst_group_ptr) {
             bool find = false;
-            find = rs_dependency_table_.Resolve(forwarding_inst_ptr);
+            find = dependency_table_.Resolve(forwarding_inst_ptr);
             if (find) {
                 ILOG("get forwarding data from: " << forwarding_inst_ptr);
             }
@@ -120,6 +146,10 @@ namespace TimingModel {
                 sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);
 
         SelectInst_(produce_num, processed_group_ptr);
+
+        if (is_spec_wakeup_) {
+            EarlyWakeupCtrl(processed_group_ptr);
+        }
 
         DataTransfer_(processed_group_ptr);
     }
@@ -174,18 +204,54 @@ namespace TimingModel {
                 continue;
             }
 
+            if (rs_entry->is_spec_issued && !rs_entry->is_canceled && is_spec_wakeup_) {
+                continue;
+            }
+
             if (rs_entry->rs1_valid && rs_entry->rs2_valid) {
                 ILOG(getName() << " passing instruction: " << rs_entry->inst_ptr);
                 --credit_;
                 --produce_num;
+                rs_entry->inst_ptr->setIsRs1Forward(!rs_entry->rs1_valid);
+                rs_entry->inst_ptr->setIsRs2Forward(!rs_entry->rs2_valid);
                 processed_group_ptr->emplace_back(rs_entry->inst_ptr);
                 rs_entry->is_issued = true;
                 consume_num++;
                 SizeDown_();
+//            } else if (rs_entry->rs1_valid ^ rs_entry->rs2_valid) {
+            } else if ((rs_entry->rs1_valid || rs_entry->rs1_spec_wakeup) &&
+                       (rs_entry->rs2_valid || rs_entry->rs2_spec_wakeup) && is_spec_wakeup_) {
+                --credit_;
+                --produce_num;
+                rs_entry->inst_ptr->setIsSpecWakeup(true);
+                rs_entry->inst_ptr->setIsRs1Forward(!rs_entry->rs1_valid);
+                rs_entry->inst_ptr->setIsRs2Forward(!rs_entry->rs2_valid);
+                processed_group_ptr->emplace_back(rs_entry->inst_ptr);
+                rs_entry->is_spec_issued = true;
+                consume_num++;
+//                SizeDown_(); Do not pop this speculative issued entry
             }
         }
         pmu_->Monitor(getName(), "operand loss", produce_num);
         pmu_->Monitor(getName(), "total loss", issue_num_ - consume_num);
+    }
+
+    void SchedulerUnit::EarlyWakeupCtrl(TimingModel::InstGroupPtr processed_group_ptr) {
+        spec_wake_up_out.send(processed_group_ptr, sparta::Clock::Cycle(wakeup_latency_));
+
+        for (auto it = latency_table_.begin(); it != latency_table_.end(); ) {
+            if (it->second - 1 == 0) {
+                dependency_table_.EarlyWakeup(it->first);
+                it = latency_table_.erase(it);
+            } else {
+                --it->second;
+                ++it;
+            }
+        }
+
+        if (!latency_table_.empty()) {
+            process_event.schedule(1);
+        }
     }
 
     void SchedulerUnit::DataTransfer_(TimingModel::InstGroupPtr processed_group_ptr) {
@@ -207,6 +273,37 @@ namespace TimingModel {
 
         if (!issue_window_.empty() && credit_ > 0) {
             process_event.schedule(sparta::Clock::Cycle(1));
+        }
+    }
+
+    void SchedulerUnit::SpecWakeup_(const InstGroupPtr& inst_group_ptr) {
+        sparta_assert(is_spec_wakeup_, "speculative wakeup");
+        for (auto& inst_ptr: *inst_group_ptr) {
+            if (inst_ptr->getRdType() == RegType_t::NONE) {
+                continue;
+            }
+
+            auto latency = fu_latency_map_->at(inst_ptr->getFuType());
+
+            if (latency > wakeup_latency_ + 1) {
+                // speculative wakeup start up
+                latency_table_[inst_ptr->getPhyRd()] = latency - wakeup_latency_ - 1;
+            } else {
+                dependency_table_.EarlyWakeup(inst_ptr->getPhyRd());
+            }
+        }
+    }
+
+    void SchedulerUnit::WakeupResolve_(const InstGroupPtr& inst_group_ptr) {
+        for (auto& inst_ptr: *inst_group_ptr) {
+            if (inst_ptr->getIsCanceled()) {
+                sparta_assert(is_spec_wakeup_, "speculative wakeup");
+                sparta_assert(!inst_ptr->getWindowEntry()->is_canceled, "speculative wakeup")
+                inst_ptr->getWindowEntry()->is_canceled = true;
+            } else if (inst_ptr->getIsSpecWakeup()) {
+                sparta_assert(!inst_ptr->getWindowEntry()->is_issued, "speculative wakeup")
+                inst_ptr->getWindowEntry()->is_issued = true;
+            }
         }
     }
 

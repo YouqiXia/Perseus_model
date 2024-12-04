@@ -20,6 +20,10 @@ namespace TimingModel
         bool rs1_valid = false;
         bool rs2_valid = false;
         bool is_issued = false;
+        bool rs1_spec_wakeup = false;
+        bool rs2_spec_wakeup = false;
+        bool is_spec_issued = false;
+        bool is_canceled = false;
     };
     using ReStationEntryPtr = sparta::SpartaSharedPointer<ReStationEntry>;
     using ReStationEntryAllocator = sparta::SpartaSharedPointerAllocator<ReStationEntry>;

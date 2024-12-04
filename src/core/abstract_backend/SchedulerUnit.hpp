@@ -18,10 +18,12 @@
 #include "basic/InstGroup.hpp"
 #include "basic/PortInterface.hpp"
 #include "basic/SelfAllocatorsUnit.hpp"
+#include "basic/GlobalParamUnit.hpp"
+
 #include "simulation/PmuUnit.hpp"
+#include "SpecBusyTableUnit.hpp"
 
 namespace TimingModel {
-
 
     class SchedulerUnit : public sparta::Unit {
     public:
@@ -35,6 +37,8 @@ namespace TimingModel {
             PARAMETER(uint64_t, issue_width, 1, "the issuing bandwidth in a cycle")
             PARAMETER(uint64_t, queue_depth, 4, "the issuing bandwidth in a cycle")
             PARAMETER(uint64_t, phy_reg_num, 64, "the issuing bandwidth in a cycle")
+            PARAMETER(bool, is_spec_wakeup, false, "if instruction can be speculatively waked up")
+            PARAMETER(uint64_t, wakeup_latency, 0, "the latency of speculative wakeup")
         };
 
         class ReservationTable {
@@ -71,6 +75,24 @@ namespace TimingModel {
                 return find;
             }
 
+            bool EarlyWakeup(PhyRegId_t phy_reg_idx) {
+                bool find = false;
+                for (auto& rs_entry_ptr: scheduler_table_[phy_reg_idx][0]) {
+                    rs_entry_ptr->rs1_spec_wakeup = true;
+                    find = true;
+                }
+                scheduler_table_[phy_reg_idx][0].clear();
+
+                for (auto& rs_entry_ptr: scheduler_table_[phy_reg_idx][1]) {
+                    rs_entry_ptr->rs2_spec_wakeup = true;
+                    find = true;
+                }
+                scheduler_table_[phy_reg_idx][1].clear();
+
+
+                return find;
+            }
+
         private:
             std::vector<std::vector<std::vector<ReStationEntryPtr>>> scheduler_table_;
         };
@@ -90,6 +112,10 @@ namespace TimingModel {
 
         void AcceptCredit_(const CreditPairPtr&);
 
+        void WakeupResolve_(const InstGroupPtr&);
+
+        void SpecWakeup_(const InstGroupPtr&);
+
     private: // inner implementation
         void InitCredit_();
 
@@ -101,6 +127,8 @@ namespace TimingModel {
 
         void SelectInst_(uint64_t produce_num,
                          InstGroupPtr processed_group_ptr);
+
+        void EarlyWakeupCtrl(InstGroupPtr processed_group_ptr);
 
         void DataTransfer_(InstGroupPtr processed_group_ptr);
 
@@ -138,26 +166,45 @@ namespace TimingModel {
         sparta::DataInPort<InstGroupPtr> forwarding_scheduler_inst_in
                 {&unit_port_set_, "forwarding_scheduler_inst_in", sparta::SchedulingPhase::Tick, 1};
 
+        // speculative wakeup
+        sparta::DataOutPort<InstGroupPtr> spec_wake_up_out
+                {&unit_port_set_, "spec_wake_up_out"};
+
+        sparta::DataInPort<InstGroupPtr> spec_wake_up_in
+                {&unit_port_set_, "spec_wake_up_in", sparta::SchedulingPhase::Tick, 1};
+
+        // early wake-up resolve
+        sparta::DataInPort<InstGroupPtr> wakeup_resolve_in
+                {&unit_port_set_, "wakeup_resolve_in", sparta::SchedulingPhase::Tick, 1};
+
         // events
         sparta::SingleCycleUniqueEvent<> process_event
                 {&unit_event_set_, "process_event", CREATE_SPARTA_HANDLER(SchedulerUnit, ProcessInsts_)};
+
+        sparta::SingleCycleUniqueEvent<> spec_wakeup_event
+                {&unit_event_set_, "spec_wakeup_event", CREATE_SPARTA_HANDLER(SchedulerUnit, PmuMonitor_)};
 
         sparta::SingleCycleUniqueEvent<sparta::SchedulingPhase::PostTick> pmu_event
                 {&unit_event_set_, "pmu_event", CREATE_SPARTA_HANDLER(SchedulerUnit, PmuMonitor_)};
 
     private:
+        GlobalParamUnit* global_param_ptr_ = nullptr;
         SelfAllocatorsUnit* allocator_;
         PmuUnit* pmu_;
+        GlobalParamUnit::FuLatencyMap* fu_latency_map_;
 
     private:
         size_t size_ = 0;
 
         const uint64_t pipe_rank_;
+        const uint64_t wakeup_latency_;
+        const bool is_spec_wakeup_;
         const uint64_t issue_num_;
         const uint64_t rs_depth_;
 
         std::deque<ReStationEntryPtr> issue_window_;
-        ReservationTable rs_dependency_table_;
+        std::unordered_map<PhyRegId_t, uint64_t> latency_table_;
+        ReservationTable dependency_table_;
         Credit credit_ = 0;
     };
 }

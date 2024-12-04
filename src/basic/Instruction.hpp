@@ -5,6 +5,8 @@
 
 namespace TimingModel {
 
+struct ReStationEntry;
+
 struct InstInfo;
 
 typedef uint64_t Credit;
@@ -151,7 +153,14 @@ struct InstInfo {
 
     /* Scheduler info */
     uint64_t     pipe_rank;
+    ReStationEntry* window_entry;
     RobIdx_t     RobTag;
+
+    // speculative wakeup
+    bool         is_spec_wakeup = false;
+    bool         is_canceled = false;
+    uint64_t     rs1_spec_wakeup_tag = 0;
+    uint64_t     rs2_spec_wakeup_tag = 0;
     bool         IsRs1Forward = false;
     bool         IsRs2Forward = false;
 

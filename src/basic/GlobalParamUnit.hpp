@@ -57,12 +57,15 @@ namespace TimingModel {
                   std::vector<std::string>({"following_unit_name", "|", "bandwidth", "|"}), "the write map from multiple following units")
             PARAMETER(std::vector<std::string>, fu_latency_map,
                       std::vector<std::string>({"fu_type", "|", "latency", "|"}), "the latency map for each fu")
+            PARAMETER(std::vector<std::string>, group_ranks_map,
+                      std::vector<std::string>({"group_idx", "|", "rank_1", "rank_2", "|"}), "the ranks each group has")
 
     };
         typedef std::map<uint64_t, std::set<FuncType>> DispatchMap;
         typedef std::map<uint64_t, uint32_t> DispatchIssueWidthMap;
         typedef std::map<uint64_t, uint32_t> WriteBackMap;
         typedef std::unordered_map<FuncType, uint32_t> FuLatencyMap;
+        typedef std::map<uint64_t, std::set<uint32_t>> GroupRanksMap;
 
         static const char* name;
 
@@ -78,6 +81,8 @@ namespace TimingModel {
 
         FuLatencyMap& getLatencyMap() { return fu_latency_map_; };
 
+        GroupRanksMap& getGroupRanksMap() { return group_rank_map_; };
+
     private:
         void ParseDispatchMap_(const TimingModel::GlobalParamUnit::GlobalParameter *p);
 
@@ -85,11 +90,14 @@ namespace TimingModel {
 
         void ParseFuLatencyMap_(const TimingModel::GlobalParamUnit::GlobalParameter *p);
 
+        void ParseGroupRanksMap_(const TimingModel::GlobalParamUnit::GlobalParameter *p);
+
     private:
         DispatchMap dispatch_following_map_;
         DispatchIssueWidthMap dispatch_issue_width_map_;
         WriteBackMap write_back_map_;
         FuLatencyMap fu_latency_map_;
+        GroupRanksMap group_rank_map_;
     };
 
     GlobalParamUnit* getGlobalParams(sparta::TreeNode *);

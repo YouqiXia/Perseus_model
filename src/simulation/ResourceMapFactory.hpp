@@ -21,6 +21,8 @@
 #include "core/abstract_backend/SchedulerUnit.hpp"
 #include "core/abstract_backend/FlushManager.hpp"
 #include "core/abstract_backend/BusyTableUnit.hpp"
+#include "core/abstract_backend/SpecBusyTableUnit.hpp"
+#include "core/abstract_backend/StagingBufferUnit.hpp"
 
 #include "core/func_unit/PerfectFu.hpp"
 #include "core/func_unit/WriteBackStage.hpp"
@@ -64,6 +66,14 @@ namespace TimingModel {
             RegisterResource_(TimingModel::BusyTableUnit::name ,
                               new sparta::ResourceFactory<TimingModel::BusyTableUnit,
                                       TimingModel::BusyTableUnit::BusyTableParameter>);
+
+            RegisterResource_(TimingModel::SpecBusyTableUnit::name ,
+                              new sparta::ResourceFactory<TimingModel::SpecBusyTableUnit,
+                                      TimingModel::SpecBusyTableUnit::SpecBusyTableParameter>);
+
+            RegisterResource_(TimingModel::StagingBufferUnit::name ,
+                              new sparta::ResourceFactory<TimingModel::StagingBufferUnit,
+                                      TimingModel::StagingBufferUnit::StagingBufferParameter>);
 
             RegisterResource_(TimingModel::Rob::name ,
                              new sparta::ResourceFactory<TimingModel::Rob,

@@ -11,10 +11,10 @@ namespace TimingModel {
     PhysicalRegfileUnit::PhysicalRegfileUnit(sparta::TreeNode *node,
             const TimingModel::PhysicalRegfileUnit::PhysicalRegfileParameter *p) :
             sparta::Unit(node),
-            preceding_physical_regfile_read_in(&unit_port_set_, "preceding_physical_regfile_read_in", sparta::SchedulingPhase::Tick, p->latency),
-            queue_depth_(p->queue_depth),
+            queue_depth_(p->queue_depth + p->issue_width * p->latency),
             issue_width_(p->issue_width),
             latency_(p->latency),
+            is_spec_wakeup_(p->is_spec_wakeup),
             phy_regfile_(p->phy_reg_num, 0),
             phy_reg_num_(p->phy_reg_num)
     {
@@ -25,15 +25,29 @@ namespace TimingModel {
             (PhysicalRegfileUnit, WritePhysicalReg_, InstGroupPtr));
         following_credit_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA
             (PhysicalRegfileUnit, AcceptCredit_, CreditPairPtr));
+        bypass_inst_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA
+            (PhysicalRegfileUnit, BypassInst_, InstGroupPairPtr));
+
     }
 
     void PhysicalRegfileUnit::Startup_() {
         allocator_ = getSelfAllocators(getContainer());
         global_param_ptr_ = getGlobalParams(getContainer());
+        dispatch_map_ptr_ = &global_param_ptr_->getDispatchMap();
+        group_ranks_map_ptr_ = &global_param_ptr_->getGroupRanksMap();
         pmu_ = getPmuUnit(getContainer());
+        issue_width_per_pipe_ = issue_width_ / dispatch_map_ptr_->size();
 
-        for (auto pipe_pair: global_param_ptr_->getDispatchMap()) {
+        for (const auto& pipe_pair: global_param_ptr_->getDispatchMap()) {
             credit_map_[pipe_pair.first] = 0;
+        }
+
+        for (const auto& pipe_pair: *group_ranks_map_ptr_) {
+            dependency_table_[pipe_pair.first] = DependencyTable();
+        }
+
+        for (const auto& pipe_pair: global_param_ptr_->getDispatchMap()) {
+            inst_queue_[pipe_pair.first] = std::deque<InstPtr>();
         }
 
         InitCredit_();
@@ -67,34 +81,83 @@ namespace TimingModel {
     }
 
     void PhysicalRegfileUnit::RecieveInsts_(const TimingModel::InstGroupPtr &inst_group_ptr) {
-//        if (latency_ == 0) {
-//            physical_regfile_following_read_out.send(inst_group_ptr);
-//            return;
-//        }
         ILOG("get instructions: " << inst_group_ptr->size());
         for (auto& inst_ptr: *inst_group_ptr) {
+            auto pipe_rank = inst_ptr->getPipeRank();
+            auto group_idx = inst_ptr->getGroupIdx();
             ILOG("get inst: " << inst_ptr);
-            inst_queue_.emplace_back(inst_ptr);
+            dependency_table_[group_idx].Allocate(inst_ptr);
+            if (latency_ == 0) {
+                inst_queue_[pipe_rank].emplace_back(inst_ptr);
+            } else {
+                latency_queue_.Push(latency_, inst_ptr);
+            }
         }
 
         process_event.schedule(0);
     }
 
+    void PhysicalRegfileUnit::BypassInst_(const TimingModel::InstGroupPairPtr &inst_group_pair_ptr) {
+        auto group_idx = inst_group_pair_ptr->inst_group.front()->getGroupIdx();
+        if (!is_spec_wakeup_) {
+            sparta_assert(dependency_table_[group_idx].Empty(), "speculative wakeup");
+            return;
+        }
+
+        for (auto inst_ptr: inst_group_pair_ptr->inst_group) {
+            dependency_table_[group_idx].Resolve(inst_ptr);
+        }
+    }
+
     void PhysicalRegfileUnit::ProcessInsts_() {
-        uint64_t produce_num = GetProduceNum_();
+
+        TickLatencyQueue_();
 
         InstGroupPtr processed_group_ptr =
                 sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);
 
-        while(produce_num--) {
-            auto inst_ptr = inst_queue_.front();
-            processed_group_ptr->emplace_back(inst_ptr);
-            ILOG("send insn to following: " << inst_ptr);
-            credit_map_[inst_ptr->getPipeRank()]--;
-            preceding_credit_map_[inst_ptr->getPipeRank()]++;
-            inst_queue_.pop_front();
+        for (const auto& pipe_pair: *dispatch_map_ptr_) {
+            auto pipe_rank = pipe_pair.first;
+            uint64_t produce_num = GetProduceNum_(pipe_rank);
+
+            while(produce_num--) {
+                auto inst_ptr = inst_queue_[pipe_rank].front();
+                auto group_idx = inst_ptr->getGroupIdx();
+                processed_group_ptr->emplace_back(inst_ptr);
+                ILOG("send insn to following: " << inst_ptr);
+                credit_map_[pipe_rank]--;
+                preceding_credit_map_[pipe_rank]++;
+                inst_queue_[pipe_rank].pop_front();
+                dependency_table_[group_idx].Pop(inst_ptr);
+            }
         }
 
+        DataTransfer_(processed_group_ptr);
+    }
+
+    uint64_t PhysicalRegfileUnit::GetProduceNum_(uint64_t pipe_rank) {
+        uint64_t produce_num = std::min(inst_queue_[pipe_rank].size(), issue_width_per_pipe_);
+        produce_num = std::min(produce_num, credit_map_[pipe_rank]);
+
+        return produce_num;
+    }
+
+    void PhysicalRegfileUnit::TickLatencyQueue_() {
+        while (!latency_queue_.Empty()) {
+            auto inst_ptr = latency_queue_.PopFront();
+            auto pipe_rank = inst_ptr->getPipeRank();
+            inst_queue_[pipe_rank].emplace_back(inst_ptr);
+        }
+
+        latency_queue_.Tick();
+        ILOG("latency queue tick");
+
+        if (!latency_queue_.IsStopped()) {
+            process_event.schedule(sparta::Clock::Cycle(1));
+        }
+    }
+
+    void PhysicalRegfileUnit::DataTransfer_(TimingModel::InstGroupPtr processed_group_ptr) {
         if (!processed_group_ptr->empty()) {
             physical_regfile_following_read_out.send(processed_group_ptr);
             for (auto& credit_pair: preceding_credit_map_) {
@@ -107,18 +170,16 @@ namespace TimingModel {
             }
         }
 
-        if (!inst_queue_.empty()) {
-            process_event.schedule(1);
+        bool empty = true;
+        for (const auto& inst_queue_pair: inst_queue_) {
+            empty &= inst_queue_pair.second.empty();
+        }
+
+        if (!empty) {
+           process_event.schedule(1);
         }
 
         ILOG(getName() << " queue size is after update: " << inst_queue_.size());
-
-    }
-
-    uint64_t PhysicalRegfileUnit::GetProduceNum_() {
-        uint64_t produce_num = std::min(inst_queue_.size(), issue_width_);
-
-        return produce_num;
     }
 
     void PhysicalRegfileUnit::ReadPhysicalReg_(const TimingModel::InstGroupPtr &inst_group_ptr) {

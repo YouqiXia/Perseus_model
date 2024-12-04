@@ -13,6 +13,7 @@ namespace TimingModel {
         ParseDispatchMap_(p);
         ParseWriteBackMap_(p);
         ParseFuLatencyMap_(p);
+        ParseGroupRanksMap_(p);
     }
 
     void GlobalParamUnit::ParseDispatchMap_(const TimingModel::GlobalParamUnit::GlobalParameter *p) {
@@ -64,6 +65,30 @@ namespace TimingModel {
                 } else {
                    width = std::atoi(dispatch_map_info.c_str());
                 //    width = std::stoi(dispatch_map_info);
+                }
+            }
+        }
+    }
+
+    void GlobalParamUnit::ParseGroupRanksMap_(const TimingModel::GlobalParamUnit::GlobalParameter *p) {
+        enum class State {GROUP_ID, RANK};
+        State state = State::GROUP_ID;
+        uint64_t group_idx;
+        std::set<uint32_t> ranks;
+        for (std::string group_rank_info: p->group_ranks_map) {
+            if (group_rank_info == "|") {
+                if (state == State::GROUP_ID) {
+                    state = State::RANK;
+                } else {
+                    group_rank_map_[group_idx] = ranks;
+                    ranks.clear();
+                    state = State::GROUP_ID;
+                }
+            } else {
+                if (state == State::GROUP_ID) {
+                    group_idx = std::atoi(group_rank_info.c_str());
+                } else {
+                    ranks.emplace(std::atoi(group_rank_info.c_str()));
                 }
             }
         }

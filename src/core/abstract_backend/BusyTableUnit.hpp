@@ -19,7 +19,7 @@
 #include "basic/GlobalParamUnit.hpp"
 #include "basic/SelfAllocatorsUnit.hpp"
 
-#include "Scoreboard.hpp"
+#include "resources/Scoreboard.hpp"
 
 #include "simulation/PmuUnit.hpp"
 

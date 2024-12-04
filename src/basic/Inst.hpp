@@ -179,8 +179,23 @@ namespace TimingModel
         void setPipeRank(uint64_t pipe_rank) { inst_.pipe_rank = pipe_rank; }
         uint64_t getPipeRank() const { return inst_.pipe_rank; }
 
+        void setWindowEntry(ReStationEntry* window_entry) { inst_.window_entry = window_entry; }
+        ReStationEntry* getWindowEntry() const { return inst_.window_entry; }
+
         void setRobTag(uint64_t RobTag) { inst_.RobTag = RobTag; }
         uint64_t getRobTag() const { return inst_.RobTag; }
+
+        void setIsSpecWakeup(bool is_spec_wakeup) { inst_.is_spec_wakeup = is_spec_wakeup; }
+        bool getIsSpecWakeup() const { return inst_.is_spec_wakeup; }
+
+        void setIsCanceled(bool is_canceled) { inst_.is_canceled = is_canceled; }
+        bool getIsCanceled() const { return inst_.is_canceled; }
+
+        void setRs1SpecWakeupTag(uint64_t rs1_spec_wakeup_tag) { inst_.rs1_spec_wakeup_tag = rs1_spec_wakeup_tag; }
+        uint64_t getRs1SpecWakeupTag() const { return inst_.rs1_spec_wakeup_tag; }
+
+        void setRs2SpecWakeupTag(uint64_t rs2_spec_wakeup_tag) { inst_.rs2_spec_wakeup_tag = rs2_spec_wakeup_tag; }
+        uint64_t getRs2SpecWakeupTag() const { return inst_.rs2_spec_wakeup_tag; }
 
         void setIsRs1Forward(bool IsRs1Forward) { inst_.IsRs1Forward = IsRs1Forward; }
         bool getIsRs1Forward() const { return inst_.IsRs1Forward; }

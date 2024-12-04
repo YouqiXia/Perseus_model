@@ -19,7 +19,7 @@
 #include "basic/GlobalParamUnit.hpp"
 #include "basic/SelfAllocatorsUnit.hpp"
 
-#include "Scoreboard.hpp"
+#include "resources/Scoreboard.hpp"
 
 #include "simulation/PmuUnit.hpp"
 
@@ -87,13 +87,6 @@ namespace TimingModel {
 
             sparta::DataOutPort<Credit> dispatch_preceding_credit_out
                 {&unit_port_set_, "dispatch_preceding_credit_out"};
-
-            // with physical register file
-            sparta::DataOutPort<InstGroupPtr> dispatch_physical_reg_read_out
-                    {&unit_port_set_, "dispatch_physical_reg_read_out"};
-
-            sparta::DataInPort<InstGroupPtr> physical_reg_dispatch_read_in
-                    {&unit_port_set_, "dispatch_physical_reg_read_in", sparta::SchedulingPhase::Tick, 1};
 
             // with rs -> also should be constructed in dispatch stage constructor
             sparta::DataOutPort<InstGroupPairPtr> dispatch_rs_inst_out
