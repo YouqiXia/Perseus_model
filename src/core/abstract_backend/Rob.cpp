@@ -125,7 +125,7 @@ namespace TimingModel {
         uint64_t issue_num = std::min(issue_width_, uint64_t(rob_.size()));
         bool do_flush = false;
         while(issue_num > 0) {
-            if (!rob_.front().finish) {
+            if (!rob_.front().finish || (rob_.front().inst_ptr->getFuType() == FuncType::STU && !rob_.front().waked_up)) {
                 pmu_->Monitor(getName(), "unfinished loss", issue_num);
                 break;
             }
@@ -170,8 +170,11 @@ namespace TimingModel {
             sparta_assert(stall_cycle_count_ < detect_period_, "commit stall: " << rob_.front().inst_ptr);
         }
 
-
-        ILOG(getName() << " commit instructions: " << commit_num << " , remaining: " << rob_.size() << "front inst is: " << rob_.front().inst_ptr);
+        if (!rob_.size()) {
+            ILOG(getName() << " commit instructions: " << commit_num << " , remaining: " << rob_.size() << "front inst is: " << rob_.front().inst_ptr);
+        } else {
+            ILOG(getName() << " commit instructions: " << commit_num << " , remaining: " << rob_.size());
+        }
 
         num_retired_ += commit_num;
 
