@@ -41,18 +41,18 @@ class AdjacencyMatrix:
         return
     
     def add_matrix(self, unit_A, unit_B, matrix):
-        assert(unit_A != unit_B)
         if matrix.shape[0] == 1 and matrix.shape[1] == 1:
             return
-        self.adjacency_matrix[f"{unit_A}_{unit_B}"] = matrix
-        self.adjacency_matrix[f"{unit_B}_{unit_A}"] = matrix.T
+        if unit_A == unit_B:
+            self.adjacency_matrix[f"{unit_A}_{unit_B}"] = matrix
+        else:
+            self.adjacency_matrix[f"{unit_A}_{unit_B}"] = matrix
+            self.adjacency_matrix[f"{unit_B}_{unit_A}"] = matrix.T
         return
 
     def isMatrix(self, unit_A, unit_B):
-        assert(unit_A != unit_B)
         return f"{unit_A}_{unit_B}" in self.adjacency_matrix
 
     def get_matrix(self, unit_A, unit_B):
-        assert(unit_A != unit_B)            
         return self.adjacency_matrix[f"{unit_A}_{unit_B}"]
             

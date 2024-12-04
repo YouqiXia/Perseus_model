@@ -1,0 +1,13 @@
+digraph dag_cycle {
+	rankdir=TB;
+	node [shape=record, fontname=Helvetica, fontsize=10];
+
+	"Update" -> "PortUpdate";
+	"PortUpdate" -> "Flush";
+	"Flush" -> "Collection";
+	"Collection" -> "preceding_physical_regfile_read_in<DataInPort>[PhysicalRegfileUnit::RecieveInsts_(InstGroupPtr)]";
+	"preceding_physical_regfile_read_in<DataInPort>[PhysicalRegfileUnit::RecieveInsts_(InstGroupPtr)]" -> "process_event[PhysicalRegfileUnit::ProcessInsts_()]";
+	"process_event[PhysicalRegfileUnit::ProcessInsts_()]" -> "process_event[StagingBufferUnit::ProcessInsts_()]";
+	"process_event[StagingBufferUnit::ProcessInsts_()]" -> "process_event[PhysicalRegfileUnit::ProcessInsts_()]";
+	"process_event[PhysicalRegfileUnit::ProcessInsts_()]" -> "process_event[StagingBufferUnit::ProcessInsts_()]";
+}

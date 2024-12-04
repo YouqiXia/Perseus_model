@@ -5,7 +5,7 @@ import copy
 class ParamConfig(param_config.ParamConfig): 
     def gen_params(self, hierarchy, instances, arch_config):
         self._gen_base_params(hierarchy, arch_config)
-        self._gen_perfect_params(hierarchy, arch_config)
+        # self._gen_perfect_params(hierarchy, arch_config)
         self._modify_config_params(arch_config)
         self._gen_fu_params(hierarchy, instances, arch_config)
         self._gen_rank_params(hierarchy, instances)
@@ -22,6 +22,7 @@ class ParamConfig(param_config.ParamConfig):
         self._modify_param(hierarchy, "issue_width", issue_width)
         self._modify_param(hierarchy, "queue_depth", 2 * issue_width)
         self._modify_param(hierarchy, "phy_reg_num", 32 * issue_width)
+        self._modify_param(hierarchy, "is_spec_wakeup", False)
         # unit param
         self._modify_unit_params(hierarchy, unitlib.units.rob, unitlib.params.rob.queue_depth, 32 * issue_width)
         self._modify_unit_params(hierarchy, unitlib.units.rob, unitlib.params.rob.retire_heartbeat, 100000)

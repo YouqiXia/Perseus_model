@@ -46,8 +46,8 @@ class Config:
                                       self.config_arch)
         topology = {"hierarchy": self.config_instances.get_hierarchy(),
                     # for debug
-                    "instances": self.config_instances.get_instances(),
-                    "unbinding": self.config_ports.get_unbinding_ports(),
+                    # "instances": self.config_instances.get_instances(),
+                    # "unbinding": self.config_ports.get_unbinding_ports(),
                     #
                     "binding"  : self.config_ports.get_binding_topo()}
         with open("../topology.json", "w") as file :

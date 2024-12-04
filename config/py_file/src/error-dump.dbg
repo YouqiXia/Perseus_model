@@ -1,0 +1,44 @@
+Name:     
+Cmdline:  
+Exe:      
+SimulatorVersion:
+Repro:    
+Start:    Wednesday Wed Dec  4 07:29:06 2024
+Elapsed:  3.85996s
+
+
+Error:
+================================================================================
+
+
+
+Backtrace:
+================================================================================
+  (1) ../../../cmake-build-debug/model(+0xecdfec) [0x55f55a7c5fec]
+  (2) ../../../cmake-build-debug/model(+0xdad6ae) [0x55f55a6a56ae]
+  (3) ../../../cmake-build-debug/model(+0xc8ee67) [0x55f55a586e67]
+  (4) ../../../cmake-build-debug/model(+0xc8d911) [0x55f55a585911]
+  (5) ../../../cmake-build-debug/model(+0xc8c226) [0x55f55a584226]
+  (6) ../../../cmake-build-debug/model(+0xdb39ab) [0x55f55a6ab9ab]
+  (7) ../../../cmake-build-debug/model(+0xdcddbf) [0x55f55a6c5dbf]
+  (8) ../../../cmake-build-debug/model(+0xc0fe0f) [0x55f55a507e0f]
+  (9) ../../../cmake-build-debug/model(+0xc0d8d7) [0x55f55a5058d7]
+ (10) ../../../cmake-build-debug/model(+0x4fd42b) [0x55f559df542b]
+ (11) /lib/x86_64-linux-gnu/libc.so.6(+0x29d90) [0x7f978a581d90]
+ (12) /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x80) [0x7f978a581e40]
+ (13) ../../../cmake-build-debug/model(+0x2ae895) [0x55f559ba6895]
+
+
+
+Scheduler:  
+================================================================================
+Current Tick:  0
+Num Fired:     0
+Current Phase: Trigger
+Current Event: <null>
+
+sparta::Scheduler is empty
+
+
+================================================================================
+error-dump.dbg EOF

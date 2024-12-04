@@ -4,6 +4,7 @@ import numpy as np
 
 class PortConfig(port_config.PortConfig):
     def _gen_binding_map(self):
+        # out - in
         # unitlib.units.scheduler - unitlib.units.perfect_fu
         row = len(self.instances[unitlib.units.scheduler])
         column = len(self.instances[unitlib.units.perfect_fu])
@@ -54,7 +55,12 @@ class PortConfig(port_config.PortConfig):
         self._bind(
             unitlib.units.dispatch_stage, unitlib.ports.dispatch_stage.out_ports.dispatch_rs_inst_out,
             unitlib.units.scheduler, unitlib.ports.scheduler.in_ports.preceding_scheduler_inst_in
-        )  
+        )
+        
+        self._bind(
+            unitlib.units.dispatch_stage, unitlib.ports.dispatch_stage.out_ports.dispatch_rs_inst_out,
+            unitlib.units.spec_busy_table, unitlib.ports.spec_busy_table.in_ports.check_in
+        )
         
         self._bind(
             unitlib.units.rob, unitlib.ports.rob.out_ports.rob_flush_out,
@@ -97,8 +103,18 @@ class PortConfig(port_config.PortConfig):
         )  
         
         self._bind(
+            unitlib.units.scheduler, unitlib.ports.scheduler.out_ports.spec_wake_up_out,
+            unitlib.units.scheduler, unitlib.ports.scheduler.in_ports.spec_wake_up_in
+        )
+        
+        self._bind(
+            unitlib.units.scheduler, unitlib.ports.scheduler.out_ports.spec_wake_up_out,
+            unitlib.units.spec_busy_table, unitlib.ports.spec_busy_table.in_ports.wakeup_in
+        )
+        
+        self._bind(
             unitlib.units.physical_regfile, unitlib.ports.physical_regfile.out_ports.physical_regfile_following_read_out,
-            unitlib.units.perfect_fu, unitlib.ports.perfect_fu.in_ports.preceding_func_inst_in
+            unitlib.units.staging_buffer, unitlib.ports.staging_buffer.in_ports.preceding_inst_in
         )
         
         self._bind(
@@ -107,13 +123,43 @@ class PortConfig(port_config.PortConfig):
         )
         
         self._bind(
+            unitlib.units.staging_buffer, unitlib.ports.staging_buffer.out_ports.following_inst_out,
+            unitlib.units.perfect_fu, unitlib.ports.perfect_fu.in_ports.preceding_func_inst_in
+        )
+        
+        self._bind(
+            unitlib.units.staging_buffer, unitlib.ports.staging_buffer.out_ports.preceding_credit_out,
+            unitlib.units.physical_regfile, unitlib.ports.physical_regfile.in_ports.following_credit_in
+        )
+        
+        self._bind(
+            unitlib.units.staging_buffer, unitlib.ports.staging_buffer.out_ports.wakeup_resolve_inst_out,
+            unitlib.units.scheduler, unitlib.ports.scheduler.in_ports.wakeup_resolve_in
+        )
+        
+        self._bind(
+            unitlib.units.staging_buffer, unitlib.ports.staging_buffer.out_ports.wakeup_resolve_inst_out,
+            unitlib.units.spec_busy_table, unitlib.ports.spec_busy_table.in_ports.wakeup_resolve_in
+        )
+        
+        self._bind(
             unitlib.units.perfect_fu, unitlib.ports.perfect_fu.out_ports.func_following_finish_out,
             unitlib.units.write_back_stage, unitlib.ports.write_back_stage.in_ports.preceding_write_back_inst_in
         )
         
         self._bind(
+            unitlib.units.perfect_fu, unitlib.ports.perfect_fu.out_ports.func_following_finish_out,
+            unitlib.units.physical_regfile, unitlib.ports.physical_regfile.in_ports.bypass_inst_in
+        )
+        
+        self._bind(
+            unitlib.units.perfect_fu, unitlib.ports.perfect_fu.out_ports.func_following_finish_out,
+            unitlib.units.staging_buffer, unitlib.ports.staging_buffer.in_ports.bypass_inst_in
+        )
+        
+        self._bind(
             unitlib.units.perfect_fu, unitlib.ports.perfect_fu.out_ports.func_rs_credit_out,
-            unitlib.units.physical_regfile, unitlib.ports.physical_regfile.in_ports.following_credit_in
+            unitlib.units.staging_buffer, unitlib.ports.staging_buffer.in_ports.following_credit_in
         )
         
         self._bind(
@@ -139,6 +185,11 @@ class PortConfig(port_config.PortConfig):
         self._bind(
             unitlib.units.write_back_stage, unitlib.ports.write_back_stage.out_ports.write_back_following_port_out,
             unitlib.units.busy_table, unitlib.ports.busy_table.in_ports.update_busy_in
+        )
+        
+        self._bind(
+            unitlib.units.write_back_stage, unitlib.ports.write_back_stage.out_ports.write_back_following_port_out,
+            unitlib.units.spec_busy_table, unitlib.ports.spec_busy_table.in_ports.update_in
         )
         
         self._bind(
@@ -179,6 +230,11 @@ class PortConfig(port_config.PortConfig):
         self._bind(
             unitlib.units.flush_manager, unitlib.ports.flush_manager.out_ports.global_flush_signal_out,
             unitlib.units.busy_table, unitlib.ports.busy_table.in_ports.busy_table_flush_in
+        )
+        
+        self._bind(
+            unitlib.units.flush_manager, unitlib.ports.flush_manager.out_ports.global_flush_signal_out,
+            unitlib.units.spec_busy_table, unitlib.ports.spec_busy_table.in_ports.flush_in
         )
         
         return self.bindings

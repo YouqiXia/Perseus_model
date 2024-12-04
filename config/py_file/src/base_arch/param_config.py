@@ -36,6 +36,18 @@ class ParamConfig:
         fu_latency_map = arch_config.get_fu_latency()
         
         self._modify_unit_params(hierarchy, unitlib.units.global_param, unitlib.params.global_param.fu_latency_map, fu_latency_map)
+        
+        group_ranks_map = []
+        rank = 0
+        for group_idx in range(arch_config.group_num):
+            group_ranks_map.append(f"{group_idx}")
+            group_ranks_map.append("|")
+            for local_rank_idx in range(int(arch_config.dispatch_path_num / arch_config.group_num)):
+                group_ranks_map.append(f"{rank}")
+                rank += 1
+            group_ranks_map.append("|")
+            
+        self._modify_unit_params(hierarchy, unitlib.units.global_param, unitlib.params.global_param.group_ranks_map, group_ranks_map)
             
         return hierarchy
     

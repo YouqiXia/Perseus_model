@@ -26,6 +26,7 @@ class ArchConfig(arch_config.ArchConfig):
         
         # the number of pipeline after disptach stage
         self.dispatch_path_num = len(self.dispatch_map)
+        self.group_num = 1
 
     def get_arch_name(self):
         return "simple_arch"
