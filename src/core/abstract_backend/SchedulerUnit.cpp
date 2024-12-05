@@ -33,6 +33,8 @@ namespace TimingModel {
                 (CREATE_SPARTA_HANDLER_WITH_DATA(SchedulerUnit, GetForwardingData, InstGroupPtr));
         spec_wake_up_in.registerConsumerHandler
                 (CREATE_SPARTA_HANDLER_WITH_DATA(SchedulerUnit, SpecWakeup_, InstGroupPtr));
+        wakeup_resolve_in.registerConsumerHandler
+                (CREATE_SPARTA_HANDLER_WITH_DATA(SchedulerUnit, WakeupResolve_, InstGroupPtr));
         preceding_scheduler_inst_in >> sparta::GlobalOrderingPoint(node, "rs_allocate_forwarding");
         sparta::GlobalOrderingPoint(node, "rs_allocate_forwarding") >> forwarding_scheduler_inst_in;
         sparta::GlobalOrderingPoint(node, "rs_allocate_forwarding") >> spec_wake_up_in;
@@ -91,10 +93,10 @@ namespace TimingModel {
             ReStationEntryPtr tmp_restation_entry =
                     sparta::allocate_sparta_shared_pointer<ReStationEntry>(*allocator_->re_station_entry_allocator);
             tmp_restation_entry->inst_ptr = inst_ptr;
-            if (!inst_ptr->getIsRs1Forward()) {
+            if (inst_ptr->getRs1Type() == RegType_t::NONE || !inst_ptr->getIsRs1Forward()) {
                 tmp_restation_entry->rs1_valid = true;
             }
-            if (!inst_ptr->getIsRs2Forward()) {
+            if (inst_ptr->getRs2Type() == RegType_t::NONE || !inst_ptr->getIsRs2Forward()) {
                 tmp_restation_entry->rs2_valid = true;
             }
 
@@ -209,18 +211,21 @@ namespace TimingModel {
             }
 
             if (rs_entry->rs1_valid && rs_entry->rs2_valid) {
-                ILOG(getName() << " passing instruction: " << rs_entry->inst_ptr);
+                ILOG("Passing instruction: " << rs_entry->inst_ptr);
                 --credit_;
                 --produce_num;
+                rs_entry->inst_ptr->setIsSpecWakeup(false);
                 rs_entry->inst_ptr->setIsRs1Forward(!rs_entry->rs1_valid);
+                rs_entry->inst_ptr->setIsRs2Forward(!rs_entry->rs2_valid);
                 rs_entry->inst_ptr->setIsRs2Forward(!rs_entry->rs2_valid);
                 processed_group_ptr->emplace_back(rs_entry->inst_ptr);
                 rs_entry->is_issued = true;
                 consume_num++;
                 SizeDown_();
 //            } else if (rs_entry->rs1_valid ^ rs_entry->rs2_valid) {
-            } else if ((rs_entry->rs1_valid || rs_entry->rs1_spec_wakeup) &&
+            } else if ((rs_entry->rs1_valid || rs_entry->rs1_spec_wakeup) && !rs_entry->is_spec_issued &&
                        (rs_entry->rs2_valid || rs_entry->rs2_spec_wakeup) && is_spec_wakeup_) {
+                ILOG("Early wakeup instruction: " << rs_entry->inst_ptr);
                 --credit_;
                 --produce_num;
                 rs_entry->inst_ptr->setIsSpecWakeup(true);
@@ -279,6 +284,7 @@ namespace TimingModel {
     void SchedulerUnit::SpecWakeup_(const InstGroupPtr& inst_group_ptr) {
         sparta_assert(is_spec_wakeup_, "speculative wakeup");
         for (auto& inst_ptr: *inst_group_ptr) {
+            ILOG("speculative wakeup from: " << inst_ptr);
             if (inst_ptr->getRdType() == RegType_t::NONE) {
                 continue;
             }
@@ -295,16 +301,25 @@ namespace TimingModel {
     }
 
     void SchedulerUnit::WakeupResolve_(const InstGroupPtr& inst_group_ptr) {
+        uint64_t issued_num = 0;
         for (auto& inst_ptr: *inst_group_ptr) {
             if (inst_ptr->getIsCanceled()) {
-                sparta_assert(is_spec_wakeup_, "speculative wakeup");
-                sparta_assert(!inst_ptr->getWindowEntry()->is_canceled, "speculative wakeup")
+                sparta_assert(is_spec_wakeup_, "speculative wakeup: " << inst_ptr);
+                sparta_assert(!inst_ptr->getWindowEntry()->is_canceled, "cancel again: " << inst_ptr)
                 inst_ptr->getWindowEntry()->is_canceled = true;
+                ILOG("cancel inst: " << inst_ptr);
             } else if (inst_ptr->getIsSpecWakeup()) {
-                sparta_assert(!inst_ptr->getWindowEntry()->is_issued, "speculative wakeup")
                 inst_ptr->getWindowEntry()->is_issued = true;
+                ILOG("inst is issued: " << inst_ptr);
+                ++issued_num;
+                SizeDown_();
             }
         }
+        CreditPairPtr rs_credit_ptr_tmp =
+                sparta::allocate_sparta_shared_pointer<CreditPair>(*allocator_->credit_pair_allocator);
+        rs_credit_ptr_tmp->pipe_rank = pipe_rank_;
+        rs_credit_ptr_tmp->credit = issued_num;
+        scheduler_preceding_credit_out.send(rs_credit_ptr_tmp);
     }
 
     void SchedulerUnit::PmuMonitor_() {

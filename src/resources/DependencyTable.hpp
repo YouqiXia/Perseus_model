@@ -14,8 +14,8 @@ namespace TimingModel {
     class DependencyTable {
     public:
         struct OperandDeps {
-            std::vector<InstPtr> rs1_deps;
-            std::vector<InstPtr> rs2_deps;
+            std::map<PhyRegId_t, InstPtr> rs1_deps;
+            std::map<PhyRegId_t, InstPtr> rs2_deps;
         };
 
     public:
@@ -31,7 +31,6 @@ namespace TimingModel {
 
     private:
         std::unordered_map<uint64_t, OperandDeps> dependent_table_;
-        std::unordered_map<uint64_t, std::vector<InstPtr>::iterator> backward_iterator_table_;
     };
 
 }

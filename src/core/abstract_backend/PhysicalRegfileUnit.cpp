@@ -110,7 +110,6 @@ namespace TimingModel {
     }
 
     void PhysicalRegfileUnit::ProcessInsts_() {
-
         TickLatencyQueue_();
 
         InstGroupPtr processed_group_ptr =
@@ -146,6 +145,7 @@ namespace TimingModel {
         while (!latency_queue_.Empty()) {
             auto inst_ptr = latency_queue_.PopFront();
             auto pipe_rank = inst_ptr->getPipeRank();
+            ILOG("pop from latency queue" << inst_ptr);
             inst_queue_[pipe_rank].emplace_back(inst_ptr);
         }
 
@@ -167,6 +167,7 @@ namespace TimingModel {
                 rs_credit_ptr->credit = credit_pair.second;
                 preceding_credit_out.send(rs_credit_ptr, sparta::Clock::Cycle(0));
                 credit_pair.second = 0;
+                ILOG(getName() << " queue size is after update: " << inst_queue_[credit_pair.first].size());
             }
         }
 
@@ -179,7 +180,6 @@ namespace TimingModel {
            process_event.schedule(1);
         }
 
-        ILOG(getName() << " queue size is after update: " << inst_queue_.size());
     }
 
     void PhysicalRegfileUnit::ReadPhysicalReg_(const TimingModel::InstGroupPtr &inst_group_ptr) {

@@ -71,8 +71,11 @@ namespace TimingModel {
         sparta::DataOutPort<CreditPairPtr> func_rs_credit_out
                 {&unit_port_set_, "func_rs_credit_out"};
 
-        sparta::DataOutPort<InstGroupPairPtr> func_following_finish_out
-                {&unit_port_set_, "func_following_finish_out"};
+        sparta::DataOutPort<InstGroupPairPtr> following_write_back_out
+                {&unit_port_set_, "following_write_back_out"};
+
+        sparta::DataOutPort<InstGroupPtr> following_rob_finish_out
+                {&unit_port_set_, "following_rob_finish_out"};
 
         sparta::DataOutPort<InstPtr> func_branch_resolve_inst_out
                 {&unit_port_set_, "func_branch_resolve_out"};

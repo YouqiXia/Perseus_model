@@ -161,8 +161,8 @@ struct InstInfo {
     bool         is_canceled = false;
     uint64_t     rs1_spec_wakeup_tag = 0;
     uint64_t     rs2_spec_wakeup_tag = 0;
-    bool         IsRs1Forward = false;
-    bool         IsRs2Forward = false;
+    bool         IsRs1Forward = true;
+    bool         IsRs2Forward = true;
 
     uint64_t     LSQTag;
 

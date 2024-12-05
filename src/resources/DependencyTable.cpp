@@ -13,16 +13,14 @@ namespace TimingModel {
             if (!dependent_table_.count(idx)) {
                 dependent_table_[idx] = OperandDeps();
             }
-            dependent_table_[idx].rs1_deps.emplace_back(inst_ptr);
-            backward_iterator_table_[prd_idx] = std::prev(dependent_table_[idx].rs1_deps.end());
+            dependent_table_[idx].rs1_deps[prd_idx] = inst_ptr;
         }
         if (inst_ptr->getIsRs2Forward()) {
             auto idx = inst_ptr->getPhyRs2();
             if (!dependent_table_.count(idx)) {
                 dependent_table_[idx] = OperandDeps();
             }
-            dependent_table_[idx].rs2_deps.emplace_back(inst_ptr);
-            backward_iterator_table_[prd_idx] = std::prev(dependent_table_[idx].rs2_deps.end());
+            dependent_table_[idx].rs2_deps[prd_idx] = inst_ptr;
         }
     }
 
@@ -32,34 +30,36 @@ namespace TimingModel {
             return;
         }
 
-        for (auto dep_inst_ptr: dependent_table_[idx].rs1_deps) {
-            sparta_assert(dep_inst_ptr->getIsRs1Forward());
-            dep_inst_ptr->setIsRs1Forward(false);
-            backward_iterator_table_.erase(dep_inst_ptr->getPhyRd());
+        for (auto dep_inst_pair: dependent_table_[idx].rs1_deps) {
+            sparta_assert(dep_inst_pair.second->getIsRs1Forward());
+            dep_inst_pair.second->setIsRs1Forward(false);
         }
 
-        for (auto dep_inst_ptr: dependent_table_[idx].rs2_deps) {
-            sparta_assert(dep_inst_ptr->getIsRs1Forward());
-            dep_inst_ptr->setIsRs1Forward(false);
-            backward_iterator_table_.erase(dep_inst_ptr->getPhyRd());
+        for (auto dep_inst_pair: dependent_table_[idx].rs2_deps) {
+            sparta_assert(dep_inst_pair.second->getIsRs2Forward());
+            dep_inst_pair.second->setIsRs2Forward(false);
         }
 
         dependent_table_.erase(idx);
     }
 
     void DependencyTable::Pop(TimingModel::InstPtr inst_ptr) {
-        auto it = inst_ptr->getPhyRd();
+        auto prd_idx = inst_ptr->getPhyRd();
         if (inst_ptr->getIsRs1Forward()) {
             auto idx = inst_ptr->getPhyRs1();
-            dependent_table_[idx].rs1_deps.erase(backward_iterator_table_[it]);
+            dependent_table_[idx].rs1_deps.erase(prd_idx);
+            if (dependent_table_[idx].rs1_deps.empty() && dependent_table_[idx].rs2_deps.empty()) {
+                dependent_table_.erase(idx);
+            }
         }
 
         if (inst_ptr->getIsRs2Forward()) {
             auto idx = inst_ptr->getPhyRs2();
-            dependent_table_[idx].rs2_deps.erase(backward_iterator_table_[it]);
+            dependent_table_[idx].rs2_deps.erase(prd_idx);
+            if (dependent_table_[idx].rs1_deps.empty() && dependent_table_[idx].rs2_deps.empty()) {
+                dependent_table_.erase(idx);
+            }
         }
-
-        backward_iterator_table_.erase(it);
     }
 
 

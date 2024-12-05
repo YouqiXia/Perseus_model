@@ -109,6 +109,8 @@ namespace TimingModel {
 
         InstGroupPairPtr inst_group_tmp_ptr =
                 sparta::allocate_sparta_shared_pointer<InstGroupPair>(*allocator_->inst_group_pair_allocator);
+        InstGroupPtr finish_inst_group_tmp_ptr =
+                sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);
         inst_group_tmp_ptr->pipe_rank = pipe_rank_;
         uint64_t produce_num = std::min(credit_, produce_num_max);
         for (int i = 0; i < alu_width_; i++) {
@@ -120,12 +122,15 @@ namespace TimingModel {
                 break;
             }
 
-            --credit_;
-            --produce_num;
             if (alu_queue_.front()->getFuType() == FuncType::LDU) {
                 pmu_->Monitor(getName(), "load num", 1);
             }
-            inst_group_tmp_ptr->inst_group.emplace_back(alu_queue_.front());
+            if (alu_queue_.front()->getRdType() != RegType_t::NONE) {
+                inst_group_tmp_ptr->inst_group.emplace_back(alu_queue_.front());
+                --credit_;
+            }
+            --produce_num;
+            finish_inst_group_tmp_ptr->emplace_back(alu_queue_.front());
             ILOG("write back: " << alu_queue_.front());
             alu_queue_.pop_front();
             SizeDown();
@@ -134,15 +139,19 @@ namespace TimingModel {
         pmu_->Monitor(getName(), "total loss", alu_width_-inst_group_tmp_ptr->inst_group.size());
 
         if (!inst_group_tmp_ptr->inst_group.empty()) {
-            func_following_finish_out.send(inst_group_tmp_ptr);
+            following_write_back_out.send(inst_group_tmp_ptr);
+        }
+
+        if (!finish_inst_group_tmp_ptr->empty()) {
+            following_rob_finish_out.send(finish_inst_group_tmp_ptr);
             ILOG("size after updating: " << alu_queue_.size());
         }
 
-        if (!inst_group_tmp_ptr->inst_group.empty()) {
+        if (!finish_inst_group_tmp_ptr->empty()) {
             CreditPairPtr rs_credit_ptr =
                     sparta::allocate_sparta_shared_pointer<CreditPair>(*allocator_->credit_pair_allocator);
             rs_credit_ptr->pipe_rank = pipe_rank_;
-            rs_credit_ptr->credit = inst_group_tmp_ptr->inst_group.size();
+            rs_credit_ptr->credit = finish_inst_group_tmp_ptr->size();
             func_rs_credit_out.send(rs_credit_ptr, sparta::Clock::Cycle(1));
         }
 

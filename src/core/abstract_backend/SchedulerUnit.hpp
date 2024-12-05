@@ -81,14 +81,11 @@ namespace TimingModel {
                     rs_entry_ptr->rs1_spec_wakeup = true;
                     find = true;
                 }
-                scheduler_table_[phy_reg_idx][0].clear();
 
                 for (auto& rs_entry_ptr: scheduler_table_[phy_reg_idx][1]) {
                     rs_entry_ptr->rs2_spec_wakeup = true;
                     find = true;
                 }
-                scheduler_table_[phy_reg_idx][1].clear();
-
 
                 return find;
             }

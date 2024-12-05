@@ -96,6 +96,8 @@ namespace TimingModel {
     }
 
     void StagingBufferUnit::ProcessInsts_() {
+        TickLatencyQueue_();
+
         uint64_t produce_num = GetProduceNum_();
 
         InstGroupPtr processed_group_ptr =
@@ -103,19 +105,18 @@ namespace TimingModel {
         InstGroupPtr wakeup_resolve_group_ptr =
                 sparta::allocate_sparta_shared_pointer<InstGroup>(*allocator_->instgroup_allocator);
 
-        TickLatencyQueue_();
-
         while(produce_num--) {
             auto inst_ptr = inst_queue_.front();
             if (!inst_ptr->getIsRs1Forward() && !inst_ptr->getIsRs2Forward()) {
                 processed_group_ptr->emplace_back(inst_ptr);
+                inst_ptr->setIsCanceled(false);
                 ILOG("send insn to following: " << inst_ptr);
+                --credit_;
             } else {
                 inst_ptr->setIsCanceled(true);
                 ILOG("cancel insn: " << inst_ptr);
             }
             wakeup_resolve_group_ptr->emplace_back(inst_ptr);
-            --credit_;
             inst_queue_.pop_front();
             dependency_table_.Pop(inst_ptr);
         }
@@ -133,11 +134,11 @@ namespace TimingModel {
     void StagingBufferUnit::TickLatencyQueue_() {
         while (!latency_queue_.Empty()) {
             auto inst_ptr = latency_queue_.PopFront();
+            ILOG("pop from latency queue" << inst_ptr);
             inst_queue_.emplace_back(inst_ptr);
         }
 
         latency_queue_.Tick();
-        ILOG("latency queue tick");
 
         if (!latency_queue_.IsStopped()) {
             process_event.schedule(sparta::Clock::Cycle(1));
@@ -149,11 +150,11 @@ namespace TimingModel {
             following_inst_out.send(processed_group_ptr);
         }
 
-        if (!processed_group_ptr->empty()) {
+        if (!wakeup_resolve_group_ptr->empty()) {
             CreditPairPtr rs_credit_ptr =
                     sparta::allocate_sparta_shared_pointer<CreditPair>(*allocator_->credit_pair_allocator);
             rs_credit_ptr->pipe_rank = pipe_rank_;
-            rs_credit_ptr->credit = processed_group_ptr->size();
+            rs_credit_ptr->credit = wakeup_resolve_group_ptr->size();
             preceding_credit_out.send(rs_credit_ptr, sparta::Clock::Cycle(1));
         }
 
