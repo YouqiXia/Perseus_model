@@ -3,8 +3,8 @@ Cmdline:
 Exe:      
 SimulatorVersion:
 Repro:    
-Start:    Thursday Thu Dec  5 14:20:20 2024
-Elapsed:  0.114207s
+Start:    Thursday Thu Dec  5 14:26:45 2024
+Elapsed:  0.167604s
 
 
 Error:
@@ -14,31 +14,31 @@ stall_cycle_count_ < detect_period_: commit stall: uid: 1 , pc: 101ba, pid: 1 'c
 
 Backtrace:
 ================================================================================
-  (1) ../../../cmake-build-debug/model(+0xece29c) [0x558d138b629c]
-  (2) ../../../cmake-build-debug/model(+0xdad95e) [0x558d1379595e]
-  (3) ../../../cmake-build-debug/model(+0xdadbf1) [0x558d13795bf1]
-  (4) ../../../cmake-build-debug/model(+0x390b82) [0x558d12d78b82]
-  (5) ../../../cmake-build-debug/model(+0x398da4) [0x558d12d80da4]
-  (6) ../../../cmake-build-debug/model(+0xc14450) [0x558d135fc450]
-  (7) ../../../cmake-build-debug/model(+0xdb6126) [0x558d1379e126]
-  (8) ../../../cmake-build-debug/model(+0xdcfdd5) [0x558d137b7dd5]
-  (9) ../../../cmake-build-debug/model(+0xdcfd47) [0x558d137b7d47]
- (10) ../../../cmake-build-debug/model(+0xdcfd7c) [0x558d137b7d7c]
- (11) ../../../cmake-build-debug/model(+0xdcf126) [0x558d137b7126]
- (12) ../../../cmake-build-debug/model(+0xc11a50) [0x558d135f9a50]
- (13) ../../../cmake-build-debug/model(+0xc1179e) [0x558d135f979e]
- (14) ../../../cmake-build-debug/model(+0xc11730) [0x558d135f9730]
- (15) ../../../cmake-build-debug/model(+0x4fd5f8) [0x558d12ee55f8]
- (16) /lib/x86_64-linux-gnu/libc.so.6(+0x29d90) [0x7f1dde40bd90]
- (17) /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x80) [0x7f1dde40be40]
- (18) ../../../cmake-build-debug/model(+0x2ae895) [0x558d12c96895]
+  (1) ../../../cmake-build-debug/model(+0xece29c) [0x560517eb329c]
+  (2) ../../../cmake-build-debug/model(+0xdad95e) [0x560517d9295e]
+  (3) ../../../cmake-build-debug/model(+0xdadbf1) [0x560517d92bf1]
+  (4) ../../../cmake-build-debug/model(+0x390b82) [0x560517375b82]
+  (5) ../../../cmake-build-debug/model(+0x398da4) [0x56051737dda4]
+  (6) ../../../cmake-build-debug/model(+0xc14450) [0x560517bf9450]
+  (7) ../../../cmake-build-debug/model(+0xdb6126) [0x560517d9b126]
+  (8) ../../../cmake-build-debug/model(+0xdcfdd5) [0x560517db4dd5]
+  (9) ../../../cmake-build-debug/model(+0xdcfd47) [0x560517db4d47]
+ (10) ../../../cmake-build-debug/model(+0xdcfd7c) [0x560517db4d7c]
+ (11) ../../../cmake-build-debug/model(+0xdcf126) [0x560517db4126]
+ (12) ../../../cmake-build-debug/model(+0xc11a50) [0x560517bf6a50]
+ (13) ../../../cmake-build-debug/model(+0xc1179e) [0x560517bf679e]
+ (14) ../../../cmake-build-debug/model(+0xc11730) [0x560517bf6730]
+ (15) ../../../cmake-build-debug/model(+0x4fd5f8) [0x5605174e25f8]
+ (16) /lib/x86_64-linux-gnu/libc.so.6(+0x29d90) [0x7f30b6899d90]
+ (17) /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x80) [0x7f30b6899e40]
+ (18) ../../../cmake-build-debug/model(+0x2ae895) [0x560517293895]
 
 
 
 Scheduler:  
 ================================================================================
 Current Tick:  1002
-Num Fired:     9484
+Num Fired:     10455
 Current Phase: Tick
 Current Event: commit_event[Rob::Commit_()]
 
@@ -58,11 +58,11 @@ Scheduler's event tree for tick: 1002
 	Group[13]: [0;32m[0;0m
 	Group[14]: [0;32m[0;32mcommit_event[Rob::Commit_()][0;0m
 	Group[15]: [0;32m[0;0m
-	Group[16]: [0;32m[0;0m
+	Group[16]: [0;32m[0;32mprocess_event[SchedulerUnit::ProcessInsts_()][0;0m
 	Group[17]: [0;32m[0;0m
-	Group[18]: [0;32m[0;32mprocess_event[PhysicalRegfileUnit::ProcessInsts_()][0;0m
+	Group[18]: [0;32m[0;0m
 	Group[19]: [0;32m[0;0m
-	Group[20]: [0;32m[0;0m
+	Group[20]: [0;32m[0;32mprocess_event[StagingBufferUnit::ProcessInsts_()][0;0m
 	Group[21]: [0;32m[0;0m
 	Group[22]: [0;32m[0;0m
 	Group[23]: [0;32m[0;0m
@@ -70,8 +70,8 @@ Scheduler's event tree for tick: 1002
 	Group[25]: [0;32m[0;0m
 	Group[zero]: [0;32m[0;0m
 
-Scheduler's Last Scheduled Continuing Event: 1003
-Scheduler's event tree for tick: 1003
+Scheduler's Last Scheduled Continuing Event: 2004
+Scheduler's event tree for tick: 2004
 	Group[1]: [0;32m[0;0m
 	Group[2]: [0;32m[0;0m
 	Group[3]: [0;32m[0;0m
@@ -87,11 +87,11 @@ Scheduler's event tree for tick: 1003
 	Group[13]: [0;32m[0;0m
 	Group[14]: [0;32m[0;32mcommit_event[Rob::Commit_()][0;0m
 	Group[15]: [0;32m[0;0m
-	Group[16]: [0;32m[0;0m
+	Group[16]: [0;32m[0;32mprocess_event[SchedulerUnit::ProcessInsts_()][0;0m
 	Group[17]: [0;32m[0;0m
-	Group[18]: [0;32m[0;32mprocess_event[PhysicalRegfileUnit::ProcessInsts_()][0;0m
+	Group[18]: [0;32m[0;0m
 	Group[19]: [0;32m[0;0m
-	Group[20]: [0;32m[0;0m
+	Group[20]: [0;32m[0;32mprocess_event[StagingBufferUnit::ProcessInsts_()][0;0m
 	Group[21]: [0;32m[0;0m
 	Group[22]: [0;32m[0;0m
 	Group[23]: [0;32m[0;0m
