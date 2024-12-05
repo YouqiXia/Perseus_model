@@ -22,7 +22,7 @@ class ParamConfig(param_config.ParamConfig):
         self._modify_param(hierarchy, "issue_width", issue_width)
         self._modify_param(hierarchy, "queue_depth", 2 * issue_width)
         self._modify_param(hierarchy, "phy_reg_num", 32 * issue_width)
-        self._modify_param(hierarchy, "is_spec_wakeup", False)
+        self._modify_param(hierarchy, "is_spec_wakeup", True)
         # unit param
         self._modify_unit_params(hierarchy, unitlib.units.rob, unitlib.params.rob.queue_depth, 32 * issue_width)
         self._modify_unit_params(hierarchy, unitlib.units.rob, unitlib.params.rob.retire_heartbeat, 100000)
@@ -32,10 +32,18 @@ class ParamConfig(param_config.ParamConfig):
         self._modify_unit_params(hierarchy, unitlib.units.scheduler, unitlib.params.scheduler.queue_depth, 32 * issue_width)
         self._modify_unit_params(hierarchy, unitlib.units.scheduler, unitlib.params.scheduler.issue_width, int(issue_width/len(arch_config.dispatch_map)))
         
-        self._modify_unit_params(hierarchy, unitlib.units.physical_regfile, unitlib.params.physical_regfile.latency, 0)
+        physical_reg_latency = 2
+        self._modify_unit_params(hierarchy, unitlib.units.physical_regfile, unitlib.params.physical_regfile.queue_depth, physical_reg_latency * issue_width + issue_width * 2)
+        self._modify_unit_params(hierarchy, unitlib.units.physical_regfile, unitlib.params.physical_regfile.latency, physical_reg_latency)
+        
+        staging_buffer_latency = 120
+        self._modify_unit_params(hierarchy, unitlib.units.staging_buffer, unitlib.params.staging_buffer.latency, staging_buffer_latency)
+        self._modify_unit_params(hierarchy, unitlib.units.staging_buffer, unitlib.params.staging_buffer.queue_depth, staging_buffer_latency * issue_width + issue_width * 2)
         
         self._modify_unit_params(hierarchy, unitlib.units.perfect_fu, unitlib.params.scheduler.queue_depth, 40)
         self._modify_unit_params(hierarchy, unitlib.units.perfect_fu, unitlib.params.scheduler.issue_width, int(issue_width/len(arch_config.dispatch_map)))
+        
+        self._modify_param(hierarchy, "wakeup_latency", physical_reg_latency + staging_buffer_latency)
         return hierarchy
     
     def _gen_perfect_params(self, hierarchy, arch_config):

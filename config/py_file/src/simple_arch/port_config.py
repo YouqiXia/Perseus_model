@@ -143,23 +143,28 @@ class PortConfig(port_config.PortConfig):
         )
         
         self._bind(
-            unitlib.units.perfect_fu, unitlib.ports.perfect_fu.out_ports.func_following_finish_out,
+            unitlib.units.perfect_fu, unitlib.ports.perfect_fu.out_ports.following_write_back_out,
             unitlib.units.write_back_stage, unitlib.ports.write_back_stage.in_ports.preceding_write_back_inst_in
         )
         
         self._bind(
-            unitlib.units.perfect_fu, unitlib.ports.perfect_fu.out_ports.func_following_finish_out,
+            unitlib.units.perfect_fu, unitlib.ports.perfect_fu.out_ports.following_write_back_out,
             unitlib.units.physical_regfile, unitlib.ports.physical_regfile.in_ports.bypass_inst_in
         )
         
         self._bind(
-            unitlib.units.perfect_fu, unitlib.ports.perfect_fu.out_ports.func_following_finish_out,
+            unitlib.units.perfect_fu, unitlib.ports.perfect_fu.out_ports.following_write_back_out,
             unitlib.units.staging_buffer, unitlib.ports.staging_buffer.in_ports.bypass_inst_in
         )
         
         self._bind(
             unitlib.units.perfect_fu, unitlib.ports.perfect_fu.out_ports.func_rs_credit_out,
             unitlib.units.staging_buffer, unitlib.ports.staging_buffer.in_ports.following_credit_in
+        )
+        
+        self._bind(
+            unitlib.units.perfect_fu, unitlib.ports.perfect_fu.out_ports.following_rob_finish_out,
+            unitlib.units.rob, unitlib.ports.rob.in_ports.write_back_rob_finish_in
         )
         
         self._bind(
@@ -170,11 +175,6 @@ class PortConfig(port_config.PortConfig):
         self._bind(
             unitlib.units.write_back_stage, unitlib.ports.write_back_stage.out_ports.write_back_following_port_out,
             unitlib.units.dispatch_stage, unitlib.ports.dispatch_stage.in_ports.write_back_dispatch_port_in
-        )
-        
-        self._bind(
-            unitlib.units.write_back_stage, unitlib.ports.write_back_stage.out_ports.write_back_following_port_out,
-            unitlib.units.rob, unitlib.ports.rob.in_ports.write_back_rob_finish_in
         )
         
         self._bind(
