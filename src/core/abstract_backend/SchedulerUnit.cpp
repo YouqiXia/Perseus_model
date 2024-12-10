@@ -291,7 +291,7 @@ namespace TimingModel {
 
             auto latency = fu_latency_map_->at(inst_ptr->getFuType());
 
-            if (latency > wakeup_latency_ + 1) {
+            if (latency > wakeup_latency_) {
                 // speculative wakeup start up
                 latency_table_[inst_ptr->getPhyRd()] = latency - wakeup_latency_ - 1;
             } else {

@@ -24,6 +24,8 @@ namespace TimingModel {
                         (StagingBufferUnit, AcceptCredit_, CreditPairPtr));
         preceding_inst_in.registerConsumerHandler(CREATE_SPARTA_HANDLER_WITH_DATA
                         (StagingBufferUnit, RecieveInsts_, InstGroupPtr));
+        preceding_inst_in >> sparta::GlobalOrderingPoint(node, "staging_buffer_bypass");
+        sparta::GlobalOrderingPoint(node, "staging_buffer_bypass") >> bypass_inst_in;
     }
 
     void StagingBufferUnit::Startup_() {
