@@ -245,7 +245,7 @@ namespace TimingModel {
         spec_wake_up_out.send(processed_group_ptr, sparta::Clock::Cycle(wakeup_latency_));
 
         for (auto it = latency_table_.begin(); it != latency_table_.end(); ) {
-            if (it->second - 1 == 0) {
+            if (it->second == 0) {
                 dependency_table_.EarlyWakeup(it->first);
                 it = latency_table_.erase(it);
             } else {
@@ -293,7 +293,7 @@ namespace TimingModel {
 
             if (latency > wakeup_latency_) {
                 // speculative wakeup start up
-                latency_table_[inst_ptr->getPhyRd()] = latency - wakeup_latency_ - 1;
+                latency_table_[inst_ptr->getPhyRd()] = latency - wakeup_latency_;
             } else {
                 dependency_table_.EarlyWakeup(inst_ptr->getPhyRd());
             }

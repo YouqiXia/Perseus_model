@@ -71,11 +71,12 @@ namespace TimingModel {
 
     void PerfectFu::Allocate_(const TimingModel::InstGroupPtr &inst_group_ptr) {
         for (auto& inst_ptr: *inst_group_ptr) {
+            ILOG("allocate instruction: " << inst_ptr);
             if (inst_ptr->getPipeRank() != pipe_rank_) {
                 continue;
             }
             allocate_event.preparePayload(inst_ptr)->
-                schedule(sparta::Clock::Cycle(inst_ptr->getExecuteTime() - 1));
+                schedule(sparta::Clock::Cycle(fu_latency_map_[inst_ptr->getFuType()] - 1));
             SizeUp();
         }
     }
