@@ -18,25 +18,25 @@ class ParamConfig(param_config.ParamConfig):
         
     def _gen_base_params(self, hierarchy, arch_config):
         # global param
-        issue_width = 8
+        issue_width = 1
         self._modify_param(hierarchy, "issue_width", issue_width)
-        self._modify_param(hierarchy, "queue_depth", 2 * issue_width)
-        self._modify_param(hierarchy, "phy_reg_num", 32 * issue_width)
+        self._modify_param(hierarchy, "queue_depth", 2 * (issue_width + 1))
+        self._modify_param(hierarchy, "phy_reg_num", 32 * (issue_width + 1))
         self._modify_param(hierarchy, "is_spec_wakeup", True)
         # unit param
-        self._modify_unit_params(hierarchy, unitlib.units.rob, unitlib.params.rob.queue_depth, 32 * issue_width)
+        self._modify_unit_params(hierarchy, unitlib.units.rob, unitlib.params.rob.queue_depth, 32 * (issue_width + 1))
         self._modify_unit_params(hierarchy, unitlib.units.rob, unitlib.params.rob.retire_heartbeat, 100000)
         
         self._modify_unit_params(hierarchy, unitlib.units.dispatch_stage, unitlib.params.dispatch_stage.queue_depth, 32)
         
-        self._modify_unit_params(hierarchy, unitlib.units.scheduler, unitlib.params.scheduler.queue_depth, 32 * issue_width)
+        self._modify_unit_params(hierarchy, unitlib.units.scheduler, unitlib.params.scheduler.queue_depth, 32 * (issue_width + 1))
         self._modify_unit_params(hierarchy, unitlib.units.scheduler, unitlib.params.scheduler.issue_width, int(issue_width/len(arch_config.dispatch_map)))
         
-        physical_reg_latency = 0
-        self._modify_unit_params(hierarchy, unitlib.units.physical_regfile, unitlib.params.physical_regfile.queue_depth, physical_reg_latency * issue_width + issue_width * 2)
+        physical_reg_latency = 1
+        self._modify_unit_params(hierarchy, unitlib.units.physical_regfile, unitlib.params.physical_regfile.queue_depth, physical_reg_latency * (issue_width + 1) + (issue_width + 1) * 2)
         self._modify_unit_params(hierarchy, unitlib.units.physical_regfile, unitlib.params.physical_regfile.latency, physical_reg_latency)
         
-        staging_buffer_latency = 0
+        staging_buffer_latency = 1
         self._modify_unit_params(hierarchy, unitlib.units.staging_buffer, unitlib.params.staging_buffer.latency, staging_buffer_latency)
         self._modify_unit_params(hierarchy, unitlib.units.staging_buffer, unitlib.params.staging_buffer.queue_depth, staging_buffer_latency * issue_width + issue_width * 2)
         
@@ -76,7 +76,7 @@ class ParamConfig(param_config.ParamConfig):
         # self._modify_unit_params(hierarchy, unitlib.units.perfect_fu, unitlib.params.perfect_fu.queue_depth, issue_width * 2)
         
     def _modify_config_params(self, arch_config):
-        arch_config.fu_latency[unitlib.func_type.LDU] = 4
+        arch_config.fu_latency[unitlib.func_type.LDU] = 1
     
 
     def _gen_rank_params(self, hierarchy, instances):
