@@ -59,14 +59,14 @@ namespace TimingModel {
                 bool find = false;
                 for (auto& rs_entry_ptr: scheduler_table_[inst_ptr->getPhyRd()][0]) {
                     rs_entry_ptr->rs1_valid = true;
-                    rs_entry_ptr->inst_ptr->setIsRs1Forward(false);
+                    // rs_entry_ptr->inst_ptr->setIsRs1Forward(false);
                     find = true;
                 }
                 scheduler_table_[inst_ptr->getPhyRd()][0].clear();
 
                 for (auto& rs_entry_ptr: scheduler_table_[inst_ptr->getPhyRd()][1]) {
                     rs_entry_ptr->rs2_valid = true;
-                    rs_entry_ptr->inst_ptr->setIsRs2Forward(false);
+                    // rs_entry_ptr->inst_ptr->setIsRs2Forward(false);
                     find = true;
                 }
                 scheduler_table_[inst_ptr->getPhyRd()][1].clear();

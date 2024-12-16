@@ -140,7 +140,6 @@ namespace TimingModel {
         }
         if (renaming_stage_queue_.empty()) {
             pmu_->Monitor(getName(), "queue empty", 1);
-            pmu_->Monitor(getName(), "total loss", issue_width_);
             return;
         }
 
@@ -164,11 +163,6 @@ namespace TimingModel {
             if (stq_credit_ < produce_num_max && !is_perfect_lsu_) {
                 pmu_->Monitor(getName(), "stq loss", produce_num_max - stq_credit_);
             }
-        }
-
-        if (produce_num == 0) {
-            pmu_->Monitor(getName(), "total loss", produce_num_max);
-            return;
         }
     }
 

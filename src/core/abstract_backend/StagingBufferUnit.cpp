@@ -116,6 +116,7 @@ namespace TimingModel {
                 --credit_;
             } else {
                 inst_ptr->setIsCanceled(true);
+                pmu_->Monitor(getName(), "cancel num", 1);
                 ILOG("cancel insn: " << inst_ptr);
             }
             wakeup_resolve_group_ptr->emplace_back(inst_ptr);

@@ -103,6 +103,9 @@ namespace TimingModel {
             uint32_t issue_width_per_pipe = global_param_ptr_->getDispatchIssueWidthMap().at(func_pair.first);
             size_t size_ = 0;
             for (auto &issue_entry_ptr: inst_queue_) {
+                if (issue_entry_ptr->is_issued) {
+                    continue;
+                }
                 if (func_pair.second.find(issue_entry_ptr->inst_ptr->getFuType()) != func_pair.second.end()) {
                     size_++;
                 }
