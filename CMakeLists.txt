@@ -92,3 +92,5 @@ target_include_directories(unitlib PUBLIC ${Perseus_INCLUDES} ${PybindLib_INCLUD
 target_link_directories(unitlib PRIVATE ${Perseus_LINK_DIR})
 target_link_libraries(unitlib PRIVATE ${Perseus_LIBS})
 install(TARGETS unitlib DESTINATION ${Perseus_BASE}/lib/python)
+
+add_subdirectory(smartunit)
