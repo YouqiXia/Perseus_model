@@ -102,15 +102,10 @@ class GenModelConf(object):
         self.ports_conf = None
         self.default_params = None
 
-    def load_module_level(self):
-        with open(_module_level_file) as file:
-            self._module_level_dict = json.load(file)
-
     def gen_model_config(self, pyconf: str):
         pyconf = os.path.abspath(pyconf)
         print(pyconf)
         sys.path.append(pyconf)
-        self.load_module_level()
 
         # import frameconf
         frameconf_mod = importlib.import_module('frameconf')
