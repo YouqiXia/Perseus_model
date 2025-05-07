@@ -11,19 +11,18 @@ import string
 
 _script_dir = os.path.dirname(os.path.abspath(__file__))
 _pytemplate_file = _script_dir + '/module_tpt.py.tpl'
-_module_level_file = _script_dir + '/intermodule.json'
 _frame_file = _script_dir + '/frameconf.py.tpl'
 
 class GenTemplate(object):
     def __init__(self):
         self._module_level_dict = None
 
-    def load_module_level(self):
-        with open(_module_level_file) as file:
+    def load_module_level(self, module_level_file):
+        with open(module_level_file) as file:
             self._module_level_dict = json.load(file)
 
-    def gen_template(self):
-        self.load_module_level()
+    def gen_template(self, module_level_file):
+        self.load_module_level(module_level_file)
 
         # Read py template
         with open(_pytemplate_file) as file:
@@ -131,6 +130,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='cmd parser')
     parser.add_argument('-p', '--pyconf', type=str, help='')
     parser.add_argument('-u', '--unitlib', type=str, help='')
+    parser.add_argument('-t', '--tplconf', type=str, help='')
 
     args = parser.parse_args()
 
@@ -140,7 +140,7 @@ if __name__ == '__main__':
     if args.pyconf is not None:
         # Generate model conf
         GenModelConf().gen_model_config(args.pyconf)
-    else:
+    elif args.tplconf is not None:
         # Generate template
-        GenTemplate().gen_template()
+        GenTemplate().gen_template(args.tplconf)
     
