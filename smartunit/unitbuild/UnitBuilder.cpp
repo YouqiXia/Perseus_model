@@ -173,7 +173,6 @@ void UnitBuilder::bind(std::vector<sparta::ResourceTreeNode *> &unitset1, int be
             }
         }
     }
-    std::abort();
 }
 
 }
