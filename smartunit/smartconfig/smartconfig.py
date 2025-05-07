@@ -32,16 +32,27 @@ class GenTemplate(object):
         current_dir = os.getcwd()
         pydir = current_dir + '/pyconf'
         if (os.path.exists(pydir)):
-            raise Exception('{} exists!'.format(pydir))
+            user_input = input('Remove existing {}? y/[n]. '.format(pydir))
+            if user_input == 'y':
+                shutil.rmtree(pydir)
+            else:
+                raise Exception('{} exists!'.format(pydir))
         os.mkdir(pydir)
 
         # import UnitLib
         unitmodule = importlib.import_module('UnitLib')
+
+        # submodules string
+        submodules_str = ''
         
         # Loop all sub-module in UnitLib
         for module_name in dir(unitmodule):
             if module_name.startswith('__'):
                 continue
+
+            # Add to submodules_str
+            submodules_str += '\'{}\''.format(module_name) if len(submodules_str) == 0 else ', \'{}\''.format(module_name)
+
             # Generate py file for each submodule
             template_obj = string.Template(pytemplate_str)
             # extra_content = self.build_extra_content(module_name)
@@ -56,6 +67,9 @@ class GenTemplate(object):
 
         if self._module_level_dict:
             for str in self._module_level_dict['intermodule']:
+                # Add to submodules_str
+                submodules_str += '\'{}\''.format(str) if len(submodules_str) == 0 else ', \'{}\''.format(str)
+
                 template_obj = string.Template(pytemplate_str)
                 modules = str.split('-')
                 content = ''
@@ -70,7 +84,15 @@ class GenTemplate(object):
                 with open('{}/{}.py'.format(pydir, str), 'w') as file:
                     file.write(pyinstance_str)
         
-        shutil.copy(_frame_file, pydir + '/frameconf.py')
+        # Read frameconf_tpl
+        with open(_frame_file) as file:
+            frameconf_tpl = file.read()
+        substitutions = {
+            'submodules': submodules_str
+        }
+        template_obj = string.Template(frameconf_tpl)
+        with open('{}/{}'.format(pydir, 'frameconf.py'), 'w') as file:
+            file.write(template_obj.substitute(substitutions))
 
 class GenModelConf(object):
     def __init__(self):
@@ -90,13 +112,11 @@ class GenModelConf(object):
         sys.path.append(pyconf)
         self.load_module_level()
 
-        # import UnitLib
-        unitmodule = importlib.import_module('UnitLib')
+        # import frameconf
+        frameconf_mod = importlib.import_module('frameconf')
         
-        # Loop all sub-module in UnitLib
-        for module_name in dir(unitmodule):
-            if module_name.startswith('__'):
-                continue
+        # Loop all sub-module in frameconf
+        for module_name in frameconf_mod.SUBMODULES:
             submodule = importlib.import_module(module_name)
             submodule.build_units()
             submodule.build_ports_conf()
@@ -106,18 +126,6 @@ class GenModelConf(object):
             self.ports_conf = submodule.ports_conf.merge(self.ports_conf)
             self.unit_bind = submodule.unit_bind.merge(self.unit_bind)
             self.default_params = submodule.default_params.merge(self.default_params)
-
-        if self._module_level_dict:
-            for str in self._module_level_dict['intermodule']:
-                submodule = importlib.import_module(str) 
-                submodule.build_units()
-                submodule.build_ports_conf()
-                submodule.bind_units()
-                submodule.setup_dparams()
-                self.unit_conf = submodule.unit_conf.merge(self.unit_conf)
-                self.ports_conf = submodule.ports_conf.merge(self.ports_conf)
-                self.unit_bind = submodule.unit_bind.merge(self.unit_bind)
-                self.default_params = submodule.default_params.merge(self.default_params)
 
         self.unit_conf.to_json(os.getcwd() + '/unit_conf.json')
         self.ports_conf.to_json(os.getcwd() + '/port_conf.json')

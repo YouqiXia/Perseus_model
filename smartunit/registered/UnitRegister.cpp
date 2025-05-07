@@ -6,6 +6,12 @@ std::string registertype_to_str(RegisterType type) {
     static const std::unordered_map<TimingModel::RegisterType, std::string> s_type2str = {
         {TimingModel::RegisterType::FE, "FE"},
         {TimingModel::RegisterType::BE, "BE"},
+        {TimingModel::RegisterType::NOC, "NOC"},
+        {TimingModel::RegisterType::LSU, "LSU"},
+        {TimingModel::RegisterType::Vector, "Vector"},
+        {TimingModel::RegisterType::Cache, "Cache"},
+        {TimingModel::RegisterType::Util, "Util"},
+        {TimingModel::RegisterType::FU, "FU"},
     };
 
     return s_type2str.at(type);
@@ -15,6 +21,12 @@ RegisterType str_to_registertype(const std::string &str) {
     static const std::unordered_map<std::string, TimingModel::RegisterType> s_str2type = {
         {"FE", TimingModel::RegisterType::FE},
         {"BE", TimingModel::RegisterType::BE},
+        {"NOC", TimingModel::RegisterType::NOC},
+        {"LSU", TimingModel::RegisterType::LSU},
+        {"Vector", TimingModel::RegisterType::Vector},
+        {"Cache", TimingModel::RegisterType::Cache},
+        {"Util", TimingModel::RegisterType::Util},
+        {"FU", TimingModel::RegisterType::FU},
     };
 
     return s_str2type.at(str);

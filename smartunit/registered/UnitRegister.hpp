@@ -10,12 +10,14 @@
 namespace TimingModel {
 
 enum class RegisterType {
-    NOC,
     FE,
     BE,
+    NOC,
     LSU,
     Vector,
     Cache,
+    Util,
+    FU,
 };
 std::string registertype_to_str(RegisterType type);
 RegisterType str_to_registertype(const std::string &str);
