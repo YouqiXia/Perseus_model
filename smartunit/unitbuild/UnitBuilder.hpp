@@ -26,14 +26,12 @@ private:
     void bind(std::vector<sparta::ResourceTreeNode *> &unitset1, int beg1, int end1,
               std::vector<sparta::ResourceTreeNode *> &unitset2, int beg2, int end2,
               const std::vector<std::vector<int>> &matrix,
-              const std::vector<std::string> &ports_bind);
+              const std::vector<std::string> &ports_bind, bool in_order);
 
     UnitBuilder::Params params_;
-    struct UnitInstance {
-        int num;
-        std::vector<sparta::ResourceTreeNode *> nodes;
-    };
-    std::map<std::string, UnitInstance> unit_instances_map_; /* Use in bind. */
+
+    using UnitNameMap = std::map<std::string, std::vector<sparta::ResourceTreeNode *>>;
+    std::map<int, UnitNameMap> final_unit_instances_map_;
 };
 
 }

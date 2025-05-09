@@ -6,7 +6,7 @@ class DParams(object):
         self.module_name = module_name
         self.params_dict: dict = {}
 
-    def set_param(self, key: str, value):
+    def set_param(self, key, value):
         unitkey, param_key = key.split('|')
         if unitkey not in self.params_dict:
             self.params_dict[unitkey] = {}

@@ -7,16 +7,17 @@ class PortsConf(object):
         self.bindings = {}
 
     def bind(self, outport, inport):
-        unit1, outname = outport.split('|')
-        unit2, inname = inport.split('|')
+        unit1, portname1 = outport.split('|')
+        unit2, portname2 = inport.split('|')
         key = unit1 + '|' + unit2
         if unit1 > unit2:
             unit1, unit2 = unit2, unit1
+            portname1, portname2 = portname2, portname1
             key = unit1 + '|' + unit2
         if key not in self.bindings:
             self.bindings[key] = []
-        self.bindings[key].append(outname)
-        self.bindings[key].append(inname)
+        self.bindings[key].append(portname1)
+        self.bindings[key].append(portname2)
 
     def get_bindding(self, key):
         if key not in self.bindings:
@@ -27,8 +28,6 @@ class PortsConf(object):
         if not that:
             return self
         for key, binding in that.bindings.items():
-            if key in self.bindings:
-                continue
             self.bindings[key] = binding
         return self
     
@@ -40,10 +39,7 @@ class PortsConf(object):
 
     def to_json(self, filepath):
         filepath = os.path.abspath(filepath)
-        json_dict = {
-            'bindings': self.bindings,
-        }
-        json_str = json.dumps(json_dict, indent=4)
+        json_str = json.dumps(self.bindings, indent=4)
         with open(filepath, 'w') as file:
             file.write(json_str)
         

@@ -19,6 +19,24 @@ static std::pair<std::string, std::string> spilt_unitkey(const std::string &unit
     return result;
 }
 
+static std::vector<std::string> spilt_by_deli(const std::string &unitkey, char deli) {
+    std::vector<std::string> result;
+    size_t beg = 0;
+    size_t pos = unitkey.find(deli, beg);
+    while (pos != std::string::npos) {
+        result.push_back(unitkey.substr(beg, pos - beg));
+        beg = pos + 1;
+        pos = unitkey.find(deli, beg);
+    }
+    result.push_back(unitkey.substr(beg, unitkey.size() - beg));
+    return result;
+}
+
+static std::pair<int, int> get_location(const std::string &location) {
+    int num = std::stoi(location);
+    return std::pair<int, int>(num / 100, num % 100);
+}
+
 UnitBuilder::UnitBuilder(const UnitBuilder::Params &params) : params_(params) {}
 
 std::vector<sparta::TreeNode *> UnitBuilder::build(sparta::RootTreeNode *root) {
@@ -37,76 +55,69 @@ std::vector<sparta::TreeNode *> UnitBuilder::build(sparta::RootTreeNode *root) {
         default_params_data = nlohmann::json::parse(f);
     }
 
-    auto &unit_instances = unit_conf_data["unit_instances"];
-    auto &unit_instance_params = unit_conf_data["unit_instance_params"];
-    int num = 0;
-    int core_idx = 0;
-    int cluster_idx = 0;
-    std::string modulename;
-    std::string unitname;
-
     auto &all_factory = UnitRegister::instance().getAllFactory();
-
     std::unordered_map<RegisterType, sparta::TreeNode *> module_map;
 
-    for (const auto &[key, value] : unit_instances.items()) {
-        num = value[0].get<int>();
-        core_idx = value[1].get<int>();
-        cluster_idx = value[2].get<int>();
-        auto split_pair = spilt_unitkey(key, '.');
-        modulename = split_pair.first;
-        unitname = split_pair.second;
-
-        /* Fill unit_instances_map_ */
-        unit_instances_map_.emplace(key, UnitInstance());
-        unit_instances_map_[key].num = num;
-
-        auto &params_json = unit_instance_params[key]; /* Get params json node. */
-
-        auto register_type = str_to_registertype(modulename);
-        sparta::TreeNode *parent{nullptr};
-        if (module_map.count(register_type) == 0) {
-            parent = new sparta::TreeNode(root, modulename, "module");
-            module_map.emplace(register_type, parent);
-            nodes.push_back(parent);
-        } else {
-            parent = module_map.at(register_type);
+    for (const auto &[location_key, location_val] : unit_conf_data.items()) {
+        int int_location_key = std::stoi(location_key);
+        if (final_unit_instances_map_.count(int_location_key) == 0) {
+            final_unit_instances_map_.try_emplace(int_location_key);
         }
 
-        auto &factory_map = all_factory.at(register_type);
-        auto factory = factory_map.at(unitname);
+        auto [cluster_idx, core_idx] = get_location(location_key);
+        for (const auto &[unit_key, unit_val] : location_val.items()) {
+            size_t create_cnt = unit_val.at(0);
+            auto split_pair = spilt_unitkey(unit_key, '.');
+            std::string modulename = split_pair.first;
+            std::string unitname = split_pair.second;
+            auto register_type = str_to_registertype(modulename);
 
-        for (int i = 0; i < num; ++i) {
-            std::string instance_name = unitname + "_" + std::to_string(cluster_idx)
-                                        + "_" + std::to_string(core_idx)
-                                        + "_" + std::to_string(i);
-            // std::cout << "build: " << key << " " << instance_name << std::endl;
-            auto node = new sparta::ResourceTreeNode(parent, instance_name, sparta::TreeNode::GROUP_NAME_NONE,
-                                            sparta::TreeNode::GROUP_IDX_NONE,
-                                            instance_name, factory);
-            nodes.push_back(node);
-            unit_instances_map_[key].nodes.push_back(node);
+            final_unit_instances_map_[int_location_key].try_emplace(unit_key);
 
-            /* Default params setup. */
-            if (default_params_data.contains(key)) {
-                auto &key_default_params = default_params_data[key];
-                for (const auto &[param_key, param_value] : key_default_params.items()) {
-                    node->getParameterSet()->getParameter(param_key)->setValueFromString(param_value.get<std::string>());
-                    // std::cout << "gparam: " << param_key << " " << param_value.get<std::string>() << std::endl;
-                }
+            sparta::TreeNode *parent{nullptr};
+            if (module_map.count(register_type) == 0) {
+                parent = new sparta::TreeNode(root, modulename, "module");
+                module_map.emplace(register_type, parent);
+                nodes.push_back(parent);
+            } else {
+                parent = module_map.at(register_type);
             }
 
-            /* Local params setup. */
-            if (not params_json.empty()) {
-                for (const auto &[param_key, param_value] : params_json.items()) {
-                    if (not node->getParameterSet()->hasParameter(param_key)) continue;
-                    node->getParameterSet()->getParameter(param_key)->setValueFromString(param_value[i].get<std::string>());
-                    // std::cout << "lparam: " << param_key << " " << param_value[i].get<std::string>() << std::endl;
+            auto &factory_map = all_factory.at(register_type);
+            auto factory = factory_map.at(unitname);
+
+            for (size_t i = 0; i < create_cnt; ++i) {
+                std::string instance_name = unitname + "_" + std::to_string(cluster_idx)
+                                            + "_" + std::to_string(core_idx)
+                                            + "_" + std::to_string(i);
+
+                auto node = new sparta::ResourceTreeNode(parent, instance_name, sparta::TreeNode::GROUP_NAME_NONE,
+                                                         sparta::TreeNode::GROUP_IDX_NONE,
+                                                         instance_name, factory);
+                nodes.push_back(node);
+                final_unit_instances_map_[int_location_key][unit_key].push_back(node);
+
+                /* Default params setup. */
+                if (default_params_data.contains(unit_key)) {
+                    auto &key_default_params = default_params_data[unit_key];
+                    for (const auto &[param_key, param_value] : key_default_params.items()) {
+                        node->getParameterSet()->getParameter(param_key)->setValueFromString(param_value.get<std::string>());
+                        // std::cout << "gparam: " << param_key << " " << param_value.get<std::string>() << std::endl;
+                    }
+                }
+
+                /* Local params setup. */
+                if (not unit_val.at(1).empty()) {
+                    for (const auto &[param_key, param_value] : unit_val.at(1).items()) {
+                        if (not node->getParameterSet()->hasParameter(param_key)) continue;
+                        node->getParameterSet()->getParameter(param_key)->setValueFromString(param_value[i].get<std::string>());
+                        // std::cout << "lparam: " << param_key << " " << param_value[i].get<std::string>() << std::endl;
+                    }
                 }
             }
         }
     }
-    // std::cout << "build end" << std::endl;
+
     return nodes;
 }
 
@@ -126,18 +137,21 @@ void UnitBuilder::bind(sparta::RootTreeNode *root) {
 
     std::vector<std::vector<int>> matrix;
     std::vector<std::string> ports_bind;
-    auto &binds_data = unit_bind_data["binds"];
-    for (auto &[bind_key, matrix_json] : binds_data.items()) {
-        auto split_pair = spilt_unitkey(bind_key, '|');
-        std::string tmpstr1 = split_pair.first;
-        std::string tmpstr2 = split_pair.second;
+    for (auto &[bind_key, matrix_json] : unit_bind_data.items()) {
+        auto thekeys = spilt_by_deli(bind_key, '|');
+        std::string tmpstr1 = thekeys[0];
+        std::string tmpstr2 = thekeys[2];
+        bool in_order = true;
         if (tmpstr1 > tmpstr2) {
             std::swap(tmpstr1, tmpstr2);
+            in_order = false;
         }
         std::string ports_conf_key = tmpstr1 + "|" + tmpstr2;
 
-        auto &unit_data1 = unit_instances_map_[split_pair.first];
-        auto &unit_data2 = unit_instances_map_[split_pair.second];
+        int location1 = std::stoi(thekeys[1]);
+        int location2 = std::stoi(thekeys[3]);
+        auto &unit_data1 = final_unit_instances_map_[location1][thekeys[0]];
+        auto &unit_data2 = final_unit_instances_map_[location2][thekeys[2]];
 
         /* Only support one core. */
         for (auto &arr : matrix_json) {
@@ -147,29 +161,32 @@ void UnitBuilder::bind(sparta::RootTreeNode *root) {
             }
         }
         std::vector<std::string> ports_bind;
-        for (auto &elm : port_conf_data["bindings"][ports_conf_key]) {
-            // std::cout << elm.get<std::string>() << std::endl;
+        for (auto &elm : port_conf_data[ports_conf_key]) {
+            std::cout << elm.get<std::string>() << std::endl;
             ports_bind.push_back(elm.get<std::string>());
         }
-        bind(unit_data1.nodes, 0, unit_data1.nodes.size(), unit_data2.nodes, 0, unit_data2.nodes.size(),
-             matrix, ports_bind);
+        bind(unit_data1, 0, unit_data1.size(), unit_data2, 0, unit_data2.size(),
+             matrix, ports_bind, in_order);
     }
-
-    /* Bind port. */
 }
 
 void UnitBuilder::bind(std::vector<sparta::ResourceTreeNode *> &unitset1, int beg1, int end1,
                        std::vector<sparta::ResourceTreeNode *> &unitset2, int beg2, int end2,
                        const std::vector<std::vector<int>> &matrix,
-                       const std::vector<std::string> &ports_bind) {
+                       const std::vector<std::string> &ports_bind, bool in_order) {
     for (int i = beg1; i < end1; ++i) {
         for (int j = beg2; j < end2; ++j) {
             if (matrix[i][j] == 0) continue;
             /* Bind ports. */
             for (size_t pos = 0; pos < ports_bind.size(); pos += 2) {
-                sparta::bind(unitset1[i]->getChildAs<sparta::Port>("ports." + ports_bind[pos]),
-                             unitset2[j]->getChildAs<sparta::Port>("ports." + ports_bind[pos + 1]));
-                // std::cout << unitset1[i]->getName() << " " << ports_bind[pos] << " " << unitset2[j]->getName() << " " << ports_bind[pos + 1] << std::endl;
+                int idx1 = pos;
+                int idx2 = pos + 1;
+                if (not in_order) {
+                    std::swap(idx1, idx2);
+                }
+                sparta::bind(unitset1[i]->getChildAs<sparta::Port>("ports." + ports_bind[idx1]),
+                             unitset2[j]->getChildAs<sparta::Port>("ports." + ports_bind[idx2]));
+                // std::cout << unitset1[i]->getName() << " " << ports_bind[idx1] << " " << unitset2[j]->getName() << " " << ports_bind[idx2] << std::endl;
             }
         }
     }
