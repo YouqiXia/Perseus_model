@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 import os
 import sys
 import argparse
@@ -143,4 +141,6 @@ if __name__ == '__main__':
     elif args.tplconf is not None:
         # Generate template
         GenTemplate().gen_template(args.tplconf)
+    else:
+        GenTemplate().gen_template(_script_dir + '/intermodule.json')
     
