@@ -13,12 +13,18 @@
 #include "example.hpp"
 #include "FE.hpp"
 #include "BE.hpp"
+#include "Extension.hpp"
 
 namespace TimingModel {
 
 int UnitRegister::doAllRegister() {
     int retval = 0;
     auto &the_instance = UnitRegister::instance();
+
+    retval = registerExtension(the_instance);
+    if (retval != 0) {
+        return retval;
+    }
 
     retval = registerExampleUnit(the_instance);
     if (retval != 0) {

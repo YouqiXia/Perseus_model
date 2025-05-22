@@ -41,6 +41,11 @@ UnitBuilder::UnitBuilder(const UnitBuilder::Params &params) : params_(params) {}
 
 std::vector<sparta::TreeNode *> UnitBuilder::build(sparta::RootTreeNode *root) {
     /* Build tree. */
+    /* Add extension into root. */
+    for (auto &[extension_name, factory] : TimingModel::UnitRegister::instance().getExtensionFactorys()) {
+        root->addExtensionFactory(extension_name, factory);
+    }
+
     // std::cout << "build beg" << std::endl;
     std::vector<sparta::TreeNode *> nodes; /* All tree node. */
     nlohmann::json unit_conf_data;

@@ -28,7 +28,13 @@ public:
         sparta::RootTreeNode dummy_node("dummy_rtn");
         dummy_node.setClock(&clk);
         dummy_node.enterConfiguring();
+
+        /* Add extension into root. */
+        for (auto &[extension_name, factory] : TimingModel::UnitRegister::instance().getExtensionFactorys()) {
+            dummy_node.addExtensionFactory(extension_name, factory);
+        }
         
+        /* Add unit. */
         for (auto &[type, factorys_map] : TimingModel::UnitRegister::instance().getAllFactory()) {
             for (auto &factory_base_pair : factorys_map) {
                 m_resource_nodes.emplace_back(new sparta::ResourceTreeNode{&dummy_node,

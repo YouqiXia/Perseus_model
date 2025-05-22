@@ -64,6 +64,15 @@ int UnitRegister::doRegister(RegisterType type, const std::string &resource_name
     }
 }
 
+int UnitRegister::doRegisterExtension(const std::string &extension_name, std::function<sparta::TreeNode::ExtensionsBase*()> factory) {
+    m_extension_factorys[extension_name] = factory;
+    return 0;
+}
+
+ExtensionFactorys &UnitRegister::getExtensionFactorys() {
+    return m_extension_factorys;
+}
+
 UnitRegister::UnitRegister() : m_enabled(true) {}
 
 UnitRegister::~UnitRegister() {

@@ -24,6 +24,7 @@ RegisterType str_to_registertype(const std::string &str);
 
 using ElmCreateFunc = std::function<sparta::ResourceFactoryBase*(void)>;
 using FactoryMap = std::map<std::string, sparta::ResourceFactoryBase*>;
+using ExtensionFactorys = std::map<std::string, std::function<sparta::TreeNode::ExtensionsBase*()>>;
 
 class UnitRegister {
 public:
@@ -57,6 +58,9 @@ public:
      */
     int doRegister(RegisterType type, const std::string &resource_name, sparta::ResourceFactoryBase* factory);
 
+    int doRegisterExtension(const std::string & extension_name, std::function<sparta::TreeNode::ExtensionsBase*()> factory);
+    ExtensionFactorys &getExtensionFactorys();
+
 private:
     UnitRegister();
     ~UnitRegister();
@@ -65,6 +69,7 @@ private:
 
     bool m_enabled;
     std::unordered_map<RegisterType, FactoryMap> m_all_factories_maps;
+    ExtensionFactorys m_extension_factorys;
 };
 
 }
