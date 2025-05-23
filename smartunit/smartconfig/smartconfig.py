@@ -119,10 +119,18 @@ class GenModelConf(object):
             self.unit_bind = submodule.unit_bind.merge(self.unit_bind)
             self.default_params = submodule.default_params.merge(self.default_params)
 
-        self.unit_conf.to_json(os.getcwd() + '/unit_conf.json')
-        self.ports_conf.to_json(os.getcwd() + '/port_conf.json')
-        self.unit_bind.to_json(os.getcwd() + '/unit_bind.json')
-        self.default_params.to_json(os.getcwd() + '/default_params.json')
+        json_dir = os.getcwd() + '/jsonconf'
+        if (os.path.exists(json_dir)):
+            user_input = input('Remove existing {}? y/[n]. '.format(json_dir))
+            if user_input == 'y':
+                shutil.rmtree(json_dir)
+            else:
+                raise Exception('{} exists!'.format(json_dir))
+        os.mkdir(json_dir)
+        self.unit_conf.to_json(json_dir + '/unit_conf.json')
+        self.ports_conf.to_json(json_dir + '/port_conf.json')
+        self.unit_bind.to_json(json_dir + '/unit_bind.json')
+        self.default_params.to_json(json_dir + '/default_params.json')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='cmd parser')

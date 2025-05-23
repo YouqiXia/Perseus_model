@@ -18,6 +18,7 @@ public:
         std::string default_params_path;
     };
 
+    UnitBuilder(const std::string &conf_dir);
     UnitBuilder(const UnitBuilder::Params &params);
     std::vector<sparta::TreeNode *> build(sparta::RootTreeNode *root);
     void bind(sparta::RootTreeNode *root);

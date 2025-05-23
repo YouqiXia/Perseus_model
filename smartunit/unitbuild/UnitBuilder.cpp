@@ -37,6 +37,13 @@ static std::pair<int, int> get_location(const std::string &location) {
     return std::pair<int, int>(num / 100, num % 100);
 }
 
+UnitBuilder::UnitBuilder(const std::string &conf_dir) {
+    params_.unit_conf_path = conf_dir + "/unit_conf.json";
+    params_.unit_bind_path = conf_dir + "/port_conf.json";
+    params_.port_conf_path = conf_dir + "/unit_bind.json";
+    params_.default_params_path = conf_dir + "/default_params.json";
+}
+
 UnitBuilder::UnitBuilder(const UnitBuilder::Params &params) : params_(params) {}
 
 std::vector<sparta::TreeNode *> UnitBuilder::build(sparta::RootTreeNode *root) {
