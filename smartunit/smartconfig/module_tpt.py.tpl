@@ -1,5 +1,5 @@
 import unitconf
-import portsconf
+import portsbind
 import dparams
 
 import frameconf
@@ -7,8 +7,7 @@ import frameconf
 $extra_content
 
 unit_conf = unitconf.UnitFactory($name, frameconf.CORE_COUNT, frameconf.CLUSTER_COUNT)
-unit_bind = unitconf.UnitBind($name)
-ports_conf = portsconf.PortsConf($name)
+ports_bind = portsbind.PortsBind($name)
 default_params = dparams.DParams($name)
 
 # Create unit instances, you should not build units in python that bind modules
@@ -24,18 +23,11 @@ def build_units():
     # unit_conf.set_params(unit, param_name, param_arr, location)
     pass
 
-# Setup how the ports bind between units.
-def build_ports_conf():
-    # Setup ports_conf here.
+# Bind ports of the unit instances
+def bind_ports():
+    # Bind unit ports here.
 
-    # ports_conf.bind(outport, inport)
-    pass
-
-# Bind unit instances
-def bind_units():
-    # Bind unit instances here.
-
-    # unit_bind.bind_unit(unit1, unit2, bind_matrix, location1, location2)
+    # ports_bind.bind(port1, port2, bind_matrix, location1, location2)
     pass
 
 # Setup default params for units

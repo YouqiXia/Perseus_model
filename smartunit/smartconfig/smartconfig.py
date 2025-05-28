@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import sys
 import argparse
@@ -95,8 +97,7 @@ class GenModelConf(object):
     def __init__(self):
         self._module_level_dict = None
         self.unit_conf = None
-        self.unit_bind = None
-        self.ports_conf = None
+        self.ports_bind = None
         self.default_params = None
 
     def gen_model_config(self, pyconf: str):
@@ -111,12 +112,10 @@ class GenModelConf(object):
         for module_name in frameconf_mod.SUBMODULES:
             submodule = importlib.import_module(module_name)
             submodule.build_units()
-            submodule.build_ports_conf()
-            submodule.bind_units()
+            submodule.bind_ports()
             submodule.setup_dparams()
             self.unit_conf = submodule.unit_conf.merge(self.unit_conf)
-            self.ports_conf = submodule.ports_conf.merge(self.ports_conf)
-            self.unit_bind = submodule.unit_bind.merge(self.unit_bind)
+            self.ports_bind = submodule.ports_bind.merge(self.ports_bind)
             self.default_params = submodule.default_params.merge(self.default_params)
 
         json_dir = os.getcwd() + '/jsonconf'
@@ -128,8 +127,7 @@ class GenModelConf(object):
                 raise Exception('{} exists!'.format(json_dir))
         os.mkdir(json_dir)
         self.unit_conf.to_json(json_dir + '/unit_conf.json')
-        self.ports_conf.to_json(json_dir + '/port_conf.json')
-        self.unit_bind.to_json(json_dir + '/unit_bind.json')
+        self.ports_bind.to_json(json_dir + '/port_bind.json')
         self.default_params.to_json(json_dir + '/default_params.json')
 
 if __name__ == '__main__':
